@@ -41,6 +41,12 @@
   </div>
 
   <div class="card">
+    <h2>Plan</h2>
+    <p id="plan-label" style="font-weight: 600; margin: 0 0 4px;">Free</p>
+    <p id="plan-desc" class="empty">Link-in-bio only — social links, contact, and about.</p>
+  </div>
+
+  <div class="card">
     <h2>Edit details</h2>
     <input id="business_name" placeholder="Business name" />
     <input id="phone" placeholder="Phone number" />
@@ -57,7 +63,8 @@
   </div>
 
   <div class="card">
-    <h2>Subscription</h2>
+    <h2>Upgrade</h2>
+    <p class="empty">Website unlocks services, photo gallery, service area, and quote requests. Website + Booking adds deposit collection on top.</p>
     <button class="secondary" id="upgrade-website">Subscribe — Website ($9.99/mo)</button>
     <button class="secondary" id="upgrade-booking">Subscribe — Website + Booking ($19.99/mo)</button>
   </div>
@@ -155,6 +162,29 @@
     `).join("");
   }
 
+  const PLAN_LABELS = {
+    free: ["Free", "Link-in-bio only — social links, contact, and about."],
+    website: ["Website", "Services, gallery, service area, and quote requests are unlocked."],
+    website_booking: ["Website + Booking", "Everything in Website, plus deposit collection."],
+  };
+
+  async function loadPlan() {
+    const { data: sub } = await sb
+      .from("subscriptions")
+      .select("tier, status")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+    const tier = sub && sub.status === "active" ? sub.tier : "free";
+    const [label, desc] = PLAN_LABELS[tier] || PLAN_LABELS.free;
+    document.getElementById("plan-label").textContent = label;
+    document.getElementById("plan-desc").textContent = desc;
+    if (tier === "website") document.getElementById("upgrade-website").style.display = "none";
+    if (tier === "website_booking") {
+      document.getElementById("upgrade-website").style.display = "none";
+      document.getElementById("upgrade-booking").style.display = "none";
+    }
+  }
+
   (async () => {
     session = await requireSession();
     if (!session) return;
@@ -170,6 +200,14 @@
       return;
     }
     page = pageData;
+
+    await loadPlan();
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("subscribe") === "success") {
+      await callFunction("render-page", { page_id: pageData.id }, session);
+      window.history.replaceState({}, "", "/app/dashboard.html");
+    }
 
     document.getElementById("page-url").href = `https://bizinbio.net/${page.slug}/`;
     document.getElementById("page-url").textContent = `bizinbio.net/${page.slug}/`;
