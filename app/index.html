@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BizInBio — a real website in minutes</title>
+<meta name="description" content="A mobile-first link-in-bio website builder for any business. Get a real, published website in under 3 minutes." />
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background: #FAFAFA; color: #1C1C1E; }
+  .wrap { max-width: 420px; margin: 0 auto; padding: 48px 20px; }
+  h1 { font-size: 26px; margin: 0 0 8px; text-align: center; }
+  p.sub { color: #6B6B6B; text-align: center; margin: 0 0 32px; }
+  .card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tab { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #DDD; background: #fff; font-weight: 600; }
+  .tab.active { background: #1C1C1E; color: #fff; border-color: #1C1C1E; }
+  form { display: flex; flex-direction: column; gap: 10px; }
+  input { padding: 14px; border-radius: 10px; border: 1px solid #DDD; font-size: 16px; }
+  button[type="submit"] { padding: 14px; border-radius: 10px; border: none; background: #1C1C1E; color: #fff; font-weight: 600; font-size: 16px; margin-top: 8px; }
+  .msg { text-align: center; color: #6B6B6B; margin-top: 12px; min-height: 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>BizInBio</h1>
+  <p class="sub">Get a real website for your business in minutes.</p>
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" id="tab-signup">Sign up</button>
+      <button class="tab" id="tab-login">Log in</button>
+    </div>
+    <form id="auth-form">
+      <input type="email" name="email" placeholder="Email" required />
+      <input type="password" name="password" placeholder="Password" required minlength="6" />
+      <button type="submit" id="submit-btn">Create my page</button>
+    </form>
+    <p class="msg" id="msg"></p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="app.js"></script>
+<script>
+  let mode = "signup";
+  const tabSignup = document.getElementById("tab-signup");
+  const tabLogin = document.getElementById("tab-login");
+  const submitBtn = document.getElementById("submit-btn");
+  const msg = document.getElementById("msg");
+
+  tabSignup.addEventListener("click", () => {
+    mode = "signup";
+    tabSignup.classList.add("active");
+    tabLogin.classList.remove("active");
+    submitBtn.textContent = "Create my page";
+  });
+  tabLogin.addEventListener("click", () => {
+    mode = "login";
+    tabLogin.classList.add("active");
+    tabSignup.classList.remove("active");
+    submitBtn.textContent = "Log in";
+  });
+
+  document.getElementById("auth-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = e.target.email.value;
+    const password = e.target.password.value;
+    msg.textContent = "Working...";
+    try {
+      const { error } = mode === "signup"
+        ? await sb.auth.signUp({ email, password })
+        : await sb.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      await routeAfterAuth();
+    } catch (err) {
+      msg.textContent = err.message || "Something went wrong.";
+    }
+  });
+
+  async function routeAfterAuth() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      msg.textContent = "Check your email to confirm your account.";
+      return;
+    }
+    const { data: page } = await sb
+      .from("pages")
+      .select("id")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+    window.location.href = page ? "/app/dashboard.html" : "/app/onboarding.html";
+  }
+
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) await routeAfterAuth();
+  })();
+</script>
+</body>
+</html>

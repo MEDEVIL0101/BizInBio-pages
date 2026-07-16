@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard — BizInBio</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background: #FAFAFA; color: #1C1C1E; }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 32px 20px 60px; }
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  h1 { font-size: 20px; margin: 0; }
+  button.link { background: none; border: none; color: #6B6B6B; font-size: 14px; }
+  .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 16px; }
+  .card h2 { font-size: 15px; margin: 0 0 12px; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.04em; }
+  a.page-url { display: block; word-break: break-all; color: #1C1C1E; font-weight: 600; margin-bottom: 8px; }
+  .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .badge.live { background: #DFF5E4; color: #1E7B3C; }
+  input, textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #DDD; font-size: 15px; margin-bottom: 10px; }
+  button.primary { width: 100%; padding: 14px; border-radius: 10px; border: none; background: #1C1C1E; color: #fff; font-weight: 600; font-size: 15px; }
+  button.secondary { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #1C1C1E; background: #fff; color: #1C1C1E; font-weight: 600; font-size: 15px; margin-top: 8px; }
+  .lead { padding: 12px 0; border-bottom: 1px solid #EEE; }
+  .lead:last-child { border-bottom: none; }
+  .lead .name { font-weight: 600; }
+  .lead .meta { color: #6B6B6B; font-size: 13px; }
+  .msg { text-align: center; color: #6B6B6B; margin-top: 10px; min-height: 18px; }
+  .empty { color: #999; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>Your page</h1>
+    <button class="link" id="logout">Log out</button>
+  </div>
+
+  <div class="card">
+    <h2>Status</h2>
+    <a class="page-url" id="page-url" href="#" target="_blank"></a>
+    <span class="badge live" id="status-badge"></span>
+  </div>
+
+  <div class="card">
+    <h2>Edit details</h2>
+    <input id="business_name" placeholder="Business name" />
+    <input id="phone" placeholder="Phone number" />
+    <input id="service_area" placeholder="Service area" />
+    <textarea id="bio" placeholder="About / bio" rows="3"></textarea>
+    <button class="primary" id="save">Save & republish</button>
+    <p class="msg" id="save-msg"></p>
+  </div>
+
+  <div class="card">
+    <h2>Booking deposits (Tier 2)</h2>
+    <p id="connect-status" class="empty">Not connected yet.</p>
+    <button class="secondary" id="connect-stripe">Connect Stripe to accept deposits</button>
+  </div>
+
+  <div class="card">
+    <h2>Subscription</h2>
+    <button class="secondary" id="upgrade-website">Subscribe — Website ($9.99/mo)</button>
+    <button class="secondary" id="upgrade-booking">Subscribe — Website + Booking ($19.99/mo)</button>
+  </div>
+
+  <div class="card">
+    <h2>Quote requests</h2>
+    <div id="leads"><p class="empty">No quote requests yet.</p></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="app.js"></script>
+<script>
+  let session, page, elementsByType = {};
+
+  document.getElementById("logout").addEventListener("click", async () => {
+    await sb.auth.signOut();
+    window.location.href = "/app/index.html";
+  });
+
+  document.getElementById("save").addEventListener("click", async () => {
+    const saveMsg = document.getElementById("save-msg");
+    saveMsg.textContent = "Saving...";
+    try {
+      const businessName = document.getElementById("business_name").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const serviceArea = document.getElementById("service_area").value.trim();
+      const bio = document.getElementById("bio").value.trim();
+
+      await sb.from("pages").update({
+        business_name: businessName,
+        service_area: serviceArea,
+        og_title: businessName,
+      }).eq("id", page.id);
+
+      if (elementsByType.header) {
+        await sb.from("elements").update({
+          content: { ...elementsByType.header.content, business_name: businessName },
+        }).eq("id", elementsByType.header.id);
+      }
+      if (elementsByType.about) {
+        await sb.from("elements").update({ content: { bio } }).eq("id", elementsByType.about.id);
+      }
+      if (elementsByType.contact) {
+        await sb.from("elements").update({
+          content: { ...elementsByType.contact.content, phone },
+        }).eq("id", elementsByType.contact.id);
+      }
+      if (elementsByType.service_area) {
+        await sb.from("elements").update({ content: { area: serviceArea } }).eq("id", elementsByType.service_area.id);
+      }
+
+      await callFunction("render-page", { page_id: page.id }, session);
+      saveMsg.textContent = "Saved and republished.";
+    } catch (err) {
+      saveMsg.textContent = err.message || "Something went wrong.";
+    }
+  });
+
+  document.getElementById("connect-stripe").addEventListener("click", async () => {
+    try {
+      const data = await callFunction("create-connect-account-link", { pageId: page.id }, session);
+      window.location.href = data.url;
+    } catch (err) {
+      alert(err.message || "Something went wrong.");
+    }
+  });
+
+  document.getElementById("upgrade-website").addEventListener("click", () => subscribe("website"));
+  document.getElementById("upgrade-booking").addEventListener("click", () => subscribe("website_booking"));
+
+  async function subscribe(tier) {
+    try {
+      const data = await callFunction("create-subscription-checkout", { tier }, session);
+      window.location.href = data.url;
+    } catch (err) {
+      alert(err.message || "Something went wrong.");
+    }
+  }
+
+  async function loadLeads() {
+    const { data: leads } = await sb
+      .from("quote_requests")
+      .select("id, name, contact_info, message, submitted_at")
+      .eq("page_id", page.id)
+      .order("submitted_at", { ascending: false });
+    const container = document.getElementById("leads");
+    if (!leads || !leads.length) return;
+    container.innerHTML = leads.map((l) => `
+      <div class="lead">
+        <div class="name">${l.name}</div>
+        <div class="meta">${l.contact_info} · ${new Date(l.submitted_at).toLocaleDateString()}</div>
+        ${l.message ? `<div>${l.message}</div>` : ""}
+      </div>
+    `).join("");
+  }
+
+  (async () => {
+    session = await requireSession();
+    if (!session) return;
+
+    const { data: pageData } = await sb
+      .from("pages")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+
+    if (!pageData) {
+      window.location.href = "/app/onboarding.html";
+      return;
+    }
+    page = pageData;
+
+    document.getElementById("page-url").href = `https://bizinbio.net/${page.slug}/`;
+    document.getElementById("page-url").textContent = `bizinbio.net/${page.slug}/`;
+    document.getElementById("status-badge").textContent = page.published ? "Live" : "Not published";
+
+    document.getElementById("business_name").value = page.business_name || "";
+    document.getElementById("service_area").value = page.service_area || "";
+
+    if (page.stripe_connect_onboarding_complete) {
+      document.getElementById("connect-status").textContent = "Connected — deposits are enabled.";
+    }
+
+    const { data: elements } = await sb.from("elements").select("*").eq("page_id", page.id);
+    (elements || []).forEach((el) => { elementsByType[el.type] = el; });
+
+    if (elementsByType.contact) document.getElementById("phone").value = elementsByType.contact.content.phone || "";
+    if (elementsByType.about) document.getElementById("bio").value = elementsByType.about.content.bio || "";
+
+    await loadLeads();
+  })();
+</script>
+</body>
+</html>

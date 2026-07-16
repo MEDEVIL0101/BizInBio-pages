@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Set up your page — BizInBio</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background: #FAFAFA; color: #1C1C1E; }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 32px 20px 60px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.sub { color: #6B6B6B; margin: 0 0 24px; }
+  .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 16px; }
+  .card h2 { font-size: 15px; margin: 0 0 12px; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.04em; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pick { padding: 16px 10px; border-radius: 12px; border: 2px solid #EEE; background: #fff; font-weight: 600; font-size: 14px; text-align: center; }
+  .pick.selected { border-color: #1C1C1E; background: #1C1C1E; color: #fff; }
+  input, textarea { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #DDD; font-size: 16px; margin-bottom: 10px; }
+  .theme-row { display: flex; gap: 10px; }
+  .theme-swatch { flex: 1; padding: 14px; border-radius: 10px; border: 2px solid #EEE; text-align: center; font-weight: 600; text-transform: capitalize; }
+  .theme-swatch.selected { border-color: #1C1C1E; }
+  input[type="file"] { border: none; padding: 0; }
+  .thumbs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .thumbs img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; }
+  button#publish { width: 100%; padding: 16px; border-radius: 12px; border: none; background: #1C1C1E; color: #fff; font-weight: 700; font-size: 16px; }
+  button#publish:disabled { opacity: 0.5; }
+  .msg { text-align: center; color: #6B6B6B; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Let's build your page</h1>
+  <p class="sub">A couple of quick steps — you'll be live in a few minutes.</p>
+
+  <div class="card">
+    <h2>1. What kind of business?</h2>
+    <div class="grid" id="category-grid"></div>
+  </div>
+
+  <div class="card">
+    <h2>2. The basics</h2>
+    <input id="business_name" placeholder="Business name" required />
+    <input id="phone" placeholder="Phone number" required />
+    <input id="service_area" placeholder="Service area (e.g. Hamilton & surrounding)" />
+  </div>
+
+  <div class="card">
+    <h2>3. A few photos</h2>
+    <input type="file" id="photos" accept="image/*" capture="environment" multiple />
+    <div class="thumbs" id="thumbs"></div>
+  </div>
+
+  <div class="card">
+    <h2>4. Pick a look</h2>
+    <div class="theme-row" id="theme-row"></div>
+  </div>
+
+  <button id="publish" disabled>Publish my page</button>
+  <p class="msg" id="msg"></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="app.js"></script>
+<script>
+  let session, selectedCategory = null, selectedTheme = "default";
+  let uploadedPhotoUrls = [];
+
+  const categoryGrid = document.getElementById("category-grid");
+  const themeRow = document.getElementById("theme-row");
+  const publishBtn = document.getElementById("publish");
+  const msg = document.getElementById("msg");
+
+  CATEGORIES.forEach((cat) => {
+    const btn = document.createElement("button");
+    btn.className = "pick";
+    btn.textContent = cat.label;
+    btn.type = "button";
+    btn.addEventListener("click", () => {
+      selectedCategory = cat;
+      [...categoryGrid.children].forEach((c) => c.classList.remove("selected"));
+      btn.classList.add("selected");
+      checkReady();
+    });
+    categoryGrid.appendChild(btn);
+  });
+
+  THEMES.forEach((theme, i) => {
+    const btn = document.createElement("button");
+    btn.className = "theme-swatch" + (i === 0 ? " selected" : "");
+    btn.textContent = theme;
+    btn.type = "button";
+    btn.addEventListener("click", () => {
+      selectedTheme = theme;
+      [...themeRow.children].forEach((c) => c.classList.remove("selected"));
+      btn.classList.add("selected");
+    });
+    themeRow.appendChild(btn);
+  });
+
+  document.getElementById("photos").addEventListener("change", async (e) => {
+    const files = [...e.target.files];
+    msg.textContent = "Uploading photos...";
+    const thumbs = document.getElementById("thumbs");
+    for (const file of files) {
+      const path = `${session.user.id}/${Date.now()}-${file.name}`;
+      const { error } = await sb.storage.from("page-photos").upload(path, file);
+      if (error) { msg.textContent = "Photo upload failed: " + error.message; continue; }
+      const { data } = sb.storage.from("page-photos").getPublicUrl(path);
+      uploadedPhotoUrls.push(data.publicUrl);
+      const img = document.createElement("img");
+      img.src = data.publicUrl;
+      thumbs.appendChild(img);
+    }
+    msg.textContent = "";
+    checkReady();
+  });
+
+  ["business_name", "phone"].forEach((id) => {
+    document.getElementById(id).addEventListener("input", checkReady);
+  });
+
+  function checkReady() {
+    const ready = selectedCategory
+      && document.getElementById("business_name").value.trim()
+      && document.getElementById("phone").value.trim();
+    publishBtn.disabled = !ready;
+  }
+
+  publishBtn.addEventListener("click", async () => {
+    publishBtn.disabled = true;
+    msg.textContent = "Publishing your page...";
+    try {
+      const businessName = document.getElementById("business_name").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const serviceArea = document.getElementById("service_area").value.trim();
+      const slug = slugify(businessName);
+
+      const { data: page, error: pageErr } = await sb
+        .from("pages")
+        .insert({
+          user_id: session.user.id,
+          slug,
+          theme: selectedTheme,
+          business_category: selectedCategory.id,
+          business_name: businessName,
+          service_area: serviceArea,
+          og_title: businessName,
+        })
+        .select()
+        .single();
+      if (pageErr) throw pageErr;
+
+      const order = TEMPLATE_ORDER[selectedCategory.template];
+      const contentFor = (type) => {
+        switch (type) {
+          case "header": return { business_name: businessName, tagline: "" };
+          case "about": return { bio: "" };
+          case "contact": return { phone, email: session.user.email };
+          case "portfolio_gallery": return { photos: uploadedPhotoUrls };
+          case "services_list": return { services: [] };
+          case "service_area": return { area: serviceArea };
+          case "social_link": return { links: [] };
+          case "quote_request_form": return {};
+          default: return {};
+        }
+      };
+
+      const elements = order.map((type, i) => ({
+        page_id: page.id,
+        type,
+        position: i,
+        content: contentFor(type),
+      }));
+      const { error: elErr } = await sb.from("elements").insert(elements);
+      if (elErr) throw elErr;
+
+      await callFunction("render-page", { page_id: page.id }, session);
+
+      window.location.href = "/app/dashboard.html";
+    } catch (err) {
+      msg.textContent = err.message || "Something went wrong.";
+      publishBtn.disabled = false;
+    }
+  });
+
+  (async () => {
+    session = await requireSession();
+    if (!session) return;
+    const { data: existing } = await sb
+      .from("pages")
+      .select("id")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+    if (existing) window.location.href = "/app/dashboard.html";
+  })();
+</script>
+</body>
+</html>
