@@ -44,6 +44,12 @@ button{font-family:inherit}
 .blueprint>.corner.bl{bottom:-6px;left:-6px}
 .blueprint>.corner.br{bottom:-6px;right:-6px}
 
+/* A framed blueprint reads as a real card by default (solid fill + soft
+   shadow) — photo frames (paired with .duotone) override back to flat/
+   transparent below, since a photo shouldn't get card elevation. */
+.blueprint{background:var(--color-bg);box-shadow:var(--shadow-sm)}
+.blueprint.duotone{background:transparent;box-shadow:none}
+
 /* Duotone photo tint — real photos get a subtle accent-red color-blend overlay */
 .duotone{position:relative;overflow:hidden}
 .duotone::after{content:"";position:absolute;inset:0;pointer-events:none;background:var(--color-accent);mix-blend-mode:color}
@@ -59,8 +65,9 @@ button{font-family:inherit}
 .btn-secondary{border-color:var(--color-divider)}
 .btn-block{width:100%}
 
-/* Cards (landing feature/pricing cards) */
-.card{display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-3);background:transparent;border:1px solid var(--color-divider)}
+/* Cards (landing feature/pricing cards) — solid fill + real elevation so
+   these read as actual cards, not wireframe outlines */
+.card{display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-4);background:var(--color-bg);border:1px solid var(--color-divider);box-shadow:var(--shadow-sm)}
 .card-kicker{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent)}
 .card-title{font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:17px}
 .card-body{margin:0;font-size:13px;opacity:.8;flex:1}
@@ -68,7 +75,7 @@ button{font-family:inherit}
 .elev-md{box-shadow:var(--shadow-md)}
 
 /* Priced package card (Professional Services layout) */
-.pkg-card{border:1px solid var(--color-divider);padding:var(--space-4);display:flex;flex-direction:column;gap:4px}
+.pkg-card{border:1px solid var(--color-divider);background:var(--color-bg);box-shadow:var(--shadow-sm);padding:var(--space-4);display:flex;flex-direction:column;gap:4px}
 .pkg-card .pkg-title{font-family:var(--font-heading);font-weight:600;font-size:16px}
 .pkg-card .pkg-price{color:var(--color-accent-700);font-family:var(--font-heading);font-weight:600;font-size:15px}
 
