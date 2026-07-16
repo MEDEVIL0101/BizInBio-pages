@@ -6,23 +6,31 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Broad, general business categories (not trades-only) — each maps to a
-// template ordering of default elements at onboarding.
+// Broad, general business categories (not trades-only) — each has its own
+// visual template and default element set (2026-07-16 redesign), not just a
+// shared grouping with reordered sections. See design_handoff_bizinbio_redesign
+// for the source mockups driving this per-category composition.
 const CATEGORIES = [
-  { id: "restaurant", label: "Restaurant / Food", template: "storefront" },
-  { id: "retail", label: "Retail", template: "storefront" },
-  { id: "salon_beauty", label: "Salon & Beauty", template: "service" },
-  { id: "professional_services", label: "Professional Services", template: "service" },
-  { id: "fitness_wellness", label: "Fitness & Wellness", template: "service" },
-  { id: "contractor_trades", label: "Contractor / Trades", template: "trade" },
-  { id: "creative_events", label: "Creative / Events", template: "service" },
-  { id: "other", label: "Other", template: "service" },
+  { id: "restaurant", label: "Restaurant / Food", blurb: "Menus, hours, gallery" },
+  { id: "retail", label: "Retail", blurb: "Products, gallery" },
+  { id: "salon_beauty", label: "Salon & Beauty", blurb: "Services, booking" },
+  { id: "professional_services", label: "Professional Services", blurb: "Bio, quote form" },
+  { id: "fitness_wellness", label: "Fitness & Wellness", blurb: "Classes, booking" },
+  { id: "contractor_trades", label: "Contractor / Trades", blurb: "Service area, quotes" },
+  { id: "creative_events", label: "Creative / Events", blurb: "Portfolio, packages" },
+  { id: "other", label: "Other", blurb: "General layout" },
 ];
 
-const TEMPLATE_ORDER = {
-  trade: ["header", "portfolio_gallery", "services_list", "service_area", "contact", "quote_request_form"],
-  storefront: ["header", "about", "portfolio_gallery", "services_list", "contact", "social_link"],
-  service: ["header", "about", "services_list", "portfolio_gallery", "contact", "quote_request_form"],
+// Default element set per category, matching each one's mockup composition.
+const CATEGORY_ELEMENTS = {
+  restaurant: ["header", "contact", "about", "services_list", "portfolio_gallery", "social_link"],
+  retail: ["header", "about", "portfolio_gallery", "services_list", "contact", "social_link"],
+  salon_beauty: ["portfolio_gallery", "header", "about", "services_list", "contact", "social_link"],
+  professional_services: ["header", "about", "contact", "services_list", "quote_request_form"],
+  fitness_wellness: ["portfolio_gallery", "header", "about", "services_list", "contact", "social_link"],
+  contractor_trades: ["header", "portfolio_gallery", "services_list", "service_area", "contact", "quote_request_form"],
+  creative_events: ["header", "about", "portfolio_gallery", "services_list", "contact", "social_link"],
+  other: ["header", "about", "portfolio_gallery", "services_list", "contact", "social_link"],
 };
 
 const THEMES = ["default", "warm", "cool", "bold"];
