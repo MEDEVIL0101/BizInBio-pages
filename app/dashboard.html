@@ -4,75 +4,56 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Dashboard — BizInBio</title>
-<style>
-  * { box-sizing: border-box; }
-  body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background: #FAFAFA; color: #1C1C1E; }
-  .wrap { max-width: 480px; margin: 0 auto; padding: 32px 20px 60px; }
-  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-  h1 { font-size: 20px; margin: 0; }
-  button.link { background: none; border: none; color: #6B6B6B; font-size: 14px; }
-  .card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 16px; }
-  .card h2 { font-size: 15px; margin: 0 0 12px; color: #6B6B6B; text-transform: uppercase; letter-spacing: 0.04em; }
-  a.page-url { display: block; word-break: break-all; color: #1C1C1E; font-weight: 600; margin-bottom: 8px; }
-  .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
-  .badge.live { background: #DFF5E4; color: #1E7B3C; }
-  input, textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #DDD; font-size: 15px; margin-bottom: 10px; }
-  button.primary { width: 100%; padding: 14px; border-radius: 10px; border: none; background: #1C1C1E; color: #fff; font-weight: 600; font-size: 15px; }
-  button.secondary { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #1C1C1E; background: #fff; color: #1C1C1E; font-weight: 600; font-size: 15px; margin-top: 8px; }
-  .lead { padding: 12px 0; border-bottom: 1px solid #EEE; }
-  .lead:last-child { border-bottom: none; }
-  .lead .name { font-weight: 600; }
-  .lead .meta { color: #6B6B6B; font-size: 13px; }
-  .msg { text-align: center; color: #6B6B6B; margin-top: 10px; min-height: 18px; }
-  .empty { color: #999; font-size: 14px; }
-</style>
+<link rel="stylesheet" href="../assets/site.css" />
 </head>
 <body>
-<div class="wrap">
-  <div class="top">
-    <h1>Your page</h1>
-    <button class="link" id="logout">Log out</button>
-  </div>
+<div style="max-width:460px;margin:0 auto">
 
-  <div class="card">
-    <h2>Status</h2>
-    <a class="page-url" id="page-url" href="#" target="_blank"></a>
-    <span class="badge live" id="status-badge"></span>
-  </div>
+<nav style="display:flex;align-items:center;padding:var(--space-4);border-bottom:1px solid var(--color-divider)">
+  <h4 style="margin-right:auto">Your page</h4>
+  <a href="#" id="logout" style="font-size:13px">Log out</a>
+</nav>
 
-  <div class="card">
-    <h2>Plan</h2>
-    <p id="plan-label" style="font-weight: 600; margin: 0 0 4px;">Free</p>
-    <p id="plan-desc" class="empty">Link-in-bio only — social links, contact, and about.</p>
-  </div>
+<div style="padding:var(--space-6) var(--space-4);display:flex;flex-direction:column;gap:calc(var(--space-8)*1.2)">
 
-  <div class="card">
-    <h2>Edit details</h2>
-    <input id="business_name" placeholder="Business name" />
-    <input id="phone" placeholder="Phone number" />
-    <input id="service_area" placeholder="Service area" />
-    <textarea id="bio" placeholder="About / bio" rows="3"></textarea>
-    <button class="primary" id="save">Save & republish</button>
-    <p class="msg" id="save-msg"></p>
-  </div>
+  <section class="blueprint" style="position:relative;padding:var(--space-4)"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <h6>Status</h6>
+    <a id="page-url" href="#" target="_blank" style="display:block;margin-top:var(--space-2);font-size:14px;word-break:break-all"></a>
+    <span class="tag live" id="status-badge" style="margin-top:var(--space-3)"></span>
+  </section>
 
-  <div class="card">
-    <h2>Booking deposits (Tier 2)</h2>
-    <p id="connect-status" class="empty">Not connected yet.</p>
-    <button class="secondary" id="connect-stripe">Connect Stripe to accept deposits</button>
-  </div>
+  <section class="blueprint" style="position:relative;padding:var(--space-4)"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <h6>Plan</h6>
+    <p id="plan-label" style="font-family:var(--font-heading);font-weight:600;font-size:17px;margin-top:var(--space-2)">Free</p>
+    <p id="plan-desc" class="text-muted" style="font-size:13px;margin-top:4px">Link-in-bio only — social links, contact, and about.</p>
+    <button id="upgrade-website" class="btn btn-primary btn-block" style="margin-top:var(--space-4)">Upgrade to Website — $9.99/mo</button>
+    <button id="upgrade-booking" class="btn btn-secondary btn-block" style="margin-top:var(--space-2)">Upgrade to Website + Booking — $19.99/mo</button>
+  </section>
 
-  <div class="card">
-    <h2>Upgrade</h2>
-    <p class="empty">Website unlocks services, photo gallery, service area, and quote requests. Website + Booking adds deposit collection on top.</p>
-    <button class="secondary" id="upgrade-website">Subscribe — Website ($9.99/mo)</button>
-    <button class="secondary" id="upgrade-booking">Subscribe — Website + Booking ($19.99/mo)</button>
-  </div>
+  <section class="blueprint" id="booking-section" style="position:relative;padding:var(--space-4);display:none"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <h6>Booking deposits</h6>
+    <p id="connect-status" class="text-muted" style="font-size:13px;margin-top:var(--space-2)">Not connected yet.</p>
+    <button id="connect-stripe" class="btn btn-secondary btn-block" style="margin-top:var(--space-3)">Connect Stripe to accept deposits</button>
+  </section>
 
-  <div class="card">
-    <h2>Quote requests</h2>
-    <div id="leads"><p class="empty">No quote requests yet.</p></div>
-  </div>
+  <section class="blueprint" style="position:relative;padding:var(--space-4)"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <h6 style="margin-bottom:var(--space-3)">Edit details</h6>
+    <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+      <div class="field"><label>Business name</label><input class="input" id="business_name" /></div>
+      <div class="field"><label>Phone</label><input class="input" id="phone" /></div>
+      <div class="field"><label>Service area</label><input class="input" id="service_area" /></div>
+      <div class="field"><label>About / bio</label><textarea class="input" id="bio" placeholder="About / bio"></textarea></div>
+    </div>
+    <button id="save" class="btn btn-primary btn-block" style="margin-top:var(--space-4)">Save &amp; republish</button>
+    <p id="save-msg" class="text-muted" style="text-align:center;font-size:13px;margin-top:var(--space-2);min-height:18px"></p>
+  </section>
+
+  <section class="blueprint" style="position:relative;padding:var(--space-4)"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <h6>Quote requests</h6>
+    <div id="leads" style="margin-top:var(--space-2)"><p class="text-muted" style="font-size:13px">No requests yet — they'll show up here once your page is live and someone reaches out.</p></div>
+  </section>
+
+</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -80,7 +61,8 @@
 <script>
   let session, page, elementsByType = {};
 
-  document.getElementById("logout").addEventListener("click", async () => {
+  document.getElementById("logout").addEventListener("click", async (e) => {
+    e.preventDefault();
     await sb.auth.signOut();
     window.location.href = "/app/index.html";
   });
@@ -106,7 +88,7 @@
         }).eq("id", elementsByType.header.id);
       }
       if (elementsByType.about) {
-        await sb.from("elements").update({ content: { bio } }).eq("id", elementsByType.about.id);
+        await sb.from("elements").update({ content: { ...elementsByType.about.content, bio } }).eq("id", elementsByType.about.id);
       }
       if (elementsByType.contact) {
         await sb.from("elements").update({
@@ -145,23 +127,6 @@
     }
   }
 
-  async function loadLeads() {
-    const { data: leads } = await sb
-      .from("quote_requests")
-      .select("id, name, contact_info, message, submitted_at")
-      .eq("page_id", page.id)
-      .order("submitted_at", { ascending: false });
-    const container = document.getElementById("leads");
-    if (!leads || !leads.length) return;
-    container.innerHTML = leads.map((l) => `
-      <div class="lead">
-        <div class="name">${l.name}</div>
-        <div class="meta">${l.contact_info} · ${new Date(l.submitted_at).toLocaleDateString()}</div>
-        ${l.message ? `<div>${l.message}</div>` : ""}
-      </div>
-    `).join("");
-  }
-
   const PLAN_LABELS = {
     free: ["Free", "Link-in-bio only — social links, contact, and about."],
     website: ["Website", "Services, gallery, service area, and quote requests are unlocked."],
@@ -183,6 +148,26 @@
       document.getElementById("upgrade-website").style.display = "none";
       document.getElementById("upgrade-booking").style.display = "none";
     }
+    if (tier === "website" || tier === "website_booking") {
+      document.getElementById("booking-section").style.display = "block";
+    }
+  }
+
+  async function loadLeads() {
+    const { data: leads } = await sb
+      .from("quote_requests")
+      .select("id, name, contact_info, message, submitted_at")
+      .eq("page_id", page.id)
+      .order("submitted_at", { ascending: false });
+    if (!leads || !leads.length) return;
+    const container = document.getElementById("leads");
+    container.innerHTML = leads.map((l) => `
+      <div style="padding:var(--space-3) 0;border-bottom:1px solid var(--color-divider)">
+        <div style="font-family:var(--font-heading);font-weight:600">${l.name}</div>
+        <div class="text-muted" style="font-size:13px">${l.contact_info} · ${new Date(l.submitted_at).toLocaleDateString()}</div>
+        ${l.message ? `<div style="margin-top:4px">${l.message}</div>` : ""}
+      </div>
+    `).join("");
   }
 
   (async () => {
@@ -201,14 +186,6 @@
     }
     page = pageData;
 
-    await loadPlan();
-
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("subscribe") === "success") {
-      await callFunction("render-page", { page_id: pageData.id }, session);
-      window.history.replaceState({}, "", "/app/dashboard.html");
-    }
-
     document.getElementById("page-url").href = `https://bizinbio.net/${page.slug}/`;
     document.getElementById("page-url").textContent = `bizinbio.net/${page.slug}/`;
     document.getElementById("status-badge").textContent = page.published ? "Live" : "Not published";
@@ -218,6 +195,15 @@
 
     if (page.stripe_connect_onboarding_complete) {
       document.getElementById("connect-status").textContent = "Connected — deposits are enabled.";
+    }
+
+    await loadPlan();
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("subscribe") === "success") {
+      await callFunction("render-page", { page_id: page.id }, session);
+      window.history.replaceState({}, "", "/app/dashboard.html");
+      await loadPlan();
     }
 
     const { data: elements } = await sb.from("elements").select("*").eq("page_id", page.id);
