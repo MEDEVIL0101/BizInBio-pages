@@ -56,11 +56,20 @@
 
   <section class="blueprint" style="position:relative;padding:var(--space-4)">
     <h6 style="margin-bottom:var(--space-3)">Edit details</h6>
+    <div style="display:flex;justify-content:center;margin-bottom:var(--space-3)">
+      <label class="upload" for="profile_photo" style="width:88px;height:88px;border-radius:50%;padding:0;overflow:hidden">
+        <div id="profile-photo-preview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
+          <div class="upload-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></div>
+        </div>
+        <input type="file" id="profile_photo" accept="image/*" capture="environment" />
+      </label>
+    </div>
+    <p class="text-muted" style="text-align:center;font-size:11px;margin-bottom:var(--space-3)">Profile photo or logo</p>
     <div style="display:flex;flex-direction:column;gap:var(--space-3)">
       <div class="field"><label>Business name</label><input class="input" id="business_name" /></div>
       <div class="field"><label>Phone</label><input class="input" id="phone" /></div>
       <div class="field"><label>Service area</label><input class="input" id="service_area" /></div>
-      <div class="field"><label>About / bio</label><textarea class="input" id="bio" placeholder="About / bio"></textarea></div>
+      <div class="field"><label>Tagline / about</label><textarea class="input" id="bio" placeholder="A short line about your business"></textarea></div>
     </div>
     <button id="save" class="btn btn-primary btn-block" style="margin-top:var(--space-4)">Save &amp; republish</button>
     <p id="save-msg" class="text-muted" style="text-align:center;font-size:13px;margin-top:var(--space-2);min-height:18px"></p>
@@ -88,6 +97,7 @@
 <script src="app.js?v=3"></script>
 <script>
   let session, page, elementsByType = {};
+  let uploadedProfilePhotoUrl = "";
 
   document.getElementById("logout").addEventListener("click", async (e) => {
     e.preventDefault();
@@ -112,11 +122,19 @@
 
       if (elementsByType.header) {
         await sb.from("elements").update({
-          content: { ...elementsByType.header.content, business_name: businessName },
+          content: {
+            ...elementsByType.header.content,
+            business_name: businessName,
+            logo_url: uploadedProfilePhotoUrl || elementsByType.header.content.logo_url || "",
+          },
         }).eq("id", elementsByType.header.id);
       }
       if (elementsByType.about) {
         await sb.from("elements").update({ content: { ...elementsByType.about.content, bio } }).eq("id", elementsByType.about.id);
+      } else if (bio) {
+        // Some category templates (e.g. Contractor) don't create an "about"
+        // element by default — add one now so the tagline has somewhere to go.
+        await sb.from("elements").insert({ page_id: page.id, type: "about", position: 99, content: { bio } });
       }
       if (elementsByType.contact) {
         await sb.from("elements").update({
@@ -171,6 +189,21 @@
     } catch (err) {
       themeMsg.textContent = err.message || "Something went wrong.";
     }
+  });
+
+  document.getElementById("profile_photo").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const saveMsg = document.getElementById("save-msg");
+    saveMsg.textContent = "Uploading photo...";
+    const path = `${session.user.id}/${Date.now()}-${file.name}`;
+    const { error } = await sb.storage.from("page-photos").upload(path, file);
+    if (error) { saveMsg.textContent = "Photo upload failed: " + error.message; return; }
+    const { data } = sb.storage.from("page-photos").getPublicUrl(path);
+    uploadedProfilePhotoUrl = data.publicUrl;
+    document.getElementById("profile-photo-preview").innerHTML =
+      `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover" />`;
+    saveMsg.textContent = "Photo uploaded — click Save & republish to apply.";
   });
 
   document.getElementById("connect-stripe").addEventListener("click", async () => {
@@ -366,6 +399,10 @@
 
     if (elementsByType.contact) document.getElementById("phone").value = elementsByType.contact.content.phone || "";
     if (elementsByType.about) document.getElementById("bio").value = elementsByType.about.content.bio || "";
+    if (elementsByType.header && elementsByType.header.content.logo_url) {
+      document.getElementById("profile-photo-preview").innerHTML =
+        `<img src="${elementsByType.header.content.logo_url}" style="width:100%;height:100%;object-fit:cover" />`;
+    }
 
     await loadLeads();
   })();
