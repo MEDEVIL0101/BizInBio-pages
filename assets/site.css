@@ -1,7 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@400;600&family=Inter:wght@400;500;600&family=Fraunces:wght@500;600&family=Oswald:wght@500;600&family=Bebas+Neue&family=Manrope:wght@600;700&display=swap');
 
 :root{
   --color-bg:#ffffff;
+  --body-bg:var(--color-bg);
   --color-card-bg:var(--color-bg);
   --color-surface:#f2f2f2;
   --color-text:#0f0f0f;
@@ -19,17 +20,22 @@
   --font-heading:"Barlow Condensed",system-ui,sans-serif;
   --font-heading-weight:600;
   --font-body:"Barlow",system-ui,sans-serif;
+  --heading-transform:none;
+  --heading-letter-spacing:-.015em;
   --space-1:3.4px; --space-2:6.8px; --space-3:10.2px; --space-4:13.6px; --space-6:20.4px; --space-8:27.2px;
   --radius-md:4px;
+  --card-blur:0px;
+  --card-border-width:1px;
+  --avatar-radius:50%;
   --shadow-sm:0 1px 3px color-mix(in srgb,#2b2b2d 10%,transparent), 0 3px 8px color-mix(in srgb,#2b2b2d 10%,transparent);
   --shadow-md:0 2px 4px color-mix(in srgb,#2b2b2d 10%,transparent), 0 8px 20px color-mix(in srgb,#2b2b2d 16%,transparent);
 }
 
 *,*::before,*::after{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-size:15px;line-height:1.55}
-h1,h2,h3,h4,h6{font-family:var(--font-heading);font-weight:var(--font-heading-weight);line-height:1.12;letter-spacing:-.015em;margin:0}
-h1{font-size:42px} h2{font-size:32px} h3{font-size:25px} h4{font-size:20px}
+body{margin:0;background:var(--body-bg);color:var(--color-text);font-family:var(--font-body);font-size:15px;line-height:1.55}
+h1,h2,h3,h4,h6{font-family:var(--font-heading);font-weight:var(--font-heading-weight);line-height:1.12;letter-spacing:var(--heading-letter-spacing);margin:0}
+h1{font-size:42px;text-transform:var(--heading-transform)} h2{font-size:32px} h3{font-size:25px} h4{font-size:20px}
 h6{font-size:13px;letter-spacing:.08em;text-transform:uppercase}
 p{margin:0}
 a{color:var(--color-accent);text-decoration:none;text-underline-offset:3px}
@@ -37,20 +43,26 @@ button{font-family:inherit}
 
 .text-muted{color:color-mix(in srgb,var(--color-text) 55%,transparent)}
 
-/* Blueprint framed component: square corners, hairline border */
-.blueprint{position:relative;border:1px solid var(--color-divider);border-radius:0}
+/* Blueprint framed component: theme-controlled corner radius + border weight */
+.blueprint{position:relative;border-style:solid;border-width:var(--card-border-width);border-color:var(--color-divider);border-radius:var(--radius-md)}
 
-/* A framed blueprint reads as a real card by default (solid fill + soft
-   shadow) — photo frames (paired with .duotone) override back to flat/
+/* A framed blueprint reads as a real card by default (solid or glass fill +
+   soft shadow) — photo frames (paired with .duotone) override back to flat/
    transparent below, since a photo shouldn't get card elevation. */
-.blueprint{background:var(--color-card-bg);box-shadow:var(--shadow-sm)}
-.blueprint.duotone{background:transparent;box-shadow:none}
+.blueprint{background:var(--color-card-bg);box-shadow:var(--shadow-sm);backdrop-filter:blur(var(--card-blur));-webkit-backdrop-filter:blur(var(--card-blur))}
+.blueprint.duotone{background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
 
 /* Duotone photo tint — real photos get a subtle accent-red color-blend overlay */
 .duotone{position:relative;overflow:hidden}
 .duotone::after{content:"";position:absolute;inset:0;pointer-events:none;background:var(--color-accent);mix-blend-mode:color}
 .duotone img{width:100%;height:100%;object-fit:cover;display:block}
 .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font:11px/1.3 ui-monospace,Menlo,monospace;background:repeating-linear-gradient(45deg,var(--color-neutral-200) 0 8px,var(--color-neutral-300) 8px 16px);color:var(--color-neutral-700)}
+
+/* Cover/banner photo — full-bleed, no card treatment (not a duotone photo:
+   this represents the business's own imagery, left untinted like the
+   profile avatar) */
+.cover-photo{width:100%;aspect-ratio:21/9;overflow:hidden;display:block}
+.cover-photo img{width:100%;height:100%;object-fit:cover;display:block}
 
 /* Buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;text-decoration:none;font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:14px;color:var(--color-text);background:transparent;border:1px solid var(--color-divider);padding:11px 16px;border-radius:var(--radius-md)}
@@ -63,7 +75,7 @@ button{font-family:inherit}
 
 /* Cards (landing feature/pricing cards) — solid fill + real elevation so
    these read as actual cards, not wireframe outlines */
-.card{display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-4);background:var(--color-card-bg);border:1px solid var(--color-divider);box-shadow:var(--shadow-sm)}
+.card{display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-4);background:var(--color-card-bg);border-style:solid;border-width:var(--card-border-width);border-color:var(--color-divider);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);backdrop-filter:blur(var(--card-blur));-webkit-backdrop-filter:blur(var(--card-blur))}
 .card-kicker{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent)}
 .card-title{font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:17px}
 .card-body{margin:0;font-size:13px;opacity:.8;flex:1}
@@ -71,7 +83,7 @@ button{font-family:inherit}
 .elev-md{box-shadow:var(--shadow-md)}
 
 /* Priced package card (Professional Services layout) */
-.pkg-card{border:1px solid var(--color-divider);background:var(--color-card-bg);box-shadow:var(--shadow-sm);padding:var(--space-4);display:flex;flex-direction:column;gap:4px}
+.pkg-card{border-style:solid;border-width:var(--card-border-width);border-color:var(--color-divider);border-radius:var(--radius-md);background:var(--color-card-bg);box-shadow:var(--shadow-sm);backdrop-filter:blur(var(--card-blur));-webkit-backdrop-filter:blur(var(--card-blur));padding:var(--space-4);display:flex;flex-direction:column;gap:4px}
 .pkg-card .pkg-title{font-family:var(--font-heading);font-weight:600;font-size:16px}
 .pkg-card .pkg-price{color:var(--color-accent-700);font-family:var(--font-heading);font-weight:600;font-size:15px}
 
@@ -108,21 +120,42 @@ button{font-family:inherit}
 textarea.input{min-height:70px;resize:vertical}
 
 /* Onboarding: category picker */
-.cat-btn{border:1px solid var(--color-divider);background:transparent;padding:var(--space-3);font:14px var(--font-body);color:var(--color-text);text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.cat-btn{border:1px solid var(--color-divider);border-radius:var(--radius-md);background:transparent;padding:var(--space-3);font:14px var(--font-body);color:var(--color-text);text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:2px}
 .cat-btn:focus-visible{outline:2px solid var(--color-accent)}
 .cat-btn.sel{border-color:var(--color-accent);background:var(--color-accent-100);color:var(--color-accent-800)}
+/* accent-100 is always a pale tint by construction (mixed toward white),
+   regardless of the live-applied theme's own light/dark mode — a subtitle
+   colored from --color-text (which flips light under dark themes) can go
+   invisible against it, so keep it in the same accent-derived family. */
+.cat-btn.sel .text-muted{color:color-mix(in srgb,var(--color-accent-800) 70%,transparent)}
 .cat-btn .name{font-family:var(--font-heading);font-weight:600;font-size:14.5px}
 
 /* Onboarding: photo upload dropzone */
-.upload{border:1px dashed var(--color-divider);padding:var(--space-6) var(--space-4);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--space-2);cursor:pointer}
+.upload{border:1px dashed var(--color-divider);border-radius:var(--radius-md);padding:var(--space-6) var(--space-4);text-align:center;display:flex;flex-direction:column;align-items:center;gap:var(--space-2);cursor:pointer}
 .upload:hover{border-color:var(--color-accent)}
 .upload-icon{width:34px;height:34px;border:1px solid var(--color-divider);display:flex;align-items:center;justify-content:center}
 .upload input[type="file"]{display:none}
 
-/* Onboarding: theme picker */
-.theme-swatch{border:1px solid var(--color-divider);padding:var(--space-2);display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--color-text);background:transparent}
-.theme-swatch:focus-visible{outline:2px solid var(--color-accent)}
-.theme-swatch.sel{border-color:var(--color-accent);color:var(--color-accent-700)}
-.swatch-dot{width:22px;height:22px;border:1px solid var(--color-divider)}
+/* Onboarding/dashboard: theme picker. Each swatch is a small, realistic
+   mockup of the actual page (avatar + name in the theme's own heading font
+   + a text line + a button), not an abstract color dot — so picking a
+   theme means seeing what you'll actually get. Selection reads via a
+   small checkmark badge, not a loud colored outline. */
+/* Deliberately fixed/neutral, not var(--color-*) — clicking a theme
+   re-skins the rest of the form live (see applyTheme() in app.js) as a
+   preview, but the picker's own cards must stay legible no matter which
+   theme is currently applied, so they can't inherit that live palette. */
+.theme-swatch{border:1px solid rgba(0,0,0,.12);border-radius:10px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:#1a1a1a;background:#ffffff}
+.theme-swatch:hover{border-color:rgba(0,0,0,.3)}
+.theme-swatch:focus-visible{outline:2px solid var(--color-accent);outline-offset:1px}
+.theme-swatch.sel{border-color:var(--color-accent)}
+.swatch-preview{width:100%;height:74px;position:relative;overflow:hidden;border:1px solid rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:8px}
+.swatch-preview .swatch-glass{position:absolute;inset:6px;backdrop-filter:blur(3px)}
+.swatch-mini-avatar{width:14px;height:14px;flex:none;position:relative;z-index:1}
+.swatch-mini-name{font-size:10px;line-height:1;position:relative;z-index:1;white-space:nowrap}
+.swatch-mini-line{width:58%;height:2px;border-radius:1px;position:relative;z-index:1}
+.swatch-mini-btn{width:68%;height:9px;margin-top:1px;position:relative;z-index:1}
+.swatch-check{position:absolute;top:6px;right:6px;width:16px;height:16px;border-radius:50%;background:var(--color-accent);display:none;align-items:center;justify-content:center;z-index:2}
+.theme-swatch.sel .swatch-check{display:flex}
 
 .step-num{width:22px;height:22px;border:1px solid var(--color-accent);color:var(--color-accent-700);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:600;font-size:12px;flex:none}

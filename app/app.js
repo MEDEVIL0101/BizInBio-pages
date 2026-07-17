@@ -33,19 +33,89 @@ const CATEGORY_ELEMENTS = {
   other: ["header", "about", "portfolio_gallery", "services_list", "contact", "social_link"],
 };
 
-// Theme presets — color palette applied to the same page structure (accent,
-// background, card fill, input surface, text). Derived shades (accent-700/
-// 800/100, dividers, button contrast) are computed automatically from these
-// via color-mix() in site.css, so Custom just needs one accent color.
+// Theme presets — each is a distinct persona (font pairing, corner shape,
+// solid-vs-glass surface, optional gradient background), mirrored field-for-
+// field from THEME_PRESETS in supabase/functions/render-page/index.ts. Keep
+// the two in sync when editing either — there's no shared build step
+// between the Deno edge function and this static JS file, so it's a manual
+// mirror. Full fidelity here (not just accent/bg) is what lets the
+// onboarding/dashboard forms re-skin live as an actual preview, not just a
+// small swatch — see applyTheme() below.
 const THEMES = [
-  { id: "classic", label: "Classic", bg: "#ffffff", accent: "#ff0000" },
-  { id: "midnight", label: "Midnight", bg: "#121212", accent: "#ffb020" },
-  { id: "sage", label: "Sage", bg: "#f6f5f0", accent: "#5c7a52" },
-  { id: "ocean", label: "Ocean", bg: "#f2f6f8", accent: "#2a6f8e" },
-  { id: "blush", label: "Blush", bg: "#fbf3f1", accent: "#c9576b" },
-  { id: "charcoal", label: "Charcoal", bg: "#f5f5f5", accent: "#3a3a3a" },
-  { id: "custom", label: "Custom", bg: "#ffffff", accent: "#ff0000" },
+  { id: "classic", label: "Classic", bg: "#ffffff", cardBg: "#ffffff", surface: "#f2f2f2", text: "#0f0f0f", accent: "#ff0000",
+    fontHeading: '"Barlow Condensed",system-ui,sans-serif', fontHeadingWeight: "600", fontBody: '"Barlow",system-ui,sans-serif',
+    radius: 4, cardBlur: 0, borderWidth: 1, avatarRadius: "50%", headingTransform: "none", headingLetterSpacing: "-.015em" },
+  { id: "editorial", label: "Editorial", bg: "#faf6f1", cardBg: "#ffffff", surface: "#f1ebe2", text: "#2a2420", accent: "#b8632f",
+    fontHeading: '"Fraunces","Georgia",serif', fontHeadingWeight: "600", fontBody: '"Inter",system-ui,sans-serif',
+    radius: 10, cardBlur: 0, borderWidth: 1, avatarRadius: "50%", headingTransform: "none", headingLetterSpacing: "-.01em" },
+  { id: "rugged", label: "Rugged", bg: "#1c1c1a", cardBg: "#262420", surface: "#302d27", text: "#f2ede4", accent: "#c85a2a", dark: true,
+    fontHeading: '"Oswald",system-ui,sans-serif', fontHeadingWeight: "600", fontBody: '"Barlow",system-ui,sans-serif',
+    radius: 0, cardBlur: 0, borderWidth: 2, avatarRadius: "8px", headingTransform: "uppercase", headingLetterSpacing: "0.01em" },
+  { id: "collegiate", label: "Collegiate", bg: "#f7f3ea", cardBg: "#ffffff", surface: "#efe8d8", text: "#1a2340", accent: "#a30f28",
+    fontHeading: '"Bebas Neue",system-ui,sans-serif', fontHeadingWeight: "400", fontBody: '"Barlow",system-ui,sans-serif',
+    radius: 16, cardBlur: 0, borderWidth: 1, avatarRadius: "50%", headingTransform: "uppercase", headingLetterSpacing: "0.02em" },
+  { id: "aurora", label: "Aurora", bg: "#f3e8e2", bodyBg: "linear-gradient(160deg,#f3e2da 0%,#ece0e6 100%)", cardBg: "rgba(255,255,255,0.55)", surface: "rgba(255,255,255,0.7)", text: "#33232a", accent: "#8a2f47",
+    fontHeading: '"Manrope",system-ui,sans-serif', fontHeadingWeight: "700", fontBody: '"Inter",system-ui,sans-serif',
+    radius: 18, cardBlur: 18, borderWidth: 1, avatarRadius: "50%", headingTransform: "none", headingLetterSpacing: "-.01em" },
+  { id: "midnight", label: "Midnight", bg: "#15130f", bodyBg: "linear-gradient(160deg,#17140f 0%,#0c0a08 100%)", cardBg: "rgba(255,255,255,0.06)", surface: "rgba(255,255,255,0.09)", text: "#f1ede4", accent: "#c9a227", dark: true,
+    fontHeading: '"Manrope",system-ui,sans-serif', fontHeadingWeight: "700", fontBody: '"Inter",system-ui,sans-serif',
+    radius: 16, cardBlur: 20, borderWidth: 1, avatarRadius: "50%", headingTransform: "none", headingLetterSpacing: "-.01em" },
+  { id: "sage", label: "Sage", bg: "#f6f5ef", cardBg: "#ffffff", surface: "#eeece0", text: "#232a1e", accent: "#5c7a52",
+    fontHeading: '"Fraunces","Georgia",serif', fontHeadingWeight: "500", fontBody: '"Barlow",system-ui,sans-serif',
+    radius: 10, cardBlur: 0, borderWidth: 1, avatarRadius: "50%", headingTransform: "none", headingLetterSpacing: "-.005em" },
+  { id: "custom", label: "Custom", bg: "#ffffff", cardBg: "#ffffff", surface: "#f2f2f2", text: "#0f0f0f", accent: "#ff0000",
+    fontHeading: '"Barlow Condensed",system-ui,sans-serif', fontHeadingWeight: "600", fontBody: '"Barlow",system-ui,sans-serif',
+    radius: 4, cardBlur: 0, borderWidth: 1, avatarRadius: "50%", headingTransform: "none", headingLetterSpacing: "-.015em" },
 ];
+
+// Applies a theme's full token set to the document root, so the
+// onboarding/dashboard form itself becomes a live preview of the chosen
+// look (not just a small static swatch) — same CSS vars themeStyleBlock()
+// injects for the actual published page in render-page/index.ts.
+function applyTheme(themeId, customAccentColor) {
+  const theme = THEMES.find((t) => t.id === themeId) || THEMES[0];
+  const accent = themeId === "custom" && customAccentColor ? customAccentColor : theme.accent;
+  const root = document.documentElement.style;
+  root.setProperty("--color-bg", theme.bg);
+  root.setProperty("--body-bg", theme.bodyBg || theme.bg);
+  root.setProperty("--color-card-bg", theme.cardBg);
+  root.setProperty("--color-surface", theme.surface);
+  root.setProperty("--color-text", theme.text);
+  root.setProperty("--color-accent", accent);
+  root.setProperty("--font-heading", theme.fontHeading);
+  root.setProperty("--font-heading-weight", theme.fontHeadingWeight);
+  root.setProperty("--font-body", theme.fontBody);
+  root.setProperty("--radius-md", theme.radius + "px");
+  root.setProperty("--card-blur", theme.cardBlur + "px");
+  root.setProperty("--card-border-width", theme.borderWidth + "px");
+  root.setProperty("--avatar-radius", theme.avatarRadius);
+  root.setProperty("--heading-transform", theme.headingTransform);
+  root.setProperty("--heading-letter-spacing", theme.headingLetterSpacing);
+}
+
+// Shared theme-swatch preview for the onboarding + dashboard theme pickers —
+// a small realistic mockup of the actual page (avatar, business name set in
+// the theme's own heading font, a body line, a button) rather than an
+// abstract color dot, so picking a theme shows what you'll actually get.
+function themeSwatchPreview(theme) {
+  const isDark = !!theme.dark;
+  const isGlass = theme.cardBlur > 0;
+  const nameColor = isDark ? "rgba(255,255,255,.92)" : "rgba(20,20,20,.85)";
+  const lineColor = isDark ? "rgba(255,255,255,.35)" : "rgba(20,20,20,.22)";
+  const glassBg = isDark ? "rgba(255,255,255,.08)" : "rgba(255,255,255,.5)";
+  const glassBorder = isDark ? "rgba(255,255,255,.16)" : "rgba(255,255,255,.7)";
+  const innerRadius = Math.max(theme.radius - 5, 3);
+  return `
+    <div class="swatch-preview" style="background:${theme.bodyBg || theme.bg};border-radius:${theme.radius}px">
+      ${theme.id === "custom" ? `<div style="position:absolute;inset:0;background:conic-gradient(from 0deg, red, orange, yellow, green, blue, violet, red);opacity:.5"></div>` : ""}
+      ${isGlass ? `<div class="swatch-glass" style="border-radius:${innerRadius}px;background:${glassBg};border:1px solid ${glassBorder}"></div>` : ""}
+      <div class="swatch-mini-avatar" style="border-radius:${theme.avatarRadius};background:${theme.accent}"></div>
+      <div class="swatch-mini-name" style="font-family:${theme.fontHeading};color:${nameColor}">Studio</div>
+      <div class="swatch-mini-line" style="background:${lineColor}"></div>
+      <div class="swatch-mini-btn" style="background:${theme.accent};border-radius:${Math.max(innerRadius - 2, 2)}px"></div>
+      <div class="swatch-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    </div>`;
+}
 
 async function requireSession() {
   const { data: { session } } = await sb.auth.getSession();

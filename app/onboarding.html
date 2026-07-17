@@ -6,7 +6,7 @@
 <title>Set up your page — BizInBio</title>
 <link rel="icon" href="../assets/favicon-32.png?v=1" />
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=1" />
-<link rel="stylesheet" href="../assets/site.css?v=5" />
+<link rel="stylesheet" href="../assets/site.css?v=9" />
 </head>
 <body>
 <div style="max-width:460px;margin:0 auto;padding:var(--space-6) var(--space-4) calc(var(--space-8)*2);display:flex;flex-direction:column;gap:calc(var(--space-8)*1.5)">
@@ -23,6 +23,15 @@
 
   <section>
     <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-4)"><span class="step-num">2</span><h6 style="margin:0">The basics</h6></div>
+    <label class="upload" for="cover_photo" style="margin-bottom:var(--space-3);aspect-ratio:21/9;padding:0;overflow:hidden;position:relative">
+      <div id="cover-photo-preview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+          <div class="upload-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></div>
+          <span class="text-muted" style="font-size:11px">Cover photo (optional)</span>
+        </div>
+      </div>
+      <input type="file" id="cover_photo" accept="image/*" capture="environment" />
+    </label>
     <div style="display:flex;justify-content:center;margin-bottom:var(--space-3)">
       <label class="upload" for="profile_photo" style="width:88px;height:88px;border-radius:50%;padding:0;overflow:hidden">
         <div id="profile-photo-preview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
@@ -53,7 +62,7 @@
 
   <section>
     <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-4)"><span class="step-num">4</span><h6 style="margin:0">Pick a look</h6></div>
-    <div id="theme-row" style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-2)"></div>
+    <div id="theme-row" style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-2)"></div>
     <div id="custom-color-row" style="display:none;margin-top:var(--space-3)">
       <div class="field"><label>Your accent color</label><input type="color" id="custom-color-input" value="#ff0000" style="width:100%;height:44px;padding:2px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-surface)" /></div>
     </div>
@@ -65,7 +74,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="app.js?v=3"></script>
+<script src="app.js?v=6"></script>
 <script>
   let session, selectedCategory = null, selectedTheme = "classic";
   let uploadedPhotoUrls = [];
@@ -95,18 +104,22 @@
     const btn = document.createElement("button");
     btn.className = "theme-swatch" + (i === 0 ? " sel" : "");
     btn.type = "button";
-    const dot = theme.id === "custom"
-      ? `<div class="swatch-dot" style="background:conic-gradient(from 0deg, red, orange, yellow, green, blue, violet, red)"></div>`
-      : `<div class="swatch-dot" style="background:${theme.bg};border-color:${theme.accent}"></div>`;
-    btn.innerHTML = `${dot}${theme.label}`;
+    btn.innerHTML = `${themeSwatchPreview(theme)}<span style="font-family:${theme.fontHeading}">${theme.label}</span>`;
     btn.addEventListener("click", () => {
       selectedTheme = theme.id;
       [...themeRow.children].forEach((c) => c.classList.remove("sel"));
       btn.classList.add("sel");
       customColorRow.style.display = theme.id === "custom" ? "block" : "none";
+      applyTheme(theme.id, customColorInput.value);
     });
     themeRow.appendChild(btn);
   });
+
+  customColorInput.addEventListener("input", () => {
+    if (selectedTheme === "custom") applyTheme("custom", customColorInput.value);
+  });
+
+  applyTheme(selectedTheme, customColorInput.value);
 
   document.getElementById("photos").addEventListener("change", async (e) => {
     const files = [...e.target.files];
@@ -126,6 +139,21 @@
     document.getElementById("upload-label").textContent = uploadedPhotoUrls.length + " photo(s) added";
     msg.textContent = "";
     checkReady();
+  });
+
+  let uploadedCoverPhotoUrl = "";
+  document.getElementById("cover_photo").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    msg.textContent = "Uploading cover photo...";
+    const path = `${session.user.id}/${Date.now()}-${file.name}`;
+    const { error } = await sb.storage.from("page-photos").upload(path, file);
+    if (error) { msg.textContent = "Photo upload failed: " + error.message; return; }
+    const { data } = sb.storage.from("page-photos").getPublicUrl(path);
+    uploadedCoverPhotoUrl = data.publicUrl;
+    document.getElementById("cover-photo-preview").innerHTML =
+      `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover" />`;
+    msg.textContent = "";
   });
 
   let uploadedProfilePhotoUrl = "";
@@ -191,7 +219,7 @@
 
       const contentFor = (type) => {
         switch (type) {
-          case "header": return { business_name: businessName, tagline: "", logo_url: uploadedProfilePhotoUrl };
+          case "header": return { business_name: businessName, tagline: "", logo_url: uploadedProfilePhotoUrl, cover_image_url: uploadedCoverPhotoUrl };
           case "about": return { bio: tagline };
           case "contact": return { phone, email: session.user.email };
           case "portfolio_gallery": return { photos: uploadedPhotoUrls };
