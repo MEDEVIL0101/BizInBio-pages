@@ -172,7 +172,7 @@
     }
   }
 
-  function renderDomainState() {
+  function renderDomainState(dcvMethod) {
     const noneView = document.getElementById("domain-none");
     const setView = document.getElementById("domain-set");
     if (!page.custom_domain) {
@@ -191,8 +191,12 @@
     } else {
       statusTag.textContent = "Pending";
       statusTag.className = "tag tag-outline";
-      document.getElementById("domain-instructions").textContent =
-        "Add a CNAME record at your domain's registrar pointing to cf.bizinbio.net, then check status. This can take a few minutes to a few hours.";
+      let text = "Add a CNAME record at your domain's registrar pointing to cf.bizinbio.net.";
+      if (dcvMethod && dcvMethod.type === "txt") {
+        text += ` Also add a TXT record — name: ${dcvMethod.name}, value: ${dcvMethod.value}.`;
+      }
+      text += " This can take a few minutes to a few hours, then check status.";
+      document.getElementById("domain-instructions").textContent = text;
     }
   }
 
@@ -205,7 +209,7 @@
       const data = await callFunction("register-custom-domain", { pageId: page.id, domain }, session);
       page.custom_domain = data.domain;
       page.custom_domain_status = data.status;
-      renderDomainState();
+      renderDomainState(data.dcvMethod);
       domainMsg.textContent = "";
     } catch (err) {
       domainMsg.textContent = err.message || "Something went wrong.";
@@ -218,7 +222,7 @@
     try {
       const data = await callFunction("register-custom-domain", { pageId: page.id }, session);
       page.custom_domain_status = data.status;
-      renderDomainState();
+      renderDomainState(data.dcvMethod);
       domainMsg.textContent = data.status === "active" ? "Domain is live!" : "Still pending — DNS may take a while to propagate.";
     } catch (err) {
       domainMsg.textContent = err.message || "Something went wrong.";
@@ -284,7 +288,17 @@
     }
 
     await loadPlan();
-    renderDomainState();
+    if (page.custom_domain && page.custom_domain_status === "pending") {
+      try {
+        const data = await callFunction("register-custom-domain", { pageId: page.id }, session);
+        page.custom_domain_status = data.status;
+        renderDomainState(data.dcvMethod);
+      } catch {
+        renderDomainState();
+      }
+    } else {
+      renderDomainState();
+    }
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("subscribe") === "success") {
