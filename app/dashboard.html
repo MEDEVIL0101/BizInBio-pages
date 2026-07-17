@@ -36,6 +36,22 @@
     <button id="connect-stripe" class="btn btn-secondary btn-block" style="margin-top:var(--space-3)">Connect Stripe to accept deposits</button>
   </section>
 
+  <section class="blueprint" id="domain-section" style="position:relative;padding:var(--space-4);display:none"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <h6>Custom domain</h6>
+    <p class="text-muted" style="font-size:13px;margin-top:var(--space-2)">Use your own domain instead of a bizinbio.net link.</p>
+    <div id="domain-none">
+      <div class="field" style="margin-top:var(--space-3)"><label>Your domain</label><input class="input" id="domain-input" placeholder="www.yourbusiness.com" /></div>
+      <button id="connect-domain" class="btn btn-secondary btn-block">Connect domain</button>
+    </div>
+    <div id="domain-set" style="display:none;margin-top:var(--space-3)">
+      <p style="font-size:14px"><strong id="domain-name"></strong> <span class="tag" id="domain-status-tag" style="margin-left:6px"></span></p>
+      <p id="domain-instructions" class="text-muted" style="font-size:12px;margin-top:var(--space-2)"></p>
+      <button id="recheck-domain" class="btn btn-secondary btn-block" style="margin-top:var(--space-3)">Check status</button>
+      <button id="remove-domain" class="btn" style="margin-top:var(--space-2);width:100%;color:var(--color-accent-700)">Remove domain</button>
+    </div>
+    <p id="domain-msg" class="text-muted" style="text-align:center;font-size:13px;margin-top:var(--space-2);min-height:18px"></p>
+  </section>
+
   <section class="blueprint" style="position:relative;padding:var(--space-4)"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
     <h6 style="margin-bottom:var(--space-3)">Edit details</h6>
     <div style="display:flex;flex-direction:column;gap:var(--space-3)">
@@ -150,8 +166,76 @@
     }
     if (tier === "website" || tier === "website_booking") {
       document.getElementById("booking-section").style.display = "block";
+      document.getElementById("domain-section").style.display = "block";
     }
   }
+
+  function renderDomainState() {
+    const noneView = document.getElementById("domain-none");
+    const setView = document.getElementById("domain-set");
+    if (!page.custom_domain) {
+      noneView.style.display = "block";
+      setView.style.display = "none";
+      return;
+    }
+    noneView.style.display = "none";
+    setView.style.display = "block";
+    document.getElementById("domain-name").textContent = page.custom_domain;
+    const statusTag = document.getElementById("domain-status-tag");
+    if (page.custom_domain_status === "active") {
+      statusTag.textContent = "Active";
+      statusTag.className = "tag live";
+      document.getElementById("domain-instructions").textContent = "Your page is live at this domain.";
+    } else {
+      statusTag.textContent = "Pending";
+      statusTag.className = "tag tag-outline";
+      document.getElementById("domain-instructions").textContent =
+        "Add a CNAME record at your domain's registrar pointing to cf.bizinbio.net, then check status. This can take a few minutes to a few hours.";
+    }
+  }
+
+  document.getElementById("connect-domain").addEventListener("click", async () => {
+    const domainMsg = document.getElementById("domain-msg");
+    const domain = document.getElementById("domain-input").value.trim();
+    if (!domain) return;
+    domainMsg.textContent = "Connecting...";
+    try {
+      const data = await callFunction("register-custom-domain", { pageId: page.id, domain }, session);
+      page.custom_domain = data.domain;
+      page.custom_domain_status = data.status;
+      renderDomainState();
+      domainMsg.textContent = "";
+    } catch (err) {
+      domainMsg.textContent = err.message || "Something went wrong.";
+    }
+  });
+
+  document.getElementById("recheck-domain").addEventListener("click", async () => {
+    const domainMsg = document.getElementById("domain-msg");
+    domainMsg.textContent = "Checking...";
+    try {
+      const data = await callFunction("register-custom-domain", { pageId: page.id }, session);
+      page.custom_domain_status = data.status;
+      renderDomainState();
+      domainMsg.textContent = data.status === "active" ? "Domain is live!" : "Still pending — DNS may take a while to propagate.";
+    } catch (err) {
+      domainMsg.textContent = err.message || "Something went wrong.";
+    }
+  });
+
+  document.getElementById("remove-domain").addEventListener("click", async () => {
+    const domainMsg = document.getElementById("domain-msg");
+    domainMsg.textContent = "Removing...";
+    try {
+      await callFunction("remove-custom-domain", { pageId: page.id }, session);
+      page.custom_domain = null;
+      page.custom_domain_status = "none";
+      renderDomainState();
+      domainMsg.textContent = "";
+    } catch (err) {
+      domainMsg.textContent = err.message || "Something went wrong.";
+    }
+  });
 
   async function loadLeads() {
     const { data: leads } = await sb
@@ -198,6 +282,7 @@
     }
 
     await loadPlan();
+    renderDomainState();
 
     const params = new URLSearchParams(window.location.search);
     if (params.get("subscribe") === "success") {
