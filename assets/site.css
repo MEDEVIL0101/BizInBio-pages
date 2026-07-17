@@ -33,16 +33,8 @@ button{font-family:inherit}
 
 .text-muted{color:color-mix(in srgb,var(--color-text) 55%,transparent)}
 
-/* Blueprint framed component: square corners, hairline border, + registration marks */
+/* Blueprint framed component: square corners, hairline border */
 .blueprint{position:relative;border:1px solid var(--color-divider);border-radius:0}
-.blueprint>.corner{position:absolute;width:11px;height:11px;color:color-mix(in srgb,var(--color-text) 55%,transparent)}
-.blueprint>.corner::before,.blueprint>.corner::after{content:"";position:absolute;background:currentColor}
-.blueprint>.corner::before{left:5px;top:0;width:1px;height:100%}
-.blueprint>.corner::after{top:5px;left:0;width:100%;height:1px}
-.blueprint>.corner.tl{top:-6px;left:-6px}
-.blueprint>.corner.tr{top:-6px;right:-6px}
-.blueprint>.corner.bl{bottom:-6px;left:-6px}
-.blueprint>.corner.br{bottom:-6px;right:-6px}
 
 /* A framed blueprint reads as a real card by default (solid fill + soft
    shadow) — photo frames (paired with .duotone) override back to flat/
