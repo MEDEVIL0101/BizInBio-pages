@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ironclad Construction Co.</title>
+<meta name="description" content="Family-owned, serving the GTA since 1998." />
+<link rel="canonical" href="https://bizinbio.net/showcase-construction-rugged/" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Ironclad Construction Co." />
+<meta property="og:description" content="Family-owned, serving the GTA since 1998." />
+<meta property="og:url" content="https://bizinbio.net/showcase-construction-rugged/" />
+<meta property="og:image" content="https://picsum.photos/seed/c1/600/600" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="//bizinbio.net/assets/favicon-32.png?v=1" />
+<link rel="apple-touch-icon" href="//bizinbio.net/assets/apple-touch-icon.png?v=1" />
+<link rel="stylesheet" href="//bizinbio.net/assets/site.css?v=5" />
+<style>:root{
+    --color-bg:#1c1c1a;
+    --body-bg:#1c1c1a;
+    --color-card-bg:#262420;
+    --color-surface:#302d27;
+    --color-text:#f2ede4;
+    --color-accent:#c85a2a;
+    --font-heading:"Oswald",system-ui,sans-serif;
+    --font-heading-weight:600;
+    --font-body:"Barlow",system-ui,sans-serif;
+    --radius-md:0px;
+    --card-blur:0px;
+    --card-border-width:2px;
+    --avatar-radius:8px;
+    --heading-transform:uppercase;
+    --heading-letter-spacing:0.01em;
+  }</style>
+</head>
+<body>
+<div style="max-width:460px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column">
+
+    <div class="cover-photo"><img src="https://picsum.photos/seed/ironcladcover/1200/500" alt="" /></div>
+    <header style="padding:var(--space-8) var(--space-4) var(--space-4)">
+      <div style="display:flex;justify-content:flex-start;margin-bottom:var(--space-3)"><img src="https://picsum.photos/seed/ironcladlogo/200" alt="" style="width:72px;height:72px;border-radius:var(--avatar-radius,50%);object-fit:cover;border:1px solid var(--color-divider)" /></div>
+      <h1 style="font-size:28px">Ironclad Construction Co.</h1>
+      <p class="text-muted" style="font-size:14px;margin-top:var(--space-2)">Family-owned, serving the GTA since 1998.</p>
+    </header>
+    <section style="padding:0 var(--space-4) var(--space-6)"><div class="gallery"><div class="blueprint duotone gallery-photo "><img src="https://picsum.photos/seed/c1/600/600" alt="" loading="lazy" /></div><div class="blueprint duotone gallery-photo "><img src="https://picsum.photos/seed/c2/600/600" alt="" loading="lazy" /></div><div class="blueprint duotone gallery-photo "><img src="https://picsum.photos/seed/c3/600/600" alt="" loading="lazy" /></div></div></section>
+    <section style="padding:0 var(--space-4) var(--space-6)"><h6 style="color:var(--color-accent-700);margin-bottom:var(--space-2)">Services</h6><div class="blueprint" style="position:relative"><div class="rate-row"><span>Foundation repair</span></div><div class="rate-row"><span>Deck construction</span></div><div class="rate-row"><span>Full renovations</span></div></div></section>
+    <section style="padding:0 var(--space-4) var(--space-6)"><h6 style="color:var(--color-accent-700);margin-bottom:var(--space-2)">Service Area</h6><p>Greater Toronto Area</p></section>
+    <div style="display:flex;gap:var(--space-2);padding:0 var(--space-4) var(--space-6)"><a href="tel:555-444-7777" class="btn" style="flex:1">Call</a><a href="sms:555-444-7777" class="btn" style="flex:1">Text</a><a href="mailto:theme-showcase-construction@bizinbio.net" class="btn" style="flex:1">Email</a></div>
+    
+    <section style="padding:0 var(--space-4) var(--space-6)">
+      <h6 style="color:var(--color-accent-700);margin-bottom:var(--space-3)">Get a quote</h6>
+      <div class="field"><label>Your name</label><input class="input" name="name" id="bib-q-name" /></div>
+      <div class="field"><label>Phone or email</label><input class="input" name="contact_info" id="bib-q-contact" /></div>
+      <div class="field"><label>Details</label><textarea class="input" name="message" id="bib-q-message" placeholder="Tell us about the job"></textarea></div>
+      <button id="bib-quote-submit" class="btn btn-primary btn-block">Send request</button>
+      <p id="bib-quote-status" class="text-muted" style="text-align:center;font-size:12px;margin-top:var(--space-2)"></p>
+    </section>
+    <script>
+      document.getElementById('bib-quote-submit').addEventListener('click', async function () {
+        var status = document.getElementById('bib-quote-status');
+        var payload = {
+          page_id: "ff250ac2-1491-4ee3-81a2-fac4810fd9c3",
+          name: document.getElementById('bib-q-name').value,
+          contact_info: document.getElementById('bib-q-contact').value,
+          message: document.getElementById('bib-q-message').value
+        };
+        status.textContent = 'Sending...';
+        try {
+          var res = await fetch("https://eqsxcbmcsjrtnkevaygy.supabase.co" + '/rest/v1/quote_requests', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': "sb_publishable_DPifKzXa875ieM2CLgMieA_VJyYRa-6",
+              'Authorization': 'Bearer ' + "sb_publishable_DPifKzXa875ieM2CLgMieA_VJyYRa-6"
+            },
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) throw new Error('failed');
+          status.textContent = 'Thanks! Your request was sent.';
+          document.getElementById('bib-q-name').value = '';
+          document.getElementById('bib-q-contact').value = '';
+          document.getElementById('bib-q-message').value = '';
+        } catch (err) {
+          status.textContent = 'Something went wrong — please try again.';
+        }
+      });
+    </script>
+    <footer style="padding:var(--space-6) var(--space-4);text-align:center;border-top:1px solid var(--color-divider)"><span class="text-muted" style="font-size:12px">Powered by BizInBio</span></footer>
+</div>
+</body>
+</html>
