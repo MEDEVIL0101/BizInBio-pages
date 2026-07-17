@@ -2,13 +2,17 @@
 
 :root{
   --color-bg:#ffffff;
+  --color-card-bg:var(--color-bg);
   --color-surface:#f2f2f2;
   --color-text:#0f0f0f;
+  --color-on-accent:#ffffff;
   --color-accent:#ff0000;
-  --color-accent-100:#ffe5e5;
-  --color-accent-700:#cc0000;
-  --color-accent-800:#990000;
-  --color-divider:color-mix(in srgb,#0f0f0f 16%,transparent);
+  /* Derived shades — any theme only needs to set --color-accent and these
+     follow automatically, including user-picked Custom colors. */
+  --color-accent-100:color-mix(in srgb,var(--color-accent) 12%,white);
+  --color-accent-700:color-mix(in srgb,var(--color-accent) 80%,black);
+  --color-accent-800:color-mix(in srgb,var(--color-accent) 65%,black);
+  --color-divider:color-mix(in srgb,var(--color-text) 16%,transparent);
   --color-neutral-200:#e5e5e5;
   --color-neutral-300:#cccccc;
   --color-neutral-700:#606060;
@@ -39,7 +43,7 @@ button{font-family:inherit}
 /* A framed blueprint reads as a real card by default (solid fill + soft
    shadow) — photo frames (paired with .duotone) override back to flat/
    transparent below, since a photo shouldn't get card elevation. */
-.blueprint{background:var(--color-bg);box-shadow:var(--shadow-sm)}
+.blueprint{background:var(--color-card-bg);box-shadow:var(--shadow-sm)}
 .blueprint.duotone{background:transparent;box-shadow:none}
 
 /* Duotone photo tint — real photos get a subtle accent-red color-blend overlay */
@@ -52,14 +56,14 @@ button{font-family:inherit}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;text-decoration:none;font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:14px;color:var(--color-text);background:transparent;border:1px solid var(--color-divider);padding:11px 16px;border-radius:var(--radius-md)}
 .btn:hover{border-color:var(--color-accent)}
 .btn:focus-visible{outline:2px solid var(--color-accent);outline-offset:1px}
-.btn-primary{background:var(--color-accent);color:var(--color-bg);border-color:var(--color-accent)}
+.btn-primary{background:var(--color-accent);color:var(--color-on-accent);border-color:var(--color-accent)}
 .btn-primary:hover{background:var(--color-accent-700);border-color:var(--color-accent-700)}
 .btn-secondary{border-color:var(--color-divider)}
 .btn-block{width:100%}
 
 /* Cards (landing feature/pricing cards) — solid fill + real elevation so
    these read as actual cards, not wireframe outlines */
-.card{display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-4);background:var(--color-bg);border:1px solid var(--color-divider);box-shadow:var(--shadow-sm)}
+.card{display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-4);background:var(--color-card-bg);border:1px solid var(--color-divider);box-shadow:var(--shadow-sm)}
 .card-kicker{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent)}
 .card-title{font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:17px}
 .card-body{margin:0;font-size:13px;opacity:.8;flex:1}
@@ -67,7 +71,7 @@ button{font-family:inherit}
 .elev-md{box-shadow:var(--shadow-md)}
 
 /* Priced package card (Professional Services layout) */
-.pkg-card{border:1px solid var(--color-divider);background:var(--color-bg);box-shadow:var(--shadow-sm);padding:var(--space-4);display:flex;flex-direction:column;gap:4px}
+.pkg-card{border:1px solid var(--color-divider);background:var(--color-card-bg);box-shadow:var(--shadow-sm);padding:var(--space-4);display:flex;flex-direction:column;gap:4px}
 .pkg-card .pkg-title{font-family:var(--font-heading);font-weight:600;font-size:16px}
 .pkg-card .pkg-price{color:var(--color-accent-700);font-family:var(--font-heading);font-weight:600;font-size:15px}
 

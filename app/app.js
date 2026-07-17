@@ -33,7 +33,19 @@ const CATEGORY_ELEMENTS = {
   other: ["header", "about", "portfolio_gallery", "services_list", "contact", "social_link"],
 };
 
-const THEMES = ["default", "warm", "cool", "bold"];
+// Theme presets — color palette applied to the same page structure (accent,
+// background, card fill, input surface, text). Derived shades (accent-700/
+// 800/100, dividers, button contrast) are computed automatically from these
+// via color-mix() in site.css, so Custom just needs one accent color.
+const THEMES = [
+  { id: "classic", label: "Classic", bg: "#ffffff", accent: "#ff0000" },
+  { id: "midnight", label: "Midnight", bg: "#121212", accent: "#ffb020" },
+  { id: "sage", label: "Sage", bg: "#f6f5f0", accent: "#5c7a52" },
+  { id: "ocean", label: "Ocean", bg: "#f2f6f8", accent: "#2a6f8e" },
+  { id: "blush", label: "Blush", bg: "#fbf3f1", accent: "#c9576b" },
+  { id: "charcoal", label: "Charcoal", bg: "#f5f5f5", accent: "#3a3a3a" },
+  { id: "custom", label: "Custom", bg: "#ffffff", accent: "#ff0000" },
+];
 
 async function requireSession() {
   const { data: { session } } = await sb.auth.getSession();
