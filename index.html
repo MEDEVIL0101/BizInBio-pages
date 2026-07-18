@@ -50,7 +50,11 @@
 
   /* Hero shop mockup — product cards with a floating "add" badge and a real
      cart summary bar, so the phone visibly demonstrates checkout, not just
-     a link list. */
+     a link list. A shop's visitors care more about browsing/filtering than
+     a contact-button row, so filter chips take that slot instead. */
+  .phone-filters{display:flex;gap:6px;padding:9px 16px 0;flex:none;flex-wrap:wrap}
+  .phone-filter{padding:6px 12px;border-radius:999px;border:1px solid rgba(36,26,32,.14);font-size:11px;font-weight:600;font-family:"Fraunces",Georgia,serif;color:#241a20}
+  .phone-filter.active{background:#d6336c;color:#fff;border-color:#d6336c}
   .phone-products{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:7px 16px 0;flex:none}
   .phone-product{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:1;display:flex;align-items:center;justify-content:center}
   .phone-product svg{width:62%;height:62%;display:block}
@@ -104,10 +108,10 @@
         <div class="phone-avatar-wrap"><img class="phone-avatar" src="https://picsum.photos/seed/vivid1/200/200" alt="" /></div>
         <div class="phone-name">Rally Supply Co.</div>
         <div class="phone-location">Austin, Texas</div>
-        <div class="phone-buttons">
-          <div class="phone-btn primary">Call</div>
-          <div class="phone-btn">WhatsApp</div>
-          <div class="phone-btn">Email</div>
+        <div class="phone-filters">
+          <span class="phone-filter active">All</span>
+          <span class="phone-filter">Tees</span>
+          <span class="phone-filter">Hoodies</span>
         </div>
         <div class="phone-products">
           <div class="phone-product" style="background:#1c1c1a">
@@ -292,13 +296,6 @@
   .phone-avatar{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,.15)}
   .phone-name{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:22px;text-align:center;margin-top:6px;flex:none}
   .phone-location{font-size:12px;text-align:center;color:rgba(36,26,32,.5);margin-top:3px;flex:none}
-  .phone-bio{font-size:12.5px;line-height:1.4;text-align:center;color:rgba(36,26,32,.6);margin-top:4px;padding:0 30px;flex:none}
-  .phone-buttons{display:flex;gap:7px;padding:11px 16px 0;flex:none}
-  .phone-btn{flex:1;text-align:center;padding:10px 4px;border-radius:8px;font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:11.5px;border:1px solid rgba(36,26,32,.14)}
-  .phone-btn.primary{background:#d6336c;color:#fff;border-color:#d6336c}
-  .phone-gallery{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:9px 16px 0;flex:none}
-  .phone-photo{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden}
-  .phone-photo img{width:100%;height:100%;object-fit:cover;display:block}
   .phone-links{padding:9px 16px 0;display:flex;flex-direction:column;gap:6px;flex:none}
   .phone-link-row{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:9px;background:#fdf1f5;border:1px solid rgba(214,51,108,.15);font-size:12.5px;font-weight:600;color:#241a20}
   .phone-link-row span.chev{color:#d6336c;font-size:14px}
