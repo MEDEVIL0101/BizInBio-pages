@@ -30,12 +30,40 @@
     <p id="plan-desc" class="text-muted" style="font-size:13px;margin-top:4px">Link-in-bio only — social links, contact, and about.</p>
     <button id="upgrade-website" class="btn btn-primary btn-block" style="margin-top:var(--space-4)">Upgrade to Website — $9.99/mo</button>
     <button id="upgrade-booking" class="btn btn-secondary btn-block" style="margin-top:var(--space-2)">Upgrade to Website + Booking — $19.99/mo</button>
+    <button id="upgrade-shop" class="btn btn-secondary btn-block" style="margin-top:var(--space-2)">Upgrade to Website + Shop — $29.99/mo</button>
   </section>
 
   <section class="blueprint" id="booking-section" style="position:relative;padding:var(--space-4);display:none">
     <h6>Booking deposits</h6>
     <p id="connect-status" class="text-muted" style="font-size:13px;margin-top:var(--space-2)">Not connected yet.</p>
     <button id="connect-stripe" class="btn btn-secondary btn-block" style="margin-top:var(--space-3)">Connect Stripe to accept deposits</button>
+  </section>
+
+  <section class="blueprint" id="shop-section" style="position:relative;padding:var(--space-4);display:none">
+    <h6>Shop</h6>
+    <p id="shop-connect-status" class="text-muted" style="font-size:13px;margin-top:var(--space-2)">Not connected yet.</p>
+    <button id="connect-stripe-shop" class="btn btn-secondary btn-block" style="margin-top:var(--space-3);margin-bottom:var(--space-4)">Connect Stripe to sell products</button>
+
+    <div id="shop-products" style="display:flex;flex-direction:column"></div>
+
+    <div style="display:flex;flex-direction:column;gap:var(--space-3);padding-top:var(--space-3);margin-top:var(--space-3);border-top:1px solid var(--color-divider)">
+      <p class="text-muted" style="font-size:12px;margin:0">Add a product</p>
+      <label class="upload" for="product_photo" style="width:88px;aspect-ratio:1;padding:0;overflow:hidden;position:relative">
+        <div id="product-photo-preview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
+          <div class="upload-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></div>
+        </div>
+        <input type="file" id="product_photo" accept="image/*" capture="environment" />
+      </label>
+      <div class="field"><label>Product name</label><input class="input" id="product_name" placeholder="Classic Logo Tee" /></div>
+      <div class="field"><label>Price (USD)</label><input class="input" id="product_price" type="number" min="0" step="0.01" placeholder="24.99" /></div>
+      <button id="add-product" class="btn btn-primary btn-block">Add product</button>
+      <p id="product-msg" class="text-muted" style="text-align:center;font-size:13px;min-height:18px"></p>
+    </div>
+  </section>
+
+  <section class="blueprint" id="orders-section" style="position:relative;padding:var(--space-4);display:none">
+    <h6>Orders</h6>
+    <div id="orders-list" style="margin-top:var(--space-2)"><p class="text-muted" style="font-size:13px">No orders yet — they'll show up here once your shop is live and someone checks out.</p></div>
   </section>
 
   <section class="blueprint" id="domain-section" style="position:relative;padding:var(--space-4);display:none">
@@ -239,17 +267,20 @@
     saveMsg.textContent = "Photo uploaded — click Save & republish to apply.";
   });
 
-  document.getElementById("connect-stripe").addEventListener("click", async () => {
+  async function connectStripe(statusElId) {
     try {
       const data = await callFunction("create-connect-account-link", { pageId: page.id }, session);
       window.location.href = data.url;
     } catch (err) {
       alert(err.message || "Something went wrong.");
     }
-  });
+  }
+  document.getElementById("connect-stripe").addEventListener("click", () => connectStripe());
+  document.getElementById("connect-stripe-shop").addEventListener("click", () => connectStripe());
 
   document.getElementById("upgrade-website").addEventListener("click", () => subscribe("website"));
   document.getElementById("upgrade-booking").addEventListener("click", () => subscribe("website_booking"));
+  document.getElementById("upgrade-shop").addEventListener("click", () => subscribe("website_shop"));
 
   async function subscribe(tier) {
     try {
@@ -264,7 +295,10 @@
     free: ["Free", "Link-in-bio only — social links, contact, and about."],
     website: ["Website", "Services, gallery, service area, and quote requests are unlocked."],
     website_booking: ["Website + Booking", "Everything in Website, plus deposit collection."],
+    website_shop: ["Website + Shop", "Everything in Website + Booking, plus a real product shop with cart checkout."],
   };
+
+  let currentTier = "free";
 
   async function loadPlan() {
     const { data: sub } = await sb
@@ -273,18 +307,137 @@
       .eq("user_id", session.user.id)
       .maybeSingle();
     const tier = sub && sub.status === "active" ? sub.tier : "free";
+    currentTier = tier;
     const [label, desc] = PLAN_LABELS[tier] || PLAN_LABELS.free;
     document.getElementById("plan-label").textContent = label;
     document.getElementById("plan-desc").textContent = desc;
     if (tier === "website") document.getElementById("upgrade-website").style.display = "none";
-    if (tier === "website_booking") {
+    if (tier === "website_booking" || tier === "website_shop") {
       document.getElementById("upgrade-website").style.display = "none";
       document.getElementById("upgrade-booking").style.display = "none";
     }
-    if (tier === "website" || tier === "website_booking") {
+    if (tier === "website_shop") document.getElementById("upgrade-shop").style.display = "none";
+    if (tier === "website" || tier === "website_booking" || tier === "website_shop") {
       document.getElementById("booking-section").style.display = "block";
       document.getElementById("domain-section").style.display = "block";
     }
+    if (tier === "website_shop") {
+      document.getElementById("shop-section").style.display = "block";
+      document.getElementById("orders-section").style.display = "block";
+      // Shop rendering is gated on a "product_shop" element existing (same
+      // pattern as every other opt-in element type) — make sure one exists
+      // as soon as someone's on this tier, rather than waiting for a UI
+      // action that has no other natural place to create it.
+      if (!elementsByType.product_shop) {
+        const { data: shopEl } = await sb
+          .from("elements")
+          .insert({ page_id: page.id, type: "product_shop", position: 100, content: {} })
+          .select()
+          .single();
+        if (shopEl) elementsByType.product_shop = shopEl;
+      }
+      await loadProducts();
+      await loadOrders();
+    }
+  }
+
+  let uploadedProductPhotoUrl = "";
+  document.getElementById("product_photo").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const msg = document.getElementById("product-msg");
+    msg.textContent = "Uploading photo...";
+    const path = `${session.user.id}/${Date.now()}-${file.name}`;
+    const { error } = await sb.storage.from("page-photos").upload(path, file);
+    if (error) { msg.textContent = "Photo upload failed: " + error.message; return; }
+    const { data } = sb.storage.from("page-photos").getPublicUrl(path);
+    uploadedProductPhotoUrl = data.publicUrl;
+    document.getElementById("product-photo-preview").innerHTML =
+      `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover" />`;
+    msg.textContent = "";
+  });
+
+  async function loadProducts() {
+    const { data: products } = await sb
+      .from("products")
+      .select("*")
+      .eq("page_id", page.id)
+      .order("position", { ascending: true });
+    const container = document.getElementById("shop-products");
+    if (!products || !products.length) {
+      container.innerHTML = `<p class="text-muted" style="font-size:13px">No products yet — add your first one below.</p>`;
+      return;
+    }
+    container.innerHTML = products.map((p) => `
+      <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) 0;border-bottom:1px solid var(--color-divider)">
+        ${p.image_url
+          ? `<img src="${p.image_url}" style="width:44px;height:44px;object-fit:cover;border-radius:var(--radius-md);flex:none" />`
+          : `<div style="width:44px;height:44px;border-radius:var(--radius-md);background:var(--color-surface);flex:none"></div>`}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:600">${p.name}</div>
+          <div class="text-muted" style="font-size:12px">$${(p.price_cents / 100).toFixed(2)}</div>
+        </div>
+        <button class="btn bib-delete-product" data-id="${p.id}" style="flex:none;font-size:12px;padding:6px 10px">Delete</button>
+      </div>
+    `).join("");
+    container.querySelectorAll(".bib-delete-product").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        await sb.from("products").delete().eq("id", btn.dataset.id);
+        await callFunction("render-page", { page_id: page.id }, session);
+        await loadProducts();
+      });
+    });
+  }
+
+  document.getElementById("add-product").addEventListener("click", async () => {
+    const msg = document.getElementById("product-msg");
+    const name = document.getElementById("product_name").value.trim();
+    const priceInput = document.getElementById("product_price").value;
+    const priceCents = Math.round(Number(priceInput) * 100);
+    if (!name || !(priceCents > 0)) {
+      msg.textContent = "Enter a product name and a price greater than $0.";
+      return;
+    }
+    msg.textContent = "Adding...";
+    try {
+      const { count } = await sb.from("products").select("id", { count: "exact", head: true }).eq("page_id", page.id);
+      await sb.from("products").insert({
+        page_id: page.id,
+        name,
+        price_cents: priceCents,
+        image_url: uploadedProductPhotoUrl || null,
+        position: count || 0,
+      });
+      document.getElementById("product_name").value = "";
+      document.getElementById("product_price").value = "";
+      document.getElementById("product-photo-preview").innerHTML =
+        `<div class="upload-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></div>`;
+      uploadedProductPhotoUrl = "";
+      await callFunction("render-page", { page_id: page.id }, session);
+      await loadProducts();
+      msg.textContent = "Added and republished.";
+    } catch (err) {
+      msg.textContent = err.message || "Something went wrong.";
+    }
+  });
+
+  async function loadOrders() {
+    const { data: orders } = await sb
+      .from("orders")
+      .select("id, buyer_name, buyer_email, total_cents, status, created_at")
+      .eq("page_id", page.id)
+      .order("created_at", { ascending: false });
+    if (!orders || !orders.length) return;
+    document.getElementById("orders-list").innerHTML = orders.map((o) => `
+      <div style="padding:var(--space-3) 0;border-bottom:1px solid var(--color-divider)">
+        <div style="display:flex;justify-content:space-between;align-items:baseline">
+          <span style="font-family:var(--font-heading);font-weight:600">$${(o.total_cents / 100).toFixed(2)}</span>
+          <span class="tag${o.status === "paid" ? " live" : ""}" style="font-size:10px">${o.status}</span>
+        </div>
+        <div class="text-muted" style="font-size:13px">${o.buyer_name || o.buyer_email || "Guest"} · ${new Date(o.created_at).toLocaleDateString()}</div>
+      </div>
+    `).join("");
   }
 
   function renderDomainState(dcvMethod) {
@@ -406,7 +559,11 @@
 
     if (page.stripe_connect_onboarding_complete) {
       document.getElementById("connect-status").textContent = "Connected — deposits are enabled.";
+      document.getElementById("shop-connect-status").textContent = "Connected — checkout is enabled.";
     }
+
+    const { data: elements } = await sb.from("elements").select("*").eq("page_id", page.id);
+    (elements || []).forEach((el) => { elementsByType[el.type] = el; });
 
     await loadPlan();
     if (page.custom_domain && page.custom_domain_status === "pending") {
@@ -427,9 +584,6 @@
       window.history.replaceState({}, "", "/app/dashboard.html");
       await loadPlan();
     }
-
-    const { data: elements } = await sb.from("elements").select("*").eq("page_id", page.id);
-    (elements || []).forEach((el) => { elementsByType[el.type] = el; });
 
     if (elementsByType.contact) document.getElementById("phone").value = elementsByType.contact.content.phone || "";
     if (elementsByType.contact) document.getElementById("whatsapp").value = elementsByType.contact.content.whatsapp || "";
