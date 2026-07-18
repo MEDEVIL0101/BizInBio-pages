@@ -28,9 +28,8 @@
     <h6>Plan</h6>
     <p id="plan-label" style="font-family:var(--font-heading);font-weight:600;font-size:17px;margin-top:var(--space-2)">Free</p>
     <p id="plan-desc" class="text-muted" style="font-size:13px;margin-top:4px">Link-in-bio only — social links, contact, and about.</p>
-    <button id="upgrade-website" class="btn btn-primary btn-block" style="margin-top:var(--space-4)">Upgrade to Website — $5.99/mo</button>
-    <button id="upgrade-booking" class="btn btn-secondary btn-block" style="margin-top:var(--space-2)">Upgrade to Website + Booking — $15.99/mo</button>
-    <button id="upgrade-shop" class="btn btn-secondary btn-block" style="margin-top:var(--space-2)">Upgrade to Website + Shop — $19.99/mo</button>
+    <button id="upgrade-all-access" class="btn btn-primary btn-block" style="margin-top:var(--space-4)">Upgrade to All Access — $9.99/mo</button>
+    <button id="upgrade-domain" class="btn btn-secondary btn-block" style="margin-top:var(--space-2)">Upgrade to Custom Domain — $19.99/mo</button>
   </section>
 
   <section class="blueprint" id="booking-section" style="position:relative;padding:var(--space-4);display:none">
@@ -279,9 +278,8 @@
   document.getElementById("connect-stripe").addEventListener("click", () => connectStripe());
   document.getElementById("connect-stripe-shop").addEventListener("click", () => connectStripe());
 
-  document.getElementById("upgrade-website").addEventListener("click", () => subscribe("website"));
-  document.getElementById("upgrade-booking").addEventListener("click", () => subscribe("website_booking"));
-  document.getElementById("upgrade-shop").addEventListener("click", () => subscribe("website_shop"));
+  document.getElementById("upgrade-all-access").addEventListener("click", () => subscribe("website_shop"));
+  document.getElementById("upgrade-domain").addEventListener("click", () => subscribe("custom_domain"));
 
   async function subscribe(tier) {
     try {
@@ -292,11 +290,16 @@
     }
   }
 
+  // "website" and "website_booking" are no longer sold (collapsed into the
+  // single "website_shop" All Access tier) but are kept here so any account
+  // still on one of those old tiers renders sensibly instead of falling
+  // through to the Free label.
   const PLAN_LABELS = {
     free: ["Free", "Link-in-bio only — social links, contact, and about."],
     website: ["Website", "Services, gallery, service area, and quote requests are unlocked."],
     website_booking: ["Website + Booking", "Everything in Website, plus deposit collection."],
-    website_shop: ["Website + Shop", "Everything in Website + Booking, plus a real product shop with cart checkout."],
+    website_shop: ["All Access", "Website, booking deposits, and a real product shop with cart checkout."],
+    custom_domain: ["Custom Domain", "Everything in All Access, plus your own domain instead of a bizinbio.net link."],
   };
 
   let currentTier = "free";
@@ -312,17 +315,20 @@
     const [label, desc] = PLAN_LABELS[tier] || PLAN_LABELS.free;
     document.getElementById("plan-label").textContent = label;
     document.getElementById("plan-desc").textContent = desc;
-    if (tier === "website") document.getElementById("upgrade-website").style.display = "none";
-    if (tier === "website_booking" || tier === "website_shop") {
-      document.getElementById("upgrade-website").style.display = "none";
-      document.getElementById("upgrade-booking").style.display = "none";
+    if (tier === "website" || tier === "website_booking" || tier === "website_shop" || tier === "custom_domain") {
+      document.getElementById("upgrade-all-access").style.display = "none";
     }
-    if (tier === "website_shop") document.getElementById("upgrade-shop").style.display = "none";
-    if (tier === "website" || tier === "website_booking" || tier === "website_shop") {
+    if (tier === "custom_domain") document.getElementById("upgrade-domain").style.display = "none";
+    if (tier === "website" || tier === "website_booking" || tier === "website_shop" || tier === "custom_domain") {
       document.getElementById("booking-section").style.display = "block";
+    }
+    // Custom Domain is the top tier and a superset of Website + Shop — it
+    // gets everything website_shop gets, plus the domain-section (which is
+    // otherwise hidden: connecting a domain is exclusive to this plan).
+    if (tier === "custom_domain") {
       document.getElementById("domain-section").style.display = "block";
     }
-    if (tier === "website_shop") {
+    if (tier === "website_shop" || tier === "custom_domain") {
       document.getElementById("shop-section").style.display = "block";
       document.getElementById("orders-section").style.display = "block";
       // Shop rendering is gated on a "product_shop" element existing (same

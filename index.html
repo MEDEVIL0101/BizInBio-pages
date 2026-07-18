@@ -25,7 +25,6 @@
     header.hero { grid-template-columns: 1fr !important; }
     .cols-3 { grid-template-columns: 1fr !important; }
     .cols-4 { grid-template-columns: 1fr 1fr !important; }
-    #pricing .cols-4 { grid-template-columns: 1fr !important; }
     .nav-links { display: none !important; }
     .pill-nav { margin: var(--space-3) var(--space-3) 0 !important; }
     .url-pill { flex-direction: column; align-items: stretch !important; width: 100%; max-width: none; background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; gap: 10px !important; }
@@ -43,7 +42,7 @@
   .dark-band{background:radial-gradient(circle at 28% 15%, rgba(255,32,32,.22), transparent 55%), #0d0d0d;color:#f4f4f4;display:flow-root}
   .dark-band .text-muted{color:rgba(244,244,244,.6)}
 
-  /* Linktree-style "bizinbio.com/yourname" claim-your-handle input, used in
+  /* Linktree-style "bizinbio.net/yourname" claim-your-handle input, used in
      the hero and again in the closing CTA band. The prefix+input live in
      their own bordered .url-field so the whole thing reads as one real
      input (not loose placeholder text) even after it stacks on mobile —
@@ -110,7 +109,7 @@
     <div style="margin-top:var(--space-6)">
       <div class="url-pill">
         <div class="url-field">
-          <span class="prefix">bizinbio.com/</span>
+          <span class="prefix">bizinbio.net/</span>
           <input type="text" placeholder="yourbusiness" />
         </div>
         <a href="/app/index.html" class="btn btn-primary">Get started free</a>
@@ -234,10 +233,11 @@
 <section id="pricing" style="padding:calc(var(--space-8)*3) calc(var(--space-8)*2) calc(var(--space-8)*3)">
   <h6 style="color:var(--color-accent-700)">Pricing</h6>
   <h2 style="margin-top:var(--space-2)">Start free. Upgrade when you're ready.</h2>
-  <div class="cols-4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-4);margin-top:var(--space-6);align-items:start">
+  <div class="cols-3" style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4);margin-top:var(--space-6);align-items:start">
     <div class="card" style="padding:var(--space-6);border:1px solid var(--color-divider)">
       <span class="card-kicker">Free</span><h3 class="card-title" style="margin-top:4px">$0</h3>
-      <p class="card-body" style="opacity:1;margin-bottom:var(--space-3)">Your link-in-bio page.</p>
+      <p class="card-body" style="opacity:1;margin-bottom:2px">Your link-in-bio page.</p>
+      <p style="font-size:12px;color:#8a8a8a;margin-bottom:var(--space-3)">bizinbio.net/yourname</p>
       <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;flex:1">
         <div>✓ Business header &amp; bio</div><div>✓ Social links</div><div>✓ Call / text / email buttons</div>
       </div>
@@ -245,28 +245,23 @@
     </div>
     <div class="card elev-md" style="padding:var(--space-6);border:2px solid var(--color-accent)">
       <span class="tag tag-accent" style="margin-bottom:6px;width:fit-content">Most popular</span>
-      <span class="card-kicker">Website</span><h3 class="card-title" style="margin-top:4px">$5.99<span style="font-size:14px;font-weight:400">/mo</span></h3>
-      <p class="card-body" style="opacity:1;margin-bottom:var(--space-3)">A full small-business website.</p>
+      <span class="card-kicker">All Access</span><h3 class="card-title" style="margin-top:4px">$9.99<span style="font-size:14px;font-weight:400">/mo</span></h3>
+      <p class="card-body" style="opacity:1;margin-bottom:2px">A full small-business website, booking, and shop.</p>
+      <p style="font-size:12px;color:#8a8a8a;margin-bottom:var(--space-3)">bizinbio.net/yourname</p>
       <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;flex:1">
-        <div>✓ Everything in Free</div><div>✓ Services list with pricing</div><div>✓ Photo gallery</div><div>✓ Service area</div><div>✓ Quote-request lead form</div>
+        <div>✓ Everything in Free</div><div>✓ Services list, gallery &amp; service area</div><div>✓ Quote-request lead form</div><div>✓ Stripe deposit collection &amp; online booking</div><div>✓ Product catalog, cart &amp; checkout</div><div class="text-muted">+ 2.5% per shop order</div>
       </div>
-      <a href="/app/index.html" class="btn btn-primary btn-block" style="margin-top:var(--space-6)">Choose Website</a>
+      <a href="/app/index.html" class="btn btn-primary btn-block" style="margin-top:var(--space-6)">Choose All Access</a>
     </div>
-    <div class="card" style="padding:var(--space-6);border:1px solid var(--color-divider)">
-      <span class="card-kicker">Website + Booking</span><h3 class="card-title" style="margin-top:4px">$15.99<span style="font-size:14px;font-weight:400">/mo</span></h3>
-      <p class="card-body" style="opacity:1;margin-bottom:var(--space-3)">Take deposits and bookings.</p>
-      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;flex:1">
-        <div>✓ Everything in Website</div><div>✓ Stripe deposit collection</div><div>✓ Online booking</div>
+    <div class="card" style="padding:var(--space-6);background:#141110;border:1px solid rgba(255,255,255,.08);color:#f4f4f4">
+      <span class="tag tag-accent" style="margin-bottom:6px;width:fit-content">Premium</span>
+      <span class="card-kicker">Custom Domain</span><h3 class="card-title" style="margin-top:4px;color:#ffffff">$19.99<span style="font-size:14px;font-weight:400;color:rgba(244,244,244,.6)">/mo</span></h3>
+      <p class="card-body" style="opacity:.8;margin-bottom:2px;color:#f4f4f4">Everything, on your own domain.</p>
+      <p style="font-size:12px;color:var(--color-accent);margin-bottom:var(--space-3)">yourbusiness.com</p>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;flex:1;color:#f4f4f4">
+        <div>✓ Everything in All Access</div><div>✓ Your own domain — no bizinbio.net link</div><div>✓ Free SSL, fully managed</div><div class="text-muted" style="color:rgba(244,244,244,.55)">+ 2.5% per shop order</div>
       </div>
-      <a href="/app/index.html" class="btn btn-secondary btn-block" style="margin-top:var(--space-6)">Choose Website + Booking</a>
-    </div>
-    <div class="card" style="padding:var(--space-6);border:1px solid var(--color-divider)">
-      <span class="card-kicker">Website + Shop</span><h3 class="card-title" style="margin-top:4px">$19.99<span style="font-size:14px;font-weight:400">/mo</span></h3>
-      <p class="card-body" style="opacity:1;margin-bottom:var(--space-3)">Sell products right from your bio.</p>
-      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;flex:1">
-        <div>✓ Everything in Website + Booking</div><div>✓ Product catalog &amp; cart</div><div>✓ Stripe checkout</div><div>✓ Order management</div><div class="text-muted">+ 2.5% per order</div>
-      </div>
-      <a href="/app/index.html" class="btn btn-secondary btn-block" style="margin-top:var(--space-6)">Choose Website + Shop</a>
+      <a href="/app/index.html" class="btn btn-primary btn-block" style="margin-top:var(--space-6)">Go custom</a>
     </div>
   </div>
 </section>
@@ -278,7 +273,7 @@
   <p class="text-muted" style="max-width:440px;margin:var(--space-3) auto var(--space-6)">Set it up in the time it takes to make coffee.</p>
   <div class="url-pill" style="margin:0 auto">
     <div class="url-field">
-      <span class="prefix">bizinbio.com/</span>
+      <span class="prefix">bizinbio.net/</span>
       <input type="text" placeholder="yourbusiness" />
     </div>
     <a href="/app/index.html" class="btn btn-primary">Get started free</a>
