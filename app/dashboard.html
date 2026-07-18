@@ -76,7 +76,9 @@
     <p class="text-muted" style="text-align:center;font-size:11px;margin-bottom:var(--space-3)">Profile photo or logo</p>
     <div style="display:flex;flex-direction:column;gap:var(--space-3)">
       <div class="field"><label>Business name</label><input class="input" id="business_name" /></div>
+      <div class="field"><label>Location (optional)</label><input class="input" id="location" placeholder="e.g. Hamilton, Ontario" /></div>
       <div class="field"><label>Phone</label><input class="input" id="phone" /></div>
+      <div class="field"><label>WhatsApp (optional)</label><input class="input" id="whatsapp" placeholder="Include country code, e.g. +1 555 555 1234" /></div>
       <div class="field"><label>Service area</label><input class="input" id="service_area" /></div>
       <div class="field"><label>Tagline / about</label><textarea class="input" id="bio" placeholder="A short line about your business"></textarea></div>
     </div>
@@ -120,7 +122,9 @@
     saveMsg.textContent = "Saving...";
     try {
       const businessName = document.getElementById("business_name").value.trim();
+      const location = document.getElementById("location").value.trim();
       const phone = document.getElementById("phone").value.trim();
+      const whatsapp = document.getElementById("whatsapp").value.trim();
       const serviceArea = document.getElementById("service_area").value.trim();
       const bio = document.getElementById("bio").value.trim();
 
@@ -135,6 +139,7 @@
           content: {
             ...elementsByType.header.content,
             business_name: businessName,
+            location,
             logo_url: uploadedProfilePhotoUrl || elementsByType.header.content.logo_url || "",
             cover_image_url: uploadedCoverPhotoUrl || elementsByType.header.content.cover_image_url || "",
           },
@@ -149,7 +154,7 @@
       }
       if (elementsByType.contact) {
         await sb.from("elements").update({
-          content: { ...elementsByType.contact.content, phone },
+          content: { ...elementsByType.contact.content, phone, whatsapp },
         }).eq("id", elementsByType.contact.id);
       }
       if (elementsByType.service_area) {
@@ -427,6 +432,8 @@
     (elements || []).forEach((el) => { elementsByType[el.type] = el; });
 
     if (elementsByType.contact) document.getElementById("phone").value = elementsByType.contact.content.phone || "";
+    if (elementsByType.contact) document.getElementById("whatsapp").value = elementsByType.contact.content.whatsapp || "";
+    if (elementsByType.header) document.getElementById("location").value = elementsByType.header.content.location || "";
     if (elementsByType.about) document.getElementById("bio").value = elementsByType.about.content.bio || "";
     if (elementsByType.header && elementsByType.header.content.logo_url) {
       document.getElementById("profile-photo-preview").innerHTML =

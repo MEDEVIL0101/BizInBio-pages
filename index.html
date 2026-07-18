@@ -17,36 +17,37 @@
   }
 
   /* Hero device mockup — a self-contained miniature of a real published
-     page (same visual language as the Editorial theme), framed in an
-     iPhone-style chassis. Deliberately hand-scaled rather than reusing the
-     full-size .avatar-img/.page-wrap classes, since those are tuned for a
-     full page, not a 300px phone screen. */
+     page, framed in an iPhone-style chassis. Deliberately hand-scaled
+     rather than reusing the full-size .avatar-img/.page-wrap classes,
+     since those are tuned for a full page, not a 300px phone screen.
+     Layout mirrors the real product's priorities: quick-contact first,
+     then gallery, then a Linktree-style link list — and photos are shown
+     at full natural color, not tinted, since believable/colorful imagery
+     sells the product better than a monochrome filter. */
   .phone-mock{display:flex;justify-content:center}
   /* Real iPhone screens run ~19.5:9 (e.g. 1179x2556) — fix the frame to
      that ratio rather than letting stacked content decide the height, or
      it comes out short and stubby instead of phone-shaped. */
   .phone-body{position:relative;width:300px;height:649px;background:#0c0c0c;border-radius:46px;padding:14px;box-shadow:0 40px 70px -24px rgba(20,15,10,.4), 0 14px 28px -10px rgba(20,15,10,.28);display:flex}
-  .phone-screen{position:relative;flex:1;display:flex;flex-direction:column;background:#faf6f1;border-radius:34px;overflow:hidden;font-family:"Inter",system-ui,sans-serif;color:#2a2420}
-  .phone-statusbar{display:flex;justify-content:space-between;align-items:center;padding:18px 26px 0;font-family:"Manrope",system-ui,sans-serif;font-weight:600;font-size:15px;color:#2a2420;flex:none}
+  .phone-screen{position:relative;flex:1;display:flex;flex-direction:column;background:#ffffff;border-radius:34px;overflow:hidden;font-family:"Inter",system-ui,sans-serif;color:#241a20}
+  .phone-statusbar{display:flex;justify-content:space-between;align-items:center;padding:18px 26px 0;font-family:"Manrope",system-ui,sans-serif;font-weight:600;font-size:15px;color:#241a20;flex:none}
   .phone-island{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:90px;height:24px;background:#0c0c0c;border-radius:14px;z-index:2}
   .phone-cover{width:100%;aspect-ratio:21/9;overflow:hidden;margin-top:18px;flex:none}
   .phone-cover img{width:100%;height:100%;object-fit:cover;display:block}
   .phone-avatar-wrap{display:flex;justify-content:center;margin-top:-42px;position:relative;z-index:1;flex:none}
-  .phone-avatar{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #faf6f1;box-shadow:0 2px 6px rgba(0,0,0,.15)}
-  .phone-name{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:23px;text-align:center;margin-top:12px;flex:none}
-  .phone-bio{font-size:13px;line-height:1.4;text-align:center;color:rgba(42,36,32,.6);margin-top:6px;padding:0 30px;flex:none}
-  .phone-gallery{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:14px 18px 0;flex:none}
+  .phone-avatar{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #ffffff;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+  .phone-name{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:22px;text-align:center;margin-top:10px;flex:none}
+  .phone-location{font-size:12px;text-align:center;color:rgba(36,26,32,.5);margin-top:3px;flex:none}
+  .phone-bio{font-size:12.5px;line-height:1.4;text-align:center;color:rgba(36,26,32,.6);margin-top:4px;padding:0 30px;flex:none}
+  .phone-buttons{display:flex;gap:7px;padding:11px 16px 0;flex:none}
+  .phone-btn{flex:1;text-align:center;padding:10px 4px;border-radius:8px;font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:11.5px;border:1px solid rgba(36,26,32,.14)}
+  .phone-btn.primary{background:#d6336c;color:#fff;border-color:#d6336c}
+  .phone-gallery{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:9px 16px 0;flex:none}
   .phone-photo{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden}
-  .phone-photo::after{content:"";position:absolute;inset:0;background:#b8632f;mix-blend-mode:color}
   .phone-photo img{width:100%;height:100%;object-fit:cover;display:block}
-  .phone-packages{padding:14px 18px 0;flex:none}
-  .phone-packages-label{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#b8632f}
-  .phone-rate-row{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px solid rgba(42,36,32,.1);font-size:13px}
-  .phone-rate-row:last-child{border-bottom:none}
-  .phone-rate-price{font-family:"Fraunces",Georgia,serif;font-weight:600;color:#a3572a}
-  .phone-buttons{display:flex;gap:9px;padding:14px}
-  .phone-btn{flex:1;text-align:center;padding:13px;border-radius:8px;font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:13.5px;border:1px solid rgba(42,36,32,.14)}
-  .phone-btn.primary{background:#b8632f;color:#fff;border-color:#b8632f}
+  .phone-links{padding:9px 16px 0;display:flex;flex-direction:column;gap:6px;flex:none}
+  .phone-link-row{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:9px;background:#fdf1f5;border:1px solid rgba(214,51,108,.15);font-size:12.5px;font-weight:600;color:#241a20}
+  .phone-link-row span.chev{color:#d6336c;font-size:14px}
   .phone-spacer{flex:1}
   .phone-home-indicator{width:120px;height:5px;background:#0c0c0c;border-radius:3px;margin:0 auto 10px;opacity:.85;flex:none}
 </style>
@@ -83,23 +84,25 @@
       <div class="phone-screen">
         <div class="phone-island"></div>
         <div class="phone-statusbar"><span>9:41</span><span>●●●●</span></div>
-        <div class="phone-cover"><img src="https://picsum.photos/seed/bibherocover/500/220" alt="" /></div>
-        <div class="phone-avatar-wrap"><img class="phone-avatar" src="https://picsum.photos/seed/bibheroavatar/200/200" alt="" /></div>
+        <div class="phone-cover"><img src="https://picsum.photos/seed/floralshop1/500/220" alt="" /></div>
+        <div class="phone-avatar-wrap"><img class="phone-avatar" src="https://picsum.photos/seed/bouquet2/200/200" alt="" /></div>
         <div class="phone-name">Wildflower Studio</div>
+        <div class="phone-location">Hamilton, Ontario</div>
         <div class="phone-bio">Botanical event styling &amp; floral design</div>
-        <div class="phone-gallery">
-          <div class="phone-photo"><img src="https://picsum.photos/seed/bibherogallery1/300/300" alt="" /></div>
-          <div class="phone-photo"><img src="https://picsum.photos/seed/bibherogallery2/300/300" alt="" /></div>
-        </div>
-        <div class="phone-packages">
-          <div class="phone-packages-label">Packages</div>
-          <div class="phone-rate-row"><span>Full day wedding</span><span class="phone-rate-price">from $3,200</span></div>
-        </div>
-        <div class="phone-spacer"></div>
         <div class="phone-buttons">
           <div class="phone-btn primary">Call</div>
+          <div class="phone-btn">WhatsApp</div>
           <div class="phone-btn">Email</div>
         </div>
+        <div class="phone-gallery">
+          <div class="phone-photo"><img src="https://picsum.photos/seed/floralshop3/300/300" alt="" /></div>
+          <div class="phone-photo"><img src="https://picsum.photos/seed/bouquet4/300/300" alt="" /></div>
+        </div>
+        <div class="phone-links">
+          <div class="phone-link-row"><span>Instagram</span><span class="chev">›</span></div>
+          <div class="phone-link-row"><span>Full portfolio</span><span class="chev">›</span></div>
+        </div>
+        <div class="phone-spacer"></div>
         <div class="phone-home-indicator"></div>
       </div>
     </div>
