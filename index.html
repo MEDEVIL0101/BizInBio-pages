@@ -52,8 +52,8 @@
      cart summary bar, so the phone visibly demonstrates checkout, not just
      a link list. */
   .phone-products{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:7px 16px 0;flex:none}
-  .phone-product{position:relative;border-radius:10px;overflow:hidden;background:#f2f2f2}
-  .phone-product img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+  .phone-product{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:1;display:flex;align-items:center;justify-content:center}
+  .phone-product svg{width:62%;height:62%;display:block}
   .phone-product-add{position:absolute;bottom:6px;right:6px;width:24px;height:24px;border-radius:50%;background:#d6336c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.25)}
   .phone-product-info{padding:5px 1px 0}
   .phone-product-name{font-size:11px;font-weight:600;line-height:1.3;color:#241a20}
@@ -70,8 +70,8 @@
 
 <nav class="pill-nav">
   <div style="display:flex;align-items:center;gap:10px;margin-right:auto">
-    <img src="assets/bee-icon.png?v=1" alt="BizInBio" class="wordmark-mark" />
-    <span class="nav-brand" style="color:#0f0f0f">Biz<span style="color:var(--color-accent)">In</span>Bio</span>
+    <img src="assets/bee-icon.png?v=1" alt="BizInBio" class="wordmark-mark" style="width:42px;height:42px" />
+    <span class="nav-brand" style="color:#0f0f0f;font-size:24px">Biz<span style="color:var(--color-accent)">In</span>Bio</span>
   </div>
   <span class="nav-links" style="display:flex;align-items:center;gap:var(--space-4)">
     <a href="#how-it-works" style="padding:0 var(--space-3);color:#0f0f0f">Features</a>
@@ -110,12 +110,12 @@
           <div class="phone-btn">Email</div>
         </div>
         <div class="phone-products">
-          <div class="phone-product">
-            <img src="https://picsum.photos/seed/vivid3/300/300" alt="" />
+          <div class="phone-product" style="background:#1c1c1a">
+            <svg viewBox="0 0 100 100" fill="none" stroke-linejoin="round"><path d="M40,8 Q50,18 60,8 L82,24 L68,34 L68,90 L32,90 L32,34 L18,24 Z" fill="#f4f1ea" /></svg>
             <div class="phone-product-add">+</div>
           </div>
-          <div class="phone-product">
-            <img src="https://picsum.photos/seed/vivid6/300/300" alt="" />
+          <div class="phone-product" style="background:#f4ede0">
+            <svg viewBox="0 0 100 100" fill="none" stroke-linejoin="round"><path d="M38,10 Q50,3 62,10 L88,28 L72,40 L72,92 L28,92 L28,40 L12,28 Z" fill="#8a2f47" /></svg>
             <div class="phone-product-add">+</div>
           </div>
           <div class="phone-product-info"><div class="phone-product-name">Logo Tee</div><div class="phone-product-price">$28.00</div></div>
