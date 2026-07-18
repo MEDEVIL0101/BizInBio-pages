@@ -1,6 +1,13 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script>
+  // Strip any section hash (e.g. #pricing from the nav) before the browser
+  // gets a chance to auto-scroll to it, so a reload always lands on the
+  // hero instead of wherever the visitor last clicked to.
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+</script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>BizInBio — built for the bio</title>
@@ -18,11 +25,13 @@
     header.hero { grid-template-columns: 1fr !important; }
     .cols-3 { grid-template-columns: 1fr !important; }
     .cols-4 { grid-template-columns: 1fr 1fr !important; }
+    #pricing .cols-4 { grid-template-columns: 1fr !important; }
     .nav-links { display: none !important; }
     .pill-nav { margin: var(--space-3) var(--space-3) 0 !important; }
-    .url-pill { display: flex !important; width: 100%; max-width: none; flex-direction: column; align-items: stretch !important; border-radius: var(--radius-lg) !important; padding: var(--space-2) !important; }
-    .url-pill input { padding: 10px 12px !important; }
-    .url-pill .btn { border-radius: var(--radius-md) !important; }
+    .url-pill { flex-direction: column; align-items: stretch !important; width: 100%; max-width: none; background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; gap: 10px !important; }
+    .url-pill .url-field { border-radius: var(--radius-lg) !important; padding-left: 16px !important; }
+    .url-pill input { padding: 15px 10px 15px 3px !important; font-size: 16px !important; }
+    .url-pill .btn { width: 100%; border-radius: var(--radius-lg) !important; padding: 15px 18px !important; font-size: 15px; }
   }
 
   /* Floating pill nav sits on top of the dark hero band. */
@@ -31,15 +40,21 @@
   /* Full-bleed dark band with a soft red radial glow — used for the hero
      and repeated for the stats band + closing CTA so the page reads as a
      deliberate light/dark rhythm rather than one long white scroll. */
-  .dark-band{background:radial-gradient(circle at 28% 15%, rgba(255,32,32,.22), transparent 55%), #0d0d0d;color:#f4f4f4}
+  .dark-band{background:radial-gradient(circle at 28% 15%, rgba(255,32,32,.22), transparent 55%), #0d0d0d;color:#f4f4f4;display:flow-root}
   .dark-band .text-muted{color:rgba(244,244,244,.6)}
 
-  /* Linktree-style "bizinbio.com/yourname" pill input, used in the hero
-     and again in the closing CTA band. */
-  .url-pill{display:inline-flex;align-items:center;gap:8px;background:#ffffff;border-radius:var(--radius-pill);padding:6px 6px 6px 20px;max-width:440px}
-  .url-pill .prefix{font-size:14px;color:#8a8a8a;white-space:nowrap;font-family:var(--font-heading)}
-  .url-pill input{border:none;outline:none;font:14px var(--font-body);flex:1;min-width:0;padding:8px 0;background:transparent;color:var(--color-text)}
-  .url-pill .btn{border-radius:var(--radius-pill);white-space:nowrap;padding:11px 18px}
+  /* Linktree-style "bizinbio.com/yourname" claim-your-handle input, used in
+     the hero and again in the closing CTA band. The prefix+input live in
+     their own bordered .url-field so the whole thing reads as one real
+     input (not loose placeholder text) even after it stacks on mobile —
+     the outer .url-pill is just a shadowed wrapper grouping field + CTA. */
+  .url-pill{display:inline-flex;align-items:center;gap:8px;background:#ffffff;border:1px solid rgba(0,0,0,.07);border-radius:var(--radius-pill);padding:6px;max-width:460px;box-shadow:var(--shadow-md)}
+  .url-pill:focus-within{box-shadow:0 0 0 3px var(--color-accent-100),var(--shadow-md)}
+  .url-pill .url-field{display:flex;align-items:center;flex:1;min-width:0;background:var(--color-surface);border-radius:var(--radius-pill);padding-left:16px}
+  .url-pill .prefix{font-size:14px;color:#8a8a8a;white-space:nowrap;font-family:var(--font-heading);flex:none}
+  .url-pill input{border:none;outline:none;font:600 14.5px var(--font-body);flex:1;min-width:0;padding:11px 10px 11px 3px;background:transparent;color:var(--color-text)}
+  .url-pill input::placeholder{color:#b3b3b3;font-weight:400}
+  .url-pill .btn{border-radius:var(--radius-pill);white-space:nowrap;padding:11px 20px;flex:none}
 
   /* How it works — big faded numerals instead of bordered step cards. */
   .step-numeral{font-family:var(--font-heading);font-weight:700;font-size:64px;line-height:1;color:var(--color-accent-100);-webkit-text-stroke:1.5px var(--color-accent);position:relative}
@@ -56,8 +71,9 @@
   .phone-filter{padding:6px 12px;border-radius:999px;border:1px solid rgba(36,26,32,.14);font-size:11px;font-weight:600;font-family:"Fraunces",Georgia,serif;color:#241a20}
   .phone-filter.active{background:#d6336c;color:#fff;border-color:#d6336c}
   .phone-products{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:7px 16px 0;flex:none}
-  .phone-product{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:1;display:flex;align-items:center;justify-content:center}
+  .phone-product{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:#f4f1ea}
   .phone-product svg{width:62%;height:62%;display:block}
+  .phone-product img{width:100%;height:100%;object-fit:cover;display:block}
   .phone-product-add{position:absolute;bottom:6px;right:6px;width:24px;height:24px;border-radius:50%;background:#d6336c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.25)}
   .phone-product-info{padding:5px 1px 0}
   .phone-product-name{font-size:11px;font-weight:600;line-height:1.3;color:#241a20}
@@ -93,8 +109,10 @@
     <p class="text-muted" style="max-width:460px;font-size:17px;margin-top:var(--space-3)">One link in your bio. A real page that connects people to everything your business offers — published in minutes.</p>
     <div style="margin-top:var(--space-6)">
       <div class="url-pill">
-        <span class="prefix">bizinbio.com/</span>
-        <input type="text" placeholder="yourbusiness" />
+        <div class="url-field">
+          <span class="prefix">bizinbio.com/</span>
+          <input type="text" placeholder="yourbusiness" />
+        </div>
         <a href="/app/index.html" class="btn btn-primary">Get started free</a>
       </div>
     </div>
@@ -105,8 +123,8 @@
         <div class="phone-island"></div>
         <div class="phone-statusbar"><span>9:41</span><span>●●●●</span></div>
         <div class="phone-cover"><img src="https://picsum.photos/seed/urbanfit4/500/220" alt="" /></div>
-        <div class="phone-avatar-wrap"><img class="phone-avatar" src="https://picsum.photos/seed/vivid1/200/200" alt="" /></div>
-        <div class="phone-name">Rally Supply Co.</div>
+        <div class="phone-avatar-wrap"><img class="phone-avatar" src="assets/RallyLogo.png" alt="" /></div>
+        <div class="phone-name">Rally Design Co.</div>
         <div class="phone-location">Austin, Texas</div>
         <div class="phone-filters">
           <span class="phone-filter active">All</span>
@@ -114,18 +132,18 @@
           <span class="phone-filter">Hoodies</span>
         </div>
         <div class="phone-products">
-          <div class="phone-product" style="background:#1c1c1a">
-            <svg viewBox="0 0 100 100" fill="none" stroke-linejoin="round"><path d="M40,8 Q50,18 60,8 L82,24 L68,34 L68,90 L32,90 L32,34 L18,24 Z" fill="#f4f1ea" /></svg>
+          <div class="phone-product">
+            <img src="assets/TshirtExample.png" alt="" />
             <div class="phone-product-add">+</div>
           </div>
-          <div class="phone-product" style="background:#f4ede0">
-            <svg viewBox="0 0 100 100" fill="none" stroke-linejoin="round"><path d="M38,10 Q50,3 62,10 L88,28 L72,40 L72,92 L28,92 L28,40 L12,28 Z" fill="#8a2f47" /></svg>
+          <div class="phone-product">
+            <img src="assets/HoodieExample.png" alt="" />
             <div class="phone-product-add">+</div>
           </div>
-          <div class="phone-product-info"><div class="phone-product-name">Logo Tee</div><div class="phone-product-price">$28.00</div></div>
-          <div class="phone-product-info"><div class="phone-product-name">Crewneck</div><div class="phone-product-price">$54.00</div></div>
+          <div class="phone-product-info"><div class="phone-product-name">Tee</div><div class="phone-product-price">$32.00</div></div>
+          <div class="phone-product-info"><div class="phone-product-name">Hoodie</div><div class="phone-product-price">$58.00</div></div>
         </div>
-        <div class="phone-cart-bar"><span class="cart-total">2 items — $82.00</span><span class="cart-btn">Checkout</span></div>
+        <div class="phone-cart-bar"><span class="cart-total">2 items — $90.00</span><span class="cart-btn">Checkout</span></div>
         <div class="phone-links">
           <div class="phone-link-row"><span>Link to our Amazon store</span><span class="chev">›</span></div>
         </div>
@@ -259,8 +277,10 @@
   <h2 style="color:#ffffff">Your business deserves a real page.</h2>
   <p class="text-muted" style="max-width:440px;margin:var(--space-3) auto var(--space-6)">Set it up in the time it takes to make coffee.</p>
   <div class="url-pill" style="margin:0 auto">
-    <span class="prefix">bizinbio.com/</span>
-    <input type="text" placeholder="yourbusiness" />
+    <div class="url-field">
+      <span class="prefix">bizinbio.com/</span>
+      <input type="text" placeholder="yourbusiness" />
+    </div>
     <a href="/app/index.html" class="btn btn-primary">Get started free</a>
   </div>
 </div>
