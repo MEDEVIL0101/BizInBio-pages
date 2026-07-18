@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Filter Test Shop</title>
+<meta name="description" content="Check out my business page." />
+<link rel="canonical" href="https://bizinbio.net/filter-check/" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Filter Test Shop" />
+<meta property="og:description" content="Check out my business page." />
+<meta property="og:url" content="https://bizinbio.net/filter-check/" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="//bizinbio.net/assets/favicon-32.png?v=1" />
+<link rel="apple-touch-icon" href="//bizinbio.net/assets/apple-touch-icon.png?v=1" />
+<link rel="stylesheet" href="//bizinbio.net/assets/site.css?v=11" />
+<style>:root{
+    --color-bg:#ffffff;
+    --body-bg:#ffffff;
+    --color-card-bg:#ffffff;
+    --color-surface:#f2f2f2;
+    --color-text:#0f0f0f;
+    --color-accent:#ff0000;
+    --font-heading:"Barlow Condensed",system-ui,sans-serif;
+    --font-heading-weight:600;
+    --font-body:"Barlow",system-ui,sans-serif;
+    --radius-md:4px;
+    --card-blur:0px;
+    --card-border-width:1px;
+    --avatar-radius:50%;
+    --heading-transform:none;
+    --heading-letter-spacing:-.015em;
+  }</style>
+</head>
+<body>
+<div class="page-wrap">
+
+    
+    
+    
+    <header style="padding:0 var(--space-4) var(--space-4);text-align:center">
+      <h1 style="font-size:30px">Filter Test Shop</h1>
+      
+      
+    </header>
+    
+    
+    <div style="display:flex;gap:var(--space-2);padding:0 var(--space-4) var(--space-6)"><a href="mailto:filter-check@bizinbio.net" class="btn" style="flex:1">Email</a></div>
+    
+    <section style="padding:0 var(--space-4) var(--space-6)">
+      <h6 style="color:var(--color-accent-700);margin-bottom:var(--space-2)">Shop</h6>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:var(--space-3)"><button type="button" class="bib-shop-filter" data-category="" style="padding:6px 12px;border-radius:999px;border:1px solid var(--color-accent);background:var(--color-accent);color:var(--color-on-accent);font-size:12px;font-family:var(--font-heading);font-weight:600;cursor:pointer">All</button><button type="button" class="bib-shop-filter" data-category="Tees" style="padding:6px 12px;border-radius:999px;border:1px solid var(--color-divider);background:transparent;color:var(--color-text);font-size:12px;font-family:var(--font-heading);font-weight:600;cursor:pointer">Tees</button><button type="button" class="bib-shop-filter" data-category="Hoodies" style="padding:6px 12px;border-radius:999px;border:1px solid var(--color-divider);background:transparent;color:var(--color-text);font-size:12px;font-family:var(--font-heading);font-weight:600;cursor:pointer">Hoodies</button></div>
+      <div class="gallery" id="bib-shop-grid">
+        <div class="blueprint" data-category="Tees" style="position:relative;padding:var(--space-2);display:flex;flex-direction:column;gap:6px">
+          <div style="aspect-ratio:1;border-radius:var(--radius-md);background:var(--color-surface)"></div>
+          <span style="font-size:13px;font-weight:600;line-height:1.3">Logo Tee</span>
+          <span style="font-size:13px;color:var(--color-accent-700);font-family:var(--font-heading);font-weight:600">$28.00</span>
+          <button type="button" class="btn btn-secondary bib-add-cart" data-id="ec862159-e01a-4d94-986a-4daca3fdccd3" data-name="Logo Tee" data-price="2800" style="margin-top:2px;font-size:12px;padding:8px">Add to cart</button>
+        </div>
+        <div class="blueprint" data-category="Tees" style="position:relative;padding:var(--space-2);display:flex;flex-direction:column;gap:6px">
+          <div style="aspect-ratio:1;border-radius:var(--radius-md);background:var(--color-surface)"></div>
+          <span style="font-size:13px;font-weight:600;line-height:1.3">Graphic Tee</span>
+          <span style="font-size:13px;color:var(--color-accent-700);font-family:var(--font-heading);font-weight:600">$32.00</span>
+          <button type="button" class="btn btn-secondary bib-add-cart" data-id="18b4fe66-1718-4fa4-946d-ad743a46891c" data-name="Graphic Tee" data-price="3200" style="margin-top:2px;font-size:12px;padding:8px">Add to cart</button>
+        </div>
+        <div class="blueprint" data-category="Hoodies" style="position:relative;padding:var(--space-2);display:flex;flex-direction:column;gap:6px">
+          <div style="aspect-ratio:1;border-radius:var(--radius-md);background:var(--color-surface)"></div>
+          <span style="font-size:13px;font-weight:600;line-height:1.3">Crewneck</span>
+          <span style="font-size:13px;color:var(--color-accent-700);font-family:var(--font-heading);font-weight:600">$54.00</span>
+          <button type="button" class="btn btn-secondary bib-add-cart" data-id="764321da-d342-463a-929c-1c1e07555295" data-name="Crewneck" data-price="5400" style="margin-top:2px;font-size:12px;padding:8px">Add to cart</button>
+        </div></div>
+    </section>
+    <div id="bib-cart-bar" style="display:none;position:sticky;bottom:0;background:var(--color-card-bg);border-top:1px solid var(--color-divider);padding:var(--space-3) var(--space-4);align-items:center;gap:var(--space-3);z-index:5">
+      <span id="bib-cart-summary" style="flex:1;font-size:13px"></span>
+      <button id="bib-cart-checkout" class="btn btn-primary" style="flex:none">Checkout</button>
+    </div>
+    <script>
+      (function () {
+        var CART_KEY = 'bib_cart_' + "64caa569-e515-4cfd-aad3-cf470504a380";
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('shop') === 'success') localStorage.removeItem(CART_KEY);
+        function getCart() { try { return JSON.parse(localStorage.getItem(CART_KEY)) || {}; } catch (e) { return {}; } }
+        function setCart(c) { localStorage.setItem(CART_KEY, JSON.stringify(c)); renderBar(); }
+        function renderBar() {
+          var cart = getCart();
+          var ids = Object.keys(cart);
+          var bar = document.getElementById('bib-cart-bar');
+          if (!ids.length) { bar.style.display = 'none'; return; }
+          var count = 0, total = 0;
+          ids.forEach(function (id) { count += cart[id].qty; total += cart[id].qty * cart[id].price; });
+          document.getElementById('bib-cart-summary').textContent = count + (count === 1 ? ' item — $' : ' items — $') + (total / 100).toFixed(2);
+          bar.style.display = 'flex';
+        }
+        document.querySelectorAll('.bib-add-cart').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var cart = getCart();
+            var id = btn.dataset.id;
+            if (!cart[id]) cart[id] = { qty: 0, price: Number(btn.dataset.price), name: btn.dataset.name };
+            cart[id].qty += 1;
+            setCart(cart);
+            var original = btn.textContent;
+            btn.textContent = 'Added';
+            setTimeout(function () { btn.textContent = original; }, 1100);
+          });
+        });
+        document.getElementById('bib-cart-checkout').addEventListener('click', async function () {
+          var cart = getCart();
+          var items = Object.keys(cart).map(function (id) { return { productId: id, quantity: cart[id].qty }; });
+          var btn = this;
+          var original = btn.textContent;
+          btn.disabled = true;
+          btn.textContent = 'Redirecting...';
+          try {
+            var res = await fetch("https://eqsxcbmcsjrtnkevaygy.supabase.co" + '/functions/v1/create-shop-checkout', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': "sb_publishable_DPifKzXa875ieM2CLgMieA_VJyYRa-6",
+                'Authorization': 'Bearer ' + "sb_publishable_DPifKzXa875ieM2CLgMieA_VJyYRa-6"
+              },
+              body: JSON.stringify({ pageId: "64caa569-e515-4cfd-aad3-cf470504a380", items: items })
+            });
+            var data = await res.json();
+            if (!res.ok || !data.url) throw new Error(data.error || 'failed');
+            window.location.href = data.url;
+          } catch (err) {
+            alert('Something went wrong — please try again.');
+            btn.disabled = false;
+            btn.textContent = original;
+          }
+        });
+        document.querySelectorAll('.bib-shop-filter').forEach(function (chip) {
+          chip.addEventListener('click', function () {
+            document.querySelectorAll('.bib-shop-filter').forEach(function (c) {
+              var isActive = c === chip;
+              c.style.background = isActive ? 'var(--color-accent)' : 'transparent';
+              c.style.color = isActive ? 'var(--color-on-accent)' : 'var(--color-text)';
+              c.style.borderColor = isActive ? 'var(--color-accent)' : 'var(--color-divider)';
+            });
+            var cat = chip.dataset.category;
+            document.querySelectorAll('#bib-shop-grid > div').forEach(function (card) {
+              card.style.display = (!cat || card.dataset.category === cat) ? '' : 'none';
+            });
+          });
+        });
+        renderBar();
+      })();
+    </script><footer style="padding:var(--space-6) var(--space-4);text-align:center;border-top:1px solid var(--color-divider)">
+      
+      <span class="text-muted" style="font-size:12px">Powered by BizInBio</span>
+    </footer>
+</div>
+</body>
+</html>
