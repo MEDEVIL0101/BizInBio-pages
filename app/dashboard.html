@@ -6,7 +6,7 @@
 <title>Dashboard — BizInBio</title>
 <link rel="icon" href="../assets/favicon-32.png?v=1" />
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=1" />
-<link rel="stylesheet" href="../assets/site.css?v=12" />
+<link rel="stylesheet" href="../assets/site.css?v=13" />
 </head>
 <body>
 <div class="page-wrap" style="display:block;min-height:0">
@@ -90,21 +90,8 @@
 
   <section class="blueprint" style="position:relative;padding:var(--space-4)">
     <h6 style="margin-bottom:var(--space-2)">Page content</h6>
-    <p class="text-muted" style="font-size:13px;margin-bottom:var(--space-3)">Add, edit, and reorder everything on your page — header, about, services, gallery, social links, and more.</p>
+    <p class="text-muted" style="font-size:13px;margin-bottom:var(--space-3)">Add, edit, and reorder everything on your page — header, about, services, gallery, social links, colors, and fonts.</p>
     <a href="/app/builder.html" class="btn btn-primary btn-block">Edit page content</a>
-  </section>
-
-  <section class="blueprint" style="position:relative;padding:var(--space-4)">
-    <h6 style="margin-bottom:var(--space-3)">Design</h6>
-    <div id="dash-theme-row" style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-2)"></div>
-    <div id="dash-custom-color-row" style="display:none;margin-top:var(--space-3);flex-direction:column;gap:var(--space-3)">
-      <div class="field"><label>Accent color</label><input type="color" id="dash-custom-color-input" value="#ff0000" style="width:100%;height:44px;padding:2px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-surface)" /></div>
-      <div class="field"><label>Background color</label><input type="color" id="dash-custom-bg-input" value="#ffffff" style="width:100%;height:44px;padding:2px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-surface)" /></div>
-      <div class="field"><label>Text color</label><input type="color" id="dash-custom-text-input" value="#0f0f0f" style="width:100%;height:44px;padding:2px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-surface)" /></div>
-      <div class="field"><label>Font</label><select class="input" id="dash-custom-font-input"></select></div>
-    </div>
-    <button id="save-theme" class="btn btn-primary btn-block" style="margin-top:var(--space-4)">Save look &amp; republish</button>
-    <p id="theme-msg" class="text-muted" style="text-align:center;font-size:13px;margin-top:var(--space-2);min-height:18px"></p>
   </section>
 
   <section class="blueprint" style="position:relative;padding:var(--space-4)">
@@ -116,7 +103,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="app.js?v=11"></script>
+<script src="app.js?v=12"></script>
 <script>
   let session, page, elementsByType = {};
 
@@ -170,73 +157,6 @@
     } catch (err) {
       dashSlugStatus.textContent = err.message || "Something went wrong.";
       dashSlugSave.disabled = false;
-    }
-  });
-
-  let selectedDashTheme = "classic";
-  const dashThemeRow = document.getElementById("dash-theme-row");
-  const dashCustomColorRow = document.getElementById("dash-custom-color-row");
-  const dashCustomColorInput = document.getElementById("dash-custom-color-input");
-  const dashCustomBgInput = document.getElementById("dash-custom-bg-input");
-  const dashCustomTextInput = document.getElementById("dash-custom-text-input");
-  const dashCustomFontInput = document.getElementById("dash-custom-font-input");
-
-  dashCustomFontInput.innerHTML = FONT_OPTIONS.map((f) => `<option value="${f.id}">${f.label}</option>`).join("");
-
-  function currentCustomTheme() {
-    return {
-      themeId: selectedDashTheme,
-      accent: dashCustomColorInput.value,
-      bg: dashCustomBgInput.value,
-      text: dashCustomTextInput.value,
-      font: dashCustomFontInput.value,
-    };
-  }
-
-  function applyCurrentTheme() {
-    const t = currentCustomTheme();
-    applyTheme(t.themeId, t.accent, t.bg, t.text, t.font);
-  }
-
-  function renderThemePicker() {
-    dashThemeRow.innerHTML = "";
-    THEMES.forEach((theme) => {
-      const btn = document.createElement("button");
-      btn.className = "theme-swatch" + (theme.id === selectedDashTheme ? " sel" : "");
-      btn.type = "button";
-      btn.innerHTML = `${themeSwatchPreview(theme)}<span style="font-family:${theme.fontHeading}">${theme.label}</span>`;
-      btn.addEventListener("click", () => {
-        selectedDashTheme = theme.id;
-        renderThemePicker();
-        dashCustomColorRow.style.display = theme.id === "custom" ? "flex" : "none";
-        applyCurrentTheme();
-      });
-      dashThemeRow.appendChild(btn);
-    });
-  }
-
-  [dashCustomColorInput, dashCustomBgInput, dashCustomTextInput, dashCustomFontInput].forEach((input) => {
-    input.addEventListener("input", () => {
-      if (selectedDashTheme === "custom") applyCurrentTheme();
-    });
-  });
-
-  document.getElementById("save-theme").addEventListener("click", async () => {
-    const themeMsg = document.getElementById("theme-msg");
-    themeMsg.textContent = "Saving...";
-    try {
-      const isCustom = selectedDashTheme === "custom";
-      await sb.from("pages").update({
-        theme: selectedDashTheme,
-        custom_accent_color: isCustom ? dashCustomColorInput.value : null,
-        custom_bg_color: isCustom ? dashCustomBgInput.value : null,
-        custom_text_color: isCustom ? dashCustomTextInput.value : null,
-        custom_font: isCustom ? dashCustomFontInput.value : null,
-      }).eq("id", page.id);
-      await callFunction("render-page", { page_id: page.id }, session);
-      themeMsg.textContent = "Saved and republished.";
-    } catch (err) {
-      themeMsg.textContent = err.message || "Something went wrong.";
     }
   });
 
@@ -531,15 +451,6 @@
     document.getElementById("page-url").textContent = `bizinbio.net/${page.slug}/`;
     document.getElementById("status-badge").textContent = page.published ? "Live" : "Not published";
     document.getElementById("dash-slug-input").value = page.slug;
-
-    selectedDashTheme = page.theme || "classic";
-    if (page.custom_accent_color) dashCustomColorInput.value = page.custom_accent_color;
-    if (page.custom_bg_color) dashCustomBgInput.value = page.custom_bg_color;
-    if (page.custom_text_color) dashCustomTextInput.value = page.custom_text_color;
-    if (page.custom_font) dashCustomFontInput.value = page.custom_font;
-    renderThemePicker();
-    if (selectedDashTheme === "custom") dashCustomColorRow.style.display = "flex";
-    applyCurrentTheme();
 
     if (page.stripe_connect_onboarding_complete) {
       document.getElementById("connect-status").textContent = "Connected — deposits are enabled.";

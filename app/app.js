@@ -33,63 +33,35 @@ const CATEGORY_ELEMENTS = {
   other: ["header", "about", "portfolio_gallery", "services_list", "contact", "social_link"],
 };
 
-// Theme presets — each is a distinct persona (font pairing, corner shape,
-// solid-vs-glass surface, optional gradient background), mirrored field-for-
-// field from THEME_PRESETS in supabase/functions/render-page/index.ts. Keep
-// the two in sync when editing either — there's no shared build step
-// between the Deno edge function and this static JS file, so it's a manual
-// mirror. Full fidelity here (not just accent/bg) is what lets the
-// onboarding/dashboard forms re-skin live as an actual preview, not just a
-// small swatch — see applyTheme() below.
-const THEMES = [
-  { id: "classic", label: "Classic", bg: "#ffffff", cardBg: "#ffffff", surface: "#f2f2f2", text: "#0f0f0f", accent: "#ff0000",
-    fontHeading: '"Barlow Condensed",system-ui,sans-serif', fontHeadingWeight: "600", fontBody: '"Barlow",system-ui,sans-serif',
-    radius: 4, cardBlur: 0, borderWidth: 1, avatarRadius: "50%", headingTransform: "none", headingLetterSpacing: "-.015em" },
-  { id: "editorial", label: "Editorial", bg: "#faf6f1", cardBg: "#ffffff", surface: "#f1ebe2", text: "#2a2420", accent: "#b8632f",
-    fontHeading: '"Fraunces","Georgia",serif', fontHeadingWeight: "600", fontBody: '"Inter",system-ui,sans-serif',
-    radius: 10, cardBlur: 0, borderWidth: 1, avatarRadius: "50%", headingTransform: "none", headingLetterSpacing: "-.01em" },
-  { id: "rugged", label: "Rugged", bg: "#1c1c1a", cardBg: "#262420", surface: "#302d27", text: "#f2ede4", accent: "#c85a2a", dark: true,
-    fontHeading: '"Oswald",system-ui,sans-serif', fontHeadingWeight: "600", fontBody: '"Barlow",system-ui,sans-serif',
-    radius: 0, cardBlur: 0, borderWidth: 2, avatarRadius: "8px", headingTransform: "uppercase", headingLetterSpacing: "0.01em" },
-  { id: "collegiate", label: "Collegiate", bg: "#f7f3ea", cardBg: "#ffffff", surface: "#efe8d8", text: "#1a2340", accent: "#a30f28",
-    fontHeading: '"Bebas Neue",system-ui,sans-serif', fontHeadingWeight: "400", fontBody: '"Barlow",system-ui,sans-serif',
-    radius: 16, cardBlur: 0, borderWidth: 1, avatarRadius: "50%", headingTransform: "uppercase", headingLetterSpacing: "0.02em" },
-  { id: "aurora", label: "Aurora", bg: "#f3e8e2", bodyBg: "linear-gradient(160deg,#f3e2da 0%,#ece0e6 100%)", cardBg: "rgba(255,255,255,0.55)", surface: "rgba(255,255,255,0.7)", text: "#33232a", accent: "#8a2f47",
-    fontHeading: '"Manrope",system-ui,sans-serif', fontHeadingWeight: "700", fontBody: '"Inter",system-ui,sans-serif',
-    radius: 18, cardBlur: 18, borderWidth: 1, avatarRadius: "50%", headingTransform: "none", headingLetterSpacing: "-.01em" },
-  { id: "midnight", label: "Midnight", bg: "#15130f", bodyBg: "linear-gradient(160deg,#17140f 0%,#0c0a08 100%)", cardBg: "rgba(255,255,255,0.06)", surface: "rgba(255,255,255,0.09)", text: "#f1ede4", accent: "#c9a227", dark: true,
-    fontHeading: '"Manrope",system-ui,sans-serif', fontHeadingWeight: "700", fontBody: '"Inter",system-ui,sans-serif',
-    radius: 16, cardBlur: 20, borderWidth: 1, avatarRadius: "50%", headingTransform: "none", headingLetterSpacing: "-.01em" },
-  { id: "sage", label: "Sage", bg: "#f6f5ef", cardBg: "#ffffff", surface: "#eeece0", text: "#232a1e", accent: "#5c7a52",
-    fontHeading: '"Fraunces","Georgia",serif', fontHeadingWeight: "500", fontBody: '"Barlow",system-ui,sans-serif',
-    radius: 10, cardBlur: 0, borderWidth: 1, avatarRadius: "50%", headingTransform: "none", headingLetterSpacing: "-.005em" },
-  { id: "custom", label: "Custom", bg: "#ffffff", cardBg: "#ffffff", surface: "#f2f2f2", text: "#0f0f0f", accent: "#ff0000",
-    fontHeading: '"Barlow Condensed",system-ui,sans-serif', fontHeadingWeight: "600", fontBody: '"Barlow",system-ui,sans-serif',
-    radius: 4, cardBlur: 0, borderWidth: 1, avatarRadius: "50%", headingTransform: "none", headingLetterSpacing: "-.015em" },
+// Theme v2 — a flat color palette (or Custom, user-picked accent+bg) plus an
+// independent font pairing. Mirrors PALETTES/FONT_PAIRS/CUSTOM_TEXT/SHAPE in
+// supabase/functions/render-page/index.ts exactly (same manual-sync
+// convention as SOCIAL_PLATFORMS). One consistent shape language (radius/
+// border/avatar) across every palette — only color and font vary.
+const PALETTES = [
+  { id: "coral", label: "Coral", primary: "#e8603c", bg: "#fbf3ec", text: "#3d2c22" },
+  { id: "citrus", label: "Citrus", primary: "#dba53a", bg: "#fbf4e7", text: "#3a3020" },
+  { id: "ocean", label: "Ocean", primary: "#3f7cb0", bg: "#eff5f9", text: "#212c34" },
+  { id: "berry", label: "Berry", primary: "#a13d6b", bg: "#faeef3", text: "#33202a" },
+  { id: "forest", label: "Forest", primary: "#4b8060", bg: "#eef6f0", text: "#1f2e24" },
+];
+const CUSTOM_TEXT = "#2b2320";
+const SHAPE = { radius: "14px", cardBlur: "0px", borderWidth: "1px", avatarRadius: "50%" };
+
+const FONT_PAIRS = [
+  { id: "playful", label: "Playful", display: '"Fredoka",system-ui,sans-serif', body: '"Plus Jakarta Sans",system-ui,sans-serif' },
+  { id: "editorial", label: "Editorial", display: '"Playfair Display","Georgia",serif', body: '"Source Sans 3",system-ui,sans-serif' },
+  { id: "modern", label: "Modern", display: '"Space Grotesk",system-ui,sans-serif', body: '"IBM Plex Sans",system-ui,sans-serif' },
+  { id: "elegant", label: "Elegant", display: '"DM Serif Display","Georgia",serif', body: '"DM Sans",system-ui,sans-serif' },
 ];
 
 // Element types visible on a free-tier page — mirrors FREE_ELEMENTS in
 // supabase/functions/render-page/index.ts (same manual-sync convention as
-// THEMES/SOCIAL_PLATFORMS). Every paid tier ("website_shop"/All Access and
+// PALETTES/SOCIAL_PLATFORMS). Every paid tier ("website_shop"/All Access and
 // "custom_domain") unlocks every element type, so the builder only needs
 // this one free/paid boundary, not the full per-tier breakdown render-page
 // enforces server-side.
 const FREE_ELEMENT_TYPES = new Set(["header", "social_link", "contact", "about"]);
-
-// Curated font choices for the "Custom" theme — mirrors FONT_OPTIONS in
-// supabase/functions/render-page/index.ts (same manual-sync convention as
-// THEMES/THEME_PRESETS). Deliberately a fixed list, not free-text: every
-// option here is already loaded via the Google Fonts import at the top of
-// site.css, so a custom font choice can never reference an unloaded family.
-const FONT_OPTIONS = [
-  { id: "barlow_condensed", label: "Barlow Condensed", css: '"Barlow Condensed",system-ui,sans-serif' },
-  { id: "barlow", label: "Barlow", css: '"Barlow",system-ui,sans-serif' },
-  { id: "inter", label: "Inter", css: '"Inter",system-ui,sans-serif' },
-  { id: "fraunces", label: "Fraunces (serif)", css: '"Fraunces","Georgia",serif' },
-  { id: "oswald", label: "Oswald", css: '"Oswald",system-ui,sans-serif' },
-  { id: "bebas_neue", label: "Bebas Neue", css: '"Bebas Neue",system-ui,sans-serif' },
-  { id: "manrope", label: "Manrope", css: '"Manrope",system-ui,sans-serif' },
-];
 
 // Social platform icons for the builder's link picker — mirrors
 // SOCIAL_PLATFORMS in supabase/functions/render-page/index.ts exactly (same
@@ -130,65 +102,54 @@ const ELEMENT_DEFAULTS = {
   services_list: { services: [] },
   portfolio_gallery: { photos: [] },
   social_link: { links: [] },
-  contact: { phone: "", whatsapp: "", email: "" },
+  contact: {
+    methods: [
+      { id: "phone", type: "phone", label: "Phone", value: "", enabled: false, showValue: true },
+      { id: "email", type: "email", label: "Email", value: "", enabled: false, showValue: true },
+      { id: "whatsapp", type: "whatsapp", label: "WhatsApp", value: "", enabled: false, showValue: true },
+    ],
+  },
   service_area: { area: "" },
-  quote_request_form: {},
+  quote_request_form: {
+    fields: [
+      { id: "name", label: "Name", enabled: true },
+      { id: "email", label: "Email", enabled: true },
+      { id: "phone", label: "Phone", enabled: false },
+      { id: "details", label: "Project details", enabled: true },
+    ],
+  },
   booking_deposit: { deposit_amount: 0 },
   product_shop: {},
 };
 
-// Applies a theme's full token set to the document root, so the
-// onboarding/dashboard form itself becomes a live preview of the chosen
-// look (not just a small static swatch) — same CSS vars themeStyleBlock()
-// injects for the actual published page in render-page/index.ts.
-function applyTheme(themeId, customAccentColor, customBgColor, customTextColor, customFont) {
-  const theme = THEMES.find((t) => t.id === themeId) || THEMES[0];
+// Applies a theme's full token set to a root element (defaults to the
+// document root) — same CSS vars themeStyleBlock() injects for the actual
+// published page in render-page/index.ts, so any element that gets this
+// becomes a live preview of the chosen look. Builder chrome is fixed-color
+// per the design handoff, so builder.html targets only its preview
+// subtree, not the whole document, unlike other app pages.
+function applyTheme(themeId, customAccentColor, customBgColor, fontPairId, target) {
   const isCustom = themeId === "custom";
-  const accent = isCustom && customAccentColor ? customAccentColor : theme.accent;
-  const bg = isCustom && customBgColor ? customBgColor : theme.bg;
-  const bodyBg = isCustom && customBgColor ? customBgColor : (theme.bodyBg || theme.bg);
-  const text = isCustom && customTextColor ? customTextColor : theme.text;
-  const font = isCustom ? FONT_OPTIONS.find((f) => f.id === customFont) : undefined;
-  const root = document.documentElement.style;
-  root.setProperty("--color-bg", bg);
-  root.setProperty("--body-bg", bodyBg);
-  root.setProperty("--color-card-bg", theme.cardBg);
-  root.setProperty("--color-surface", theme.surface);
-  root.setProperty("--color-text", text);
-  root.setProperty("--color-accent", accent);
-  root.setProperty("--font-heading", font ? font.css : theme.fontHeading);
-  root.setProperty("--font-heading-weight", theme.fontHeadingWeight);
-  root.setProperty("--font-body", font ? font.css : theme.fontBody);
-  root.setProperty("--radius-md", theme.radius + "px");
-  root.setProperty("--card-blur", theme.cardBlur + "px");
-  root.setProperty("--card-border-width", theme.borderWidth + "px");
-  root.setProperty("--avatar-radius", theme.avatarRadius);
-  root.setProperty("--heading-transform", theme.headingTransform);
-  root.setProperty("--heading-letter-spacing", theme.headingLetterSpacing);
-}
-
-// Shared theme-swatch preview for the onboarding + dashboard theme pickers —
-// a small realistic mockup of the actual page (avatar, business name set in
-// the theme's own heading font, a body line, a button) rather than an
-// abstract color dot, so picking a theme shows what you'll actually get.
-function themeSwatchPreview(theme) {
-  const isDark = !!theme.dark;
-  const isGlass = theme.cardBlur > 0;
-  const nameColor = isDark ? "rgba(255,255,255,.92)" : "rgba(20,20,20,.85)";
-  const lineColor = isDark ? "rgba(255,255,255,.35)" : "rgba(20,20,20,.22)";
-  const glassBg = isDark ? "rgba(255,255,255,.08)" : "rgba(255,255,255,.5)";
-  const glassBorder = isDark ? "rgba(255,255,255,.16)" : "rgba(255,255,255,.7)";
-  const innerRadius = Math.max(theme.radius - 5, 3);
-  return `
-    <div class="swatch-preview" style="background:${theme.bodyBg || theme.bg};border-radius:${theme.radius}px">
-      ${theme.id === "custom" ? `<div style="position:absolute;inset:0;background:conic-gradient(from 0deg, red, orange, yellow, green, blue, violet, red);opacity:.5"></div>` : ""}
-      ${isGlass ? `<div class="swatch-glass" style="border-radius:${innerRadius}px;background:${glassBg};border:1px solid ${glassBorder}"></div>` : ""}
-      <div class="swatch-mini-avatar" style="border-radius:${theme.avatarRadius};background:${theme.accent}"></div>
-      <div class="swatch-mini-name" style="font-family:${theme.fontHeading};color:${nameColor}">Studio</div>
-      <div class="swatch-mini-line" style="background:${lineColor}"></div>
-      <div class="swatch-mini-btn" style="background:${theme.accent};border-radius:${Math.max(innerRadius - 2, 2)}px"></div>
-      <div class="swatch-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-    </div>`;
+  const palette = isCustom
+    ? { primary: customAccentColor || PALETTES[0].primary, bg: customBgColor || PALETTES[0].bg, text: CUSTOM_TEXT }
+    : PALETTES.find((p) => p.id === themeId) || PALETTES[0];
+  const fonts = FONT_PAIRS.find((f) => f.id === fontPairId) || FONT_PAIRS[0];
+  const root = (target || document.documentElement).style;
+  root.setProperty("--color-bg", palette.bg);
+  root.setProperty("--body-bg", palette.bg);
+  root.setProperty("--color-card-bg", "#ffffff");
+  root.setProperty("--color-surface", `color-mix(in srgb, ${palette.bg} 70%, white)`);
+  root.setProperty("--color-text", palette.text);
+  root.setProperty("--color-accent", palette.primary);
+  root.setProperty("--font-heading", fonts.display);
+  root.setProperty("--font-heading-weight", "700");
+  root.setProperty("--font-body", fonts.body);
+  root.setProperty("--radius-md", SHAPE.radius);
+  root.setProperty("--card-blur", SHAPE.cardBlur);
+  root.setProperty("--card-border-width", SHAPE.borderWidth);
+  root.setProperty("--avatar-radius", SHAPE.avatarRadius);
+  root.setProperty("--heading-transform", "none");
+  root.setProperty("--heading-letter-spacing", "normal");
 }
 
 async function requireSession() {

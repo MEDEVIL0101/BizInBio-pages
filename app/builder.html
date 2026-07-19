@@ -6,93 +6,218 @@
 <title>Page builder — BizInBio</title>
 <link rel="icon" href="../assets/favicon-32.png?v=1" />
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=1" />
-<link rel="stylesheet" href="../assets/site.css?v=12" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* Builder chrome — fixed, not user-customizable (the live-preview panel
+     is the only themed subtree; everything else here stays constant
+     regardless of the page's selected palette/font). */
+  :root{
+    --bib-bg:oklch(96.5% 0.012 75);
+    --bib-panel-bg:oklch(97.5% 0.012 75);
+    --bib-card-bg:#ffffff;
+    --bib-text:oklch(23% 0.02 50);
+    --bib-muted:oklch(55% 0.02 50);
+    --bib-border:oklch(90% 0.015 70);
+    --bib-accent:oklch(64% 0.19 28);
+    --bib-accent-press:oklch(52% 0.19 28);
+  }
+  *{box-sizing:border-box}
+  body{margin:0}
+  ::selection{background:oklch(80% 0.14 30 / .35)}
+  html,body{height:100%}
+  body{font-family:"Plus Jakarta Sans",system-ui,sans-serif;color:var(--bib-text);background:var(--bib-bg)}
+  input,textarea,button{font-family:inherit}
+  a{color:var(--bib-accent);text-decoration:none}
+  a:hover{color:var(--bib-accent-press)}
+  @keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes toastIn{from{opacity:0;transform:translate(-50%,12px) scale(.96)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+
+  .bib-app{height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+  .bib-topbar{height:72px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:oklch(99% 0.004 75);border-bottom:1px solid var(--bib-border);position:sticky;top:0;z-index:30}
+  .bib-back{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--bib-muted);padding:8px 10px;border-radius:10px}
+  .bib-back:hover{background:oklch(94% 0.02 60);color:var(--bib-text)}
+  .bib-divider-v{width:1px;height:24px;background:var(--bib-border)}
+  .bib-wordmark{display:flex;align-items:center;gap:8px}
+  .bib-wordmark-dot{width:10px;height:10px;border-radius:50%;background:var(--bib-accent);display:inline-block}
+  .bib-wordmark-text{font-family:"Fredoka",sans-serif;font-weight:700;font-size:20px;letter-spacing:-.3px}
+  .bib-wordmark-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--bib-muted);margin-left:4px}
+  .bib-url-pill{display:flex;align-items:center;gap:8px;background:oklch(94% 0.015 70);border-radius:999px;padding:8px 14px;font-size:13px;color:var(--bib-muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+  .bib-live-pill{display:flex;align-items:center;gap:6px;background:oklch(93% 0.09 150);color:oklch(38% 0.13 150);font-size:13px;font-weight:700;padding:7px 14px;border-radius:999px}
+  .bib-live-dot{width:7px;height:7px;border-radius:50%;background:oklch(58% 0.17 150);display:inline-block}
+  .bib-save-btn{background:var(--bib-accent);color:#fff;border:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:12px;cursor:pointer;box-shadow:0 2px 0 var(--bib-accent-press),0 6px 16px oklch(64% 0.19 28 / .35);transition:transform .15s ease}
+  .bib-save-btn:hover:not(:disabled){transform:translateY(-1px)}
+  .bib-save-btn:active:not(:disabled){transform:translateY(1px);box-shadow:0 1px 0 var(--bib-accent-press)}
+  .bib-save-btn:disabled{opacity:.7;cursor:default}
+
+  .bib-body{flex:1;display:flex;overflow:hidden;position:relative}
+
+  .bib-editor{width:460px;flex-shrink:0;overflow-y:auto;padding:28px 24px 80px;display:flex;flex-direction:column;gap:18px;background:var(--bib-panel-bg);border-right:1px solid var(--bib-border)}
+
+  .bib-card{background:var(--bib-card-bg);border-radius:22px;border:1px solid var(--bib-border);padding:20px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 10px 24px oklch(60% 0.03 60 / .06);animation:cardIn .4s ease both}
+  .bib-card-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .bib-card-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .bib-card-title{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--bib-muted);text-transform:uppercase}
+  .bib-card-sub{font-size:12px;color:var(--bib-muted)}
+
+  .bib-field-label{font-size:12px;font-weight:600;color:var(--bib-muted);margin-bottom:6px}
+  .bib-static-field{padding:12px 14px;border-radius:12px;background:oklch(96% 0.012 70);font-size:15px;font-weight:700;cursor:text;border:1px solid transparent}
+  .bib-static-field:hover{border-color:oklch(64% 0.19 28 / .4);background:#fff}
+  .bib-static-field.loc{font-size:14px;font-weight:400}
+  .bib-edit-input{width:100%;padding:12px 14px;border-radius:12px;background:#fff;font-size:15px;font-weight:700;border:1.5px solid var(--bib-accent);outline:none}
+
+  .bib-upload{position:relative;border-radius:12px;overflow:hidden;background:oklch(96% 0.01 70);border:1px dashed var(--bib-border);display:flex;align-items:center;justify-content:center;color:var(--bib-muted);cursor:pointer;font-size:11px;font-weight:600;text-align:center}
+  .bib-upload:hover{border-color:var(--bib-accent);color:var(--bib-accent)}
+  .bib-upload img{width:100%;height:100%;object-fit:cover;display:block}
+  .bib-upload input[type=file]{display:none}
+  .bib-upload.drag-over{border-color:var(--bib-accent);background:oklch(94% 0.05 30)}
+
+  .bib-swatch{width:42px;height:42px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;position:relative;box-shadow:0 2px 6px rgba(0,0,0,.1);transition:transform .15s ease;padding:0}
+  .bib-swatch:hover{transform:scale(1.08)}
+  .bib-swatch.sel::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2.5px solid var(--swatch-ring, currentColor)}
+  .bib-custom-swatch{background:conic-gradient(from 0deg,#ff6b4a,#ffd166,#4dd6a8,#4a9bff,#b46bff,#ff6b4a)}
+
+  .bib-fontpair-btn{text-align:left;padding:12px;border-radius:14px;background:oklch(97% 0.01 70);border:1.5px solid transparent;cursor:pointer}
+  .bib-fontpair-btn:hover{background:oklch(95% 0.015 70)}
+  .bib-fontpair-btn.sel{border-color:var(--bib-accent);background:oklch(96% 0.05 30)}
+  .bib-fontpair-aa{font-size:19px;font-weight:700;margin-bottom:2px}
+  .bib-fontpair-name{font-size:12px;font-weight:600;color:oklch(35% 0.02 50)}
+
+  .bib-section-heading{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--bib-muted);text-transform:uppercase;margin:6px 4px 0}
+
+  .bib-el-card{background:var(--bib-card-bg);border-radius:18px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.03),0 8px 20px oklch(60% 0.03 60 / .05);animation:cardIn .35s ease both;border:1px solid var(--bib-border)}
+  .bib-el-card.drag-over{border:2px dashed var(--bib-accent)}
+  .bib-el-card.bib-drag-lift{opacity:.4}
+  .bib-el-head{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer}
+  .bib-drag-handle{cursor:grab;touch-action:none;color:oklch(75% 0.01 60);padding:4px;flex:none;display:flex}
+  .bib-el-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .bib-el-title{font-size:14px;font-weight:700}
+  .bib-el-summary{font-size:12px;color:var(--bib-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bib-icon-btn{color:oklch(70% 0.02 50);background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;flex:none;display:flex}
+  .bib-icon-btn:hover{color:oklch(55% 0.18 25);background:oklch(95% 0.03 25)}
+  .bib-chevron{color:var(--bib-muted);display:flex;flex:none;transition:transform .2s ease;padding:6px;border-radius:8px}
+  .bib-chevron:hover{background:oklch(94% 0.02 60)}
+  .bib-el-panel{padding:4px 16px 18px}
+
+  .bib-gated-banner{display:flex;align-items:flex-start;gap:10px;border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.5}
+  .bib-gated-banner svg{flex-shrink:0;margin-top:2px}
+
+  .bib-toggle{width:34px;height:20px;border-radius:999px;border:none;cursor:pointer;position:relative;flex-shrink:0;transition:background .15s ease}
+  .bib-toggle-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s ease;display:block}
+
+  .bib-row-input{width:100%;padding:10px 12px;border-radius:10px;background:oklch(97% 0.01 70);border:1.5px solid var(--bib-border);font-size:13px;outline:none;font-family:inherit;color:var(--bib-text)}
+  .bib-row-input:focus-visible{border-color:var(--bib-accent)}
+  .bib-textarea{width:100%;min-height:90px;padding:12px 14px;border-radius:12px;background:oklch(97% 0.01 70);border:1.5px solid var(--bib-border);font-size:14px;outline:none;resize:vertical;font-family:inherit;line-height:1.5;color:var(--bib-text)}
+
+  .bib-gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .bib-gallery-tile{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden}
+  .bib-gallery-tile img{width:100%;height:100%;object-fit:cover;display:block}
+  .bib-gallery-remove{position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:50%;background:oklch(30% 0.02 30 / .65);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;padding:0}
+  .bib-gallery-add{aspect-ratio:1;border-radius:12px;border:2px dashed oklch(85% 0.015 70);background:oklch(97% 0.01 70);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:var(--bib-muted)}
+  .bib-gallery-add:hover{border-color:var(--bib-accent);color:var(--bib-accent)}
+
+  .bib-add-link{align-self:flex-start;margin-top:4px;font-size:12.5px;font-weight:700;color:var(--bib-accent);background:none;border:none;cursor:pointer;padding:6px 4px}
+
+  .bib-add-section-btn{width:100%;padding:14px;border-radius:14px;border:1.5px dashed oklch(82% 0.02 60);background:#fff;color:var(--bib-muted);font-weight:700;font-size:13.5px;cursor:pointer}
+  .bib-add-section-btn:hover{border-color:var(--bib-accent);color:var(--bib-accent)}
+  .bib-add-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .bib-add-card{text-align:left;padding:16px;border-radius:16px;background:#fff;border:1px solid var(--bib-border);cursor:pointer;position:relative;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .bib-add-card .bib-add-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .bib-add-card .bib-add-title{font-size:14.5px;font-weight:700}
+  .bib-all-access-badge{position:absolute;top:12px;right:12px;background:oklch(93% 0.09 150);color:oklch(38% 0.13 150);font-size:9.5px;font-weight:800;letter-spacing:.04em;padding:4px 8px;border-radius:999px}
+
+  .bib-preview-wrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:auto;padding:40px}
+  .bib-preview-label{position:absolute;top:24px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--bib-muted);display:flex;align-items:center;gap:6px}
+  .bib-phone{width:390px;height:844px;border-radius:52px;border:10px solid #111;background:#111;box-shadow:0 30px 60px rgba(0,0,0,.25);overflow:hidden;position:relative}
+  .bib-phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:26px;background:#111;border-radius:0 0 16px 16px;z-index:5}
+  .bib-phone-screen{width:100%;height:100%;overflow-y:auto;background:#fff}
+
+  .bib-toast{position:fixed;bottom:32px;left:50%;background:var(--bib-text);color:#fff;padding:14px 22px;border-radius:14px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);animation:toastIn .3s ease both;z-index:100;display:none}
+  .bib-toast.error{background:oklch(45% 0.16 25)}
+</style>
 </head>
 <body>
-<div class="page-wrap" style="display:block;min-height:0">
 
-<nav style="display:flex;align-items:center;padding:var(--space-4);border-bottom:1px solid var(--color-divider)">
-  <a href="/app/dashboard.html" style="margin-right:auto;font-size:13px">&larr; Back to dashboard</a>
-  <h4 style="margin:0">Page builder</h4>
-</nav>
-
-<div style="padding:var(--space-4) var(--space-4) 0;text-align:center">
-  <a id="page-url" href="#" target="_blank" style="font-size:13px;word-break:break-all"></a>
-  <span class="tag live" id="status-badge" style="margin-left:6px"></span>
-</div>
-
-<div style="padding:var(--space-6) var(--space-4);display:flex;flex-direction:column;gap:var(--space-6)">
-
-  <section class="blueprint" id="header-card" style="position:relative;padding:var(--space-4)">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:var(--space-3)">
-      <div class="cat-icon-chip" id="header-icon-chip"></div>
-      <div>
-        <h6 style="margin:0">Header</h6>
-        <p class="text-muted" style="font-size:12px;margin:0">Always shown first — not reorderable</p>
+<div class="bib-app">
+  <div class="bib-topbar">
+    <div style="display:flex;align-items:center;gap:20px">
+      <a href="/app/dashboard.html" class="bib-back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Back to dashboard
+      </a>
+      <div class="bib-divider-v"></div>
+      <div class="bib-wordmark">
+        <span class="bib-wordmark-dot"></span>
+        <span class="bib-wordmark-text">bizinbio</span>
+        <span class="bib-wordmark-label">builder</span>
       </div>
     </div>
-    <label class="upload" for="h-cover-input" style="margin-bottom:var(--space-3);aspect-ratio:21/9;padding:0;overflow:hidden;position:relative">
-      <div id="h-cover-preview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
-          <div class="upload-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></div>
-          <span class="text-muted" style="font-size:11px">Cover photo</span>
-        </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <a id="page-url" class="bib-url-pill" href="#" target="_blank" rel="noopener"></a>
+      <span id="status-badge" class="bib-live-pill"><span class="bib-live-dot"></span><span id="status-badge-text">Live</span></span>
+      <button id="save-republish-btn" class="bib-save-btn" type="button">Save &amp; republish</button>
+    </div>
+  </div>
+
+  <div class="bib-body">
+    <div class="bib-editor" id="editor-panel"></div>
+    <div class="bib-preview-wrap">
+      <div class="bib-preview-label">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 4a8 8 0 100 16 8 8 0 000-16z" stroke="currentColor" stroke-width="2"/><path d="M12 8v4l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Live preview
       </div>
-      <input type="file" id="h-cover-input" accept="image/*" capture="environment" />
-    </label>
-    <div style="display:flex;justify-content:center;margin-bottom:var(--space-3)">
-      <label class="upload" for="h-avatar-input" style="width:88px;height:88px;border-radius:50%;padding:0;overflow:hidden">
-        <div id="h-avatar-preview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
-          <div class="upload-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></div>
-        </div>
-        <input type="file" id="h-avatar-input" accept="image/*" capture="environment" />
-      </label>
+      <div class="bib-phone">
+        <div class="bib-phone-notch"></div>
+        <div class="bib-phone-screen" id="preview-screen"></div>
+      </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:var(--space-3)">
-      <div class="field"><label>Business name</label><input class="input" id="h-business-name" /></div>
-      <div class="field"><label>Location (optional)</label><input class="input" id="h-location" placeholder="e.g. Hamilton, Ontario" /></div>
-    </div>
-    <button type="button" id="h-save-btn" class="btn btn-primary btn-block" style="margin-top:var(--space-4)">Save &amp; republish</button>
-    <p id="h-msg" class="text-muted" style="text-align:center;font-size:13px;margin-top:var(--space-2);min-height:18px"></p>
-  </section>
+  </div>
 
-  <section>
-    <h6 style="margin-bottom:var(--space-3)">Page content</h6>
-    <div id="element-list"></div>
-    <button type="button" id="add-section-toggle" class="btn btn-secondary btn-block" style="margin-top:var(--space-2)">+ Add section</button>
-    <div id="add-element-picker" style="display:none;grid-template-columns:repeat(2,1fr);gap:var(--space-2);margin-top:var(--space-3)"></div>
-  </section>
-
-</div>
+  <div class="bib-toast" id="toast"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="app.js?v=11"></script>
+<script src="app.js?v=12"></script>
 <script>
   // ---------------------------------------------------------------------
-  // Icons — hand-drawn inline SVGs matching the rest of the app (viewBox
-  // 0 0 24 24, stroke=currentColor, stroke-width 1.5, round caps/joins).
-  const GRIP_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.3"/><circle cx="9" cy="12" r="1.3"/><circle cx="9" cy="18" r="1.3"/><circle cx="15" cy="6" r="1.3"/><circle cx="15" cy="12" r="1.3"/><circle cx="15" cy="18" r="1.3"/></svg>`;
-  const TRASH_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg>`;
-  const CHEVRON_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`;
-  const UP_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>`;
-  const DOWN_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`;
-  const UPLOAD_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>`;
-  const HEADER_ICON = `<path d="M3 4h18v16H3z"/><circle cx="8.5" cy="10" r="2"/><path d="M6 16c.5-2 2-3 2.5-3s2 1 2.5 3"/><path d="M14 9h4M14 13h4"/>`;
-
-  const ELEMENT_TYPES = {
-    about: { label: "About", singleton: true, icon: `<path d="M4 6h16M4 12h16M4 18h10"/>` },
-    services_list: { label: "Services", singleton: false, icon: `<path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1" fill="currentColor" stroke="none"/>` },
-    portfolio_gallery: { label: "Gallery", singleton: false, icon: `<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-4 4-3-3-6 6"/>` },
-    social_link: { label: "Social & links", singleton: true, icon: `<path d="M9 15l6-6"/><path d="M13 5l1-1a4 4 0 1 1 6 6l-1 1"/><path d="M11 19l-1 1a4 4 0 1 1-6-6l1-1"/>` },
-    contact: { label: "Contact", singleton: true, icon: `<path d="M6.5 3h3l1.5 5-2 2a12 12 0 0 0 5 5l2-2 5 1.5v3a2 2 0 0 1-2 2C9.5 20.5 3.5 14.5 4.5 5a2 2 0 0 1 2-2Z"/>` },
-    service_area: { label: "Service area", singleton: true, icon: `<path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>` },
-    quote_request_form: { label: "Quote request form", singleton: true, icon: `<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>` },
-    booking_deposit: { label: "Booking deposit", singleton: true, icon: `<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>` },
-    product_shop: { label: "Shop", singleton: true, icon: `<path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>` },
+  // Section catalog — title/hue/paywalled/icon per non-header element type.
+  // Icon bubble and paywall-banner colors are both derived from `hue` via
+  // one consistent oklch formula (see hueBg/hueFg/hueBannerBg/hueBannerFg
+  // below) rather than hand-tuning each — visually equivalent to the design
+  // handoff's per-type values, far less code to keep in sync.
+  const SECTION_META = {
+    contact: { title: "Contact", hue: 30, paywalled: false,
+      icon: `<path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.9 21 3 13.1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.4 0 .8-.3 1l-2.2 2.2z" stroke-linejoin="round"/>` },
+    about: { title: "About", hue: 250, paywalled: false,
+      icon: `<path d="M4 6h16M4 12h16M4 18h10" stroke-linecap="round"/>` },
+    social_link: { title: "Social & links", hue: 190, paywalled: false,
+      icon: `<path d="M10 13a5 5 0 007.07 0l2-2a5 5 0 00-7.07-7.07l-1 1M14 11a5 5 0 00-7.07 0l-2 2a5 5 0 007.07 7.07l1-1" stroke-linecap="round"/>` },
+    portfolio_gallery: { title: "Gallery", hue: 320, paywalled: true,
+      icon: `<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M3 17l5-4 4 3 4-5 5 6" stroke-linecap="round" stroke-linejoin="round"/>` },
+    services_list: { title: "Services", hue: 90, paywalled: true,
+      icon: `<path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/><circle cx="4" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.4" fill="currentColor" stroke="none"/>` },
+    quote_request_form: { title: "Quote request form", hue: 350, paywalled: true,
+      icon: `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke-linecap="round"/>` },
+    service_area: { title: "Service area", hue: 150, paywalled: true,
+      icon: `<path d="M12 21s-7-6.5-7-11a7 7 0 0114 0c0 4.5-7 11-7 11z" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.3"/>` },
+    booking_deposit: { title: "Booking deposit", hue: 270, paywalled: true,
+      icon: `<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v4M16 3v4" stroke-linecap="round"/>` },
+    product_shop: { title: "Shop", hue: 55, paywalled: true,
+      icon: `<path d="M6 8h12l-1 12a2 2 0 01-2 2H9a2 2 0 01-2-2L6 8z" stroke-linejoin="round"/><path d="M9 8V6a3 3 0 016 0v2"/>` },
   };
+  const ALL_SECTION_TYPES = Object.keys(SECTION_META);
 
-  // ELEMENT_DEFAULTS is shared from app.js (also used by onboarding.html).
+  function hueBg(hue) { return `oklch(90% 0.05 ${hue})`; }
+  function hueFg(hue) { return `oklch(49% 0.16 ${hue})`; }
+  function hueBannerBg(hue) { return `oklch(95% 0.05 ${hue})`; }
+  function hueBannerFg(hue) { return `oklch(30% 0.1 ${hue})`; }
+
+  function sectionIconSvg(type, size) {
+    const meta = SECTION_META[type];
+    if (!meta) return "";
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${meta.icon}</svg>`;
+  }
 
   function escapeHtml(str) {
     return String(str ?? "")
@@ -100,28 +225,34 @@
   }
 
   // Users routinely type "instagram.com/handle" instead of a full URL —
-  // without a scheme that renders as a link relative to the page itself
-  // (bizinbio.net/slug/instagram.com/handle), a 404. Default to https://
-  // whenever no scheme is present.
+  // without a scheme that renders as a link relative to the page itself,
+  // a 404. Default to https:// whenever no scheme is present.
   function normalizeUrl(raw) {
     const url = String(raw || "").trim();
     if (!url) return "";
     return /^[a-z][a-z0-9+.-]*:/i.test(url) ? url : `https://${url}`;
   }
 
-  function typeIcon(type) {
-    const def = ELEMENT_TYPES[type];
-    if (!def) return "";
-    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${def.icon}</svg>`;
+  const UP_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>`;
+  const DOWN_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>`;
+  const TRASH_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2m2 0v13a2 2 0 01-2 2H9a2 2 0 01-2-2V7h10z"/></svg>`;
+  const CHEVRON_ICON = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`;
+  const GRIP_ICON = `<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><circle cx="5" cy="3" r="1.4"/><circle cx="11" cy="3" r="1.4"/><circle cx="5" cy="8" r="1.4"/><circle cx="11" cy="8" r="1.4"/><circle cx="5" cy="13" r="1.4"/><circle cx="11" cy="13" r="1.4"/></svg>`;
+  const UPLOAD_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>`;
+  const CLOSE_ICON = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
+
+  const CONTACT_ICONS = {
+    phone: `<path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.9 21 3 13.1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.4 0 .8-.3 1l-2.2 2.2z" stroke-linejoin="round"/>`,
+    email: `<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M4 6.5l8 6 8-6" stroke-linecap="round" stroke-linejoin="round"/>`,
+    whatsapp: `<path d="M12 3a9 9 0 00-7.8 13.4L3 21l4.7-1.2A9 9 0 1012 3z" stroke-linejoin="round"/><path d="M8.5 12a3.5 3.5 0 007 0" stroke-linecap="round"/>`,
+  };
+  function contactIconSvg(type, size) {
+    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${CONTACT_ICONS[type] || ""}</svg>`;
   }
 
   // ---------------------------------------------------------------------
   // Drag-and-drop — Pointer Events, not the HTML5 native DnD API (no
   // reliable touch support there, and this app's usage skews mobile).
-  // Pointer capture routes subsequent move/up events straight to the
-  // dragged item regardless of where the pointer physically travels, so
-  // move/up listeners live on the item itself and die with it — nothing
-  // to leak across repeated re-renders.
   function initDragList(container, itemClass, onReorder) {
     container.addEventListener("pointerdown", (e) => {
       const handle = e.target.closest(".bib-drag-handle");
@@ -145,7 +276,7 @@
             container.insertBefore(item, prev);
             curStartY -= pr.height;
             item.style.transform = `translateY(${ev.clientY - curStartY}px)`;
-            return; // DOM just changed — let the next pointermove re-evaluate from fresh siblings
+            return;
           }
         }
         const next = item.nextElementSibling;
@@ -175,476 +306,714 @@
   }
 
   // ---------------------------------------------------------------------
-  let session, page, elements = [], isPaid = false;
+  // State — local-first: every edit accumulates here and is only written
+  // to Supabase (+ republished) on one explicit Save & republish click.
+  // This is what closes off the class of bug hit earlier with per-section
+  // auto-save (unsaved edits silently discarded on panel reopen) — there's
+  // no longer a separate persisted-vs-pending state to fall out of sync.
+  let session, page, isPaid = false;
+  let headerElId = null;
+  let headerContent = { business_name: "", location: "", logo_url: "", cover_image_url: "" };
+  let elements = []; // all non-header elements, in position order
+  let theme = { paletteId: "coral", customAccent: PALETTES[0].primary, customBg: PALETTES[0].bg, fontPairId: "playful" };
+  let expandedId = null;
+  let addMenuOpen = false;
+  let editingField = null; // 'businessName' | 'location' | null
+  let dirty = false;
+  let nextTempId = 1;
+  const deletedIds = new Set();
 
-  function isGated(type) { return !isPaid && !FREE_ELEMENT_TYPES.has(type); }
-  const pendingContent = {};
+  function tempId() { return "temp-" + (nextTempId++) + "-" + Date.now(); }
+  function isTemp(id) { return String(id).startsWith("temp-"); }
+  function isGated(type) { return !isPaid && SECTION_META[type] && SECTION_META[type].paywalled; }
+  function elById(id) { return elements.find((e) => e.id === id); }
+  function markDirty() { dirty = true; }
 
-  function headerEl() { return elements.find((e) => e.type === "header"); }
+  window.addEventListener("beforeunload", (e) => {
+    if (!dirty) return;
+    e.preventDefault();
+    e.returnValue = "";
+  });
 
-  function previewFor(el) {
+  function showToast(message, isError) {
+    const toast = document.getElementById("toast");
+    toast.textContent = message;
+    toast.className = "bib-toast" + (isError ? " error" : "");
+    toast.style.display = "flex";
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => { toast.style.display = "none"; }, 2600);
+  }
+
+  // ---------------------------------------------------------------------
+  // Summaries (section-card subtitle line)
+  function summaryFor(el) {
     const c = el.content || {};
     switch (el.type) {
-      case "about": return c.bio ? c.bio.slice(0, 60) : "No bio yet";
-      case "services_list": { const n = (c.services || []).length; return n ? `${n} service${n === 1 ? "" : "s"}` : "No services yet"; }
-      case "portfolio_gallery": { const n = (c.photos || []).length; return n ? `${n} photo${n === 1 ? "" : "s"}` : "No photos yet"; }
+      case "about": return c.bio ? c.bio.slice(0, 44) : "No bio yet";
+      case "contact": {
+        const on = (c.methods || []).filter((m) => m.enabled).map((m) => m.label);
+        return on.length ? on.join(", ") : "Nothing shown yet";
+      }
       case "social_link": { const n = (c.links || []).length; return n ? `${n} link${n === 1 ? "" : "s"}` : "No links yet"; }
-      case "contact": return c.phone || c.email || c.whatsapp || "No contact info yet";
+      case "portfolio_gallery": { const n = (c.photos || []).length; return n ? `${n} photo${n === 1 ? "" : "s"}` : "No photos yet"; }
+      case "services_list": { const n = (c.services || []).length; return n ? `${n} service${n === 1 ? "" : "s"}` : "No services yet"; }
+      case "quote_request_form": { const n = (c.fields || []).filter((f) => f.enabled).length; return `${n} field${n === 1 ? "" : "s"} enabled`; }
       case "service_area": return c.area || "Not set";
-      case "quote_request_form": return "Visitors can request a quote";
-      case "booking_deposit": return c.deposit_amount ? `$${Number(c.deposit_amount).toFixed(2)} deposit` : "No amount set";
-      case "product_shop": return "Manage products in the Shop section on your dashboard";
+      case "booking_deposit": { const on = Number(c.deposit_amount) > 0 || el._depositOn; return on ? `$${c.deposit_amount || "0"} deposit` : "Off"; }
+      case "product_shop": return "Manage products on your dashboard";
       default: return "";
     }
   }
 
-  function serviceRowHtml(s, i) {
+  // ---------------------------------------------------------------------
+  // Editor panel — full re-render on discrete actions (add/remove/reorder/
+  // toggle/expand). Text inputs mutate state directly + only refresh the
+  // live preview (see wireEditorEvents), so typing never loses focus.
+  function renderEditor() {
+    const panel = document.getElementById("editor-panel");
+    panel.innerHTML = headerCardHtml() + themeCardHtml() +
+      `<div class="bib-section-heading">Page content</div>` +
+      `<div id="element-list" style="display:flex;flex-direction:column;gap:10px">${elements.map(elementCardHtml).join("")}</div>` +
+      `<button type="button" id="add-section-toggle" class="bib-add-section-btn">+ Add section</button>` +
+      (addMenuOpen ? `<div class="bib-add-grid" id="add-section-grid">${ALL_SECTION_TYPES.map(addCardHtml).join("")}</div>` : "");
+    wireEditorEvents(panel);
+    const list = document.getElementById("element-list");
+    initDragList(list, "bib-el-card", (orderedEls) => {
+      const byId = new Map(elements.map((e) => [e.id, e]));
+      elements = orderedEls.map((el) => byId.get(el.dataset.id)).filter(Boolean);
+      markDirty();
+      renderPreview();
+    });
+  }
+
+  function headerCardHtml() {
     return `
-      <div class="bib-row" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--color-divider)">
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600">${escapeHtml(s.name || "")}</div>
-          ${s.price_range ? `<div class="text-muted" style="font-size:12px">${escapeHtml(s.price_range)}</div>` : ""}
+      <div class="bib-card">
+        <div class="bib-card-head">
+          <div class="bib-card-icon" style="background:${hueBg(30)};color:${hueFg(30)}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M3 17l5-4 4 3 4-5 5 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <div class="bib-card-title">Header</div>
+            <div class="bib-card-sub">Always shown first — not reorderable</div>
+          </div>
         </div>
-        <button type="button" class="bib-row-up bib-icon-btn" data-kind="services" data-index="${i}" title="Move up">${UP_ICON}</button>
-        <button type="button" class="bib-row-down bib-icon-btn" data-kind="services" data-index="${i}" title="Move down">${DOWN_ICON}</button>
-        <button type="button" class="bib-row-delete bib-icon-btn" data-kind="services" data-index="${i}" title="Remove" style="font-size:18px">&times;</button>
-      </div>`;
-  }
-
-  function galleryThumbHtml(url, i) {
-    return `
-      <div class="bib-gallery-thumb bib-drag-handle" data-index="${i}" style="position:relative;width:64px;height:64px;flex:none;cursor:grab">
-        <img src="${escapeHtml(url)}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-md);border:1px solid var(--color-divider);display:block" />
-        <button type="button" class="bib-row-delete" data-kind="gallery" data-index="${i}" title="Remove" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--color-accent);color:#fff;border:2px solid var(--color-card-bg);display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;cursor:pointer;padding:0">&times;</button>
-      </div>`;
-  }
-
-  function linkRowHtml(l, i) {
-    return `
-      <div class="bib-row" style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--color-divider);border-radius:var(--radius-md)">
-        <span style="flex:none">${socialIcon(l.platform)}</span>
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
-          <input class="input bib-link-label" data-index="${i}" value="${escapeHtml(l.label || "")}" placeholder="Link text" style="font-size:13px;padding:6px 8px" />
-          <input class="input bib-link-url" data-index="${i}" value="${escapeHtml(l.url || "")}" placeholder="https://..." style="font-size:12px;padding:6px 8px" />
+        <div style="position:relative;margin:14px -20px 0">
+          <label class="bib-upload" id="h-cover-drop" style="width:100%;height:150px;border-radius:0">
+            ${headerContent.cover_image_url ? `<img src="${escapeHtml(headerContent.cover_image_url)}" />` : `<span>${UPLOAD_ICON}<br/>Drop a cover photo</span>`}
+            <input type="file" accept="image/*" id="h-cover-input" />
+          </label>
+          <label class="bib-upload" id="h-avatar-drop" style="position:absolute;left:50%;bottom:-34px;transform:translateX(-50%);width:76px;height:76px;border-radius:50%;border:4px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.12)">
+            ${headerContent.logo_url ? `<img src="${escapeHtml(headerContent.logo_url)}" />` : `<span style="font-size:10px">Photo</span>`}
+            <input type="file" accept="image/*" id="h-avatar-input" />
+          </label>
         </div>
-        <button type="button" class="bib-row-up bib-icon-btn" data-kind="links" data-index="${i}" title="Move up">${UP_ICON}</button>
-        <button type="button" class="bib-row-down bib-icon-btn" data-kind="links" data-index="${i}" title="Move down">${DOWN_ICON}</button>
-        <button type="button" class="bib-row-delete bib-icon-btn" data-kind="links" data-index="${i}" title="Remove" style="font-size:18px">&times;</button>
+        <div style="margin-top:46px;display:flex;flex-direction:column;gap:14px">
+          <div>
+            <div class="bib-field-label">Business name</div>
+            ${editingField === "businessName"
+              ? `<input class="bib-edit-input" id="h-name-input" value="${escapeHtml(headerContent.business_name)}" />`
+              : `<div class="bib-static-field" id="h-name-static">${escapeHtml(headerContent.business_name) || "Add your business name"}</div>`}
+          </div>
+          <div>
+            <div class="bib-field-label">Location <span style="font-weight:400">(optional)</span></div>
+            ${editingField === "location"
+              ? `<input class="bib-edit-input loc" id="h-location-input" value="${escapeHtml(headerContent.location)}" style="font-size:14px;font-weight:400" />`
+              : `<div class="bib-static-field loc" id="h-location-static">${escapeHtml(headerContent.location) || "Add a location"}</div>`}
+          </div>
+        </div>
       </div>`;
   }
 
-  function editFormHtml(el) {
-    const content = pendingContent[el.id] || el.content || {};
+  function themeCardHtml() {
+    const isCustom = theme.paletteId === "custom";
+    return `
+      <div class="bib-card">
+        <div class="bib-card-head" style="margin-bottom:16px">
+          <div class="bib-card-icon" style="background:${hueBg(300)};color:${hueFg(300)}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="13.5" cy="6.5" r="3" fill="currentColor"/><circle cx="6" cy="12" r="3" fill="currentColor"/><circle cx="17" cy="17.5" r="3" fill="currentColor"/></svg>
+          </div>
+          <div>
+            <div class="bib-card-title">Theme</div>
+            <div class="bib-card-sub">Colors &amp; fonts for your live page</div>
+          </div>
+        </div>
+        <div class="bib-field-label">Color palette</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:${isCustom ? "14px" : "18px"}">
+          ${PALETTES.map((p) => `<button type="button" class="bib-swatch bib-palette-btn ${theme.paletteId === p.id ? "sel" : ""}" data-id="${p.id}" style="background:${p.primary};--swatch-ring:${p.primary}" title="${escapeHtml(p.label)}"></button>`).join("")}
+          <button type="button" class="bib-swatch bib-custom-swatch bib-select-custom-btn ${isCustom ? "sel" : ""}" style="--swatch-ring:oklch(40% 0.02 50)" title="Custom"></button>
+        </div>
+        ${isCustom ? `
+          <div style="display:flex;gap:14px;margin-bottom:18px;padding:14px;background:oklch(97% 0.01 70);border-radius:14px">
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--bib-muted)">
+              Accent
+              <input type="color" id="custom-accent-input" value="${theme.customAccent}" style="width:46px;height:32px;border:none;border-radius:8px;padding:0;cursor:pointer" />
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--bib-muted)">
+              Background
+              <input type="color" id="custom-bg-input" value="${theme.customBg}" style="width:46px;height:32px;border:none;border-radius:8px;padding:0;cursor:pointer" />
+            </label>
+          </div>` : ""}
+        <div class="bib-field-label">Font pairing</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          ${FONT_PAIRS.map((f) => `
+            <button type="button" class="bib-fontpair-btn bib-fontpair-item ${theme.fontPairId === f.id ? "sel" : ""}" data-id="${f.id}">
+              <div class="bib-fontpair-aa" style="font-family:${f.display}">Aa</div>
+              <div class="bib-fontpair-name">${escapeHtml(f.label)}</div>
+            </button>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  function elementCardHtml(el) {
+    const meta = SECTION_META[el.type];
+    const gated = isGated(el.type);
+    const isOpen = expandedId === el.id;
+    return `
+      <div class="bib-el-card" data-id="${el.id}">
+        <div class="bib-el-head bib-el-toggle" data-id="${el.id}">
+          <span class="bib-drag-handle">${GRIP_ICON}</span>
+          <div class="bib-el-icon" style="background:${hueBg(meta.hue)};color:${hueFg(meta.hue)}">${sectionIconSvg(el.type, 15)}</div>
+          <div style="flex:1;min-width:0">
+            <div class="bib-el-title">${escapeHtml(meta.title)}</div>
+            <div class="bib-el-summary">${escapeHtml(summaryFor(el))}</div>
+          </div>
+          <button type="button" class="bib-icon-btn bib-remove-el-btn" data-id="${el.id}" title="Delete section">${TRASH_ICON}</button>
+          <span class="bib-chevron" style="transform:rotate(${isOpen ? "180deg" : "0deg"})">${CHEVRON_ICON}</span>
+        </div>
+        ${isOpen ? `<div class="bib-el-panel">${gated ? gatedBannerHtml(meta.hue) : ""}${sectionEditorHtml(el)}</div>` : ""}
+      </div>`;
+  }
+
+  function gatedBannerHtml(hue) {
+    return `
+      <div class="bib-gated-banner" style="background:${hueBannerBg(hue)};color:${hueBannerFg(hue)}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${hueFg(hue)}" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+        <div>Part of <strong>All Access</strong> ($9.99/mo) — saved now, goes live once you <a href="/app/dashboard.html">upgrade</a>.</div>
+      </div>`;
+  }
+
+  function sectionEditorHtml(el) {
+    const c = el.content || {};
     switch (el.type) {
       case "about":
-        return `<div class="field"><label>Bio</label><textarea class="input bib-f" data-field="bio">${escapeHtml(content.bio || "")}</textarea></div>`;
-      case "services_list":
-        return `
-          <div class="bib-services-list" style="display:flex;flex-direction:column;margin-bottom:var(--space-3)">
-            ${(content.services || []).map((s, i) => serviceRowHtml(s, i)).join("") || `<p class="text-muted" style="font-size:13px">No services yet.</p>`}
-          </div>
-          <div style="display:flex;gap:6px">
-            <input class="input bib-new-service-name" placeholder="Service name" style="flex:1" />
-            <input class="input bib-new-service-price" placeholder="Price" style="width:80px" />
-            <button type="button" class="btn btn-secondary bib-add-service">Add</button>
-          </div>`;
-      case "portfolio_gallery":
-        return `
-          <div class="bib-gallery-thumbs" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--space-3)">
-            ${(content.photos || []).map((url, i) => galleryThumbHtml(url, i)).join("")}
-          </div>
-          <label class="upload" style="padding:var(--space-4);text-align:center">
-            <div class="upload-icon" style="margin:0 auto 6px">${UPLOAD_ICON}</div>
-            <span class="text-muted" style="font-size:12px">Add photos</span>
-            <input type="file" accept="image/*" capture="environment" multiple class="bib-gallery-upload" style="display:none" />
-          </label>`;
-      case "social_link":
-        return `
-          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--space-3)">
-            ${SOCIAL_PLATFORMS.map((p) => `<button type="button" class="btn btn-secondary bib-platform-btn" data-platform="${p.id}" title="${escapeHtml(p.label)}" style="padding:8px">${socialIcon(p.id)}</button>`).join("")}
-          </div>
-          <div class="bib-links-list" style="display:flex;flex-direction:column;gap:8px">
-            ${(content.links || []).map((l, i) => linkRowHtml(l, i)).join("") || `<p class="text-muted" style="font-size:13px">No links yet — pick a platform above.</p>`}
-          </div>`;
+        return `<textarea class="bib-textarea bib-about-input" data-id="${el.id}" placeholder="Tell people what you do...">${escapeHtml(c.bio || "")}</textarea>`;
+
       case "contact":
-        return `
-          <div style="display:flex;flex-direction:column;gap:var(--space-3)">
-            <div class="field"><label>Phone</label><input class="input bib-f" data-field="phone" value="${escapeHtml(content.phone || "")}" /></div>
-            <div class="field"><label>WhatsApp (optional)</label><input class="input bib-f" data-field="whatsapp" value="${escapeHtml(content.whatsapp || "")}" placeholder="Include country code, e.g. +1 555 555 1234" /></div>
-            <div class="field"><label>Email</label><input class="input bib-f" data-field="email" type="email" value="${escapeHtml(content.email || "")}" /></div>
-          </div>`;
-      case "service_area":
-        return `<div class="field"><label>Area you serve</label><input class="input bib-f" data-field="area" value="${escapeHtml(content.area || "")}" /></div>`;
+        return `<div style="display:flex;flex-direction:column;gap:10px">
+          ${(c.methods || []).map((m) => `
+            <div style="display:flex;align-items:center;gap:10px">
+              <button type="button" class="bib-toggle bib-contact-toggle" data-id="${el.id}" data-method="${m.id}" style="background:${m.enabled ? "var(--bib-accent)" : "oklch(88% 0.015 60)"}">
+                <span class="bib-toggle-knob" style="transform:translateX(${m.enabled ? "16px" : "0px"})"></span>
+              </button>
+              <div style="width:70px;flex-shrink:0;font-size:12.5px;font-weight:700;color:var(--bib-muted)">${escapeHtml(m.label)}</div>
+              <input class="bib-row-input bib-contact-value" data-id="${el.id}" data-method="${m.id}" value="${escapeHtml(m.value || "")}" placeholder="${escapeHtml(m.label)}" style="flex:1;min-width:0" />
+              <button type="button" class="bib-icon-btn bib-contact-showvalue" data-id="${el.id}" data-method="${m.id}" title="Show value on page (vs. icon only)" style="color:${m.showValue ? "var(--bib-muted)" : "oklch(75% 0.015 60)"}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>`).join("")}
+        </div>`;
+
+      case "portfolio_gallery":
+        return `<div class="bib-gallery-grid">
+          ${(c.photos || []).map((url, i) => `
+            <div class="bib-gallery-tile">
+              <img src="${escapeHtml(url)}" />
+              <button type="button" class="bib-gallery-remove bib-remove-photo" data-id="${el.id}" data-index="${i}">${CLOSE_ICON}</button>
+            </div>`).join("")}
+          <label class="bib-gallery-add" id="gallery-drop-${el.id}">
+            <input type="file" accept="image/*" multiple class="bib-gallery-input" data-id="${el.id}" style="display:none" />
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span style="font-size:11px;font-weight:600">Add</span>
+          </label>
+        </div>`;
+
+      case "social_link":
+        return `<div style="display:flex;flex-direction:column;gap:8px">
+          ${(c.links || []).map((l, i) => `
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="bib-row-input bib-link-label" data-id="${el.id}" data-index="${i}" value="${escapeHtml(l.label || "")}" placeholder="Platform" style="width:90px;flex-shrink:0" />
+              <input class="bib-row-input bib-link-url" data-id="${el.id}" data-index="${i}" value="${escapeHtml(l.url || "")}" placeholder="Link or handle" style="flex:1;min-width:0" />
+              <button type="button" class="bib-icon-btn bib-remove-link" data-id="${el.id}" data-index="${i}">${CLOSE_ICON}</button>
+            </div>`).join("")}
+          <button type="button" class="bib-add-link bib-add-link-btn" data-id="${el.id}">+ Add link</button>
+        </div>`;
+
+      case "services_list":
+        return `<div style="display:flex;flex-direction:column;gap:8px">
+          ${!(c.services || []).length ? `<div class="text-muted" style="font-size:13px;color:var(--bib-muted);padding:8px 4px">No services yet.</div>` : ""}
+          ${(c.services || []).map((s, i) => `
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="bib-row-input bib-service-name" data-id="${el.id}" data-index="${i}" value="${escapeHtml(s.name || "")}" placeholder="Service name" style="flex:1;min-width:0" />
+              <input class="bib-row-input bib-service-price" data-id="${el.id}" data-index="${i}" value="${escapeHtml(s.price_range || "")}" placeholder="$" style="width:80px;flex-shrink:0" />
+              <button type="button" class="bib-icon-btn bib-remove-service" data-id="${el.id}" data-index="${i}">${CLOSE_ICON}</button>
+            </div>`).join("")}
+          <button type="button" class="bib-add-link bib-add-service-btn" data-id="${el.id}">+ Add service</button>
+        </div>`;
+
       case "quote_request_form":
-        return `<p class="text-muted" style="font-size:13px">Visitors will see a form to request a quote — no setup needed.</p>`;
-      case "booking_deposit":
+        return `<div class="bib-field-label" style="margin-bottom:10px">Fields to collect</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${(c.fields || []).map((f) => `
+            <div style="display:flex;align-items:center;gap:10px">
+              <button type="button" class="bib-toggle bib-quote-toggle" data-id="${el.id}" data-field="${f.id}" style="background:${f.enabled ? "var(--bib-accent)" : "oklch(88% 0.015 60)"}">
+                <span class="bib-toggle-knob" style="transform:translateX(${f.enabled ? "16px" : "0px"})"></span>
+              </button>
+              <div style="font-size:13.5px;font-weight:600">${escapeHtml(f.label)}</div>
+            </div>`).join("")}
+        </div>`;
+
+      case "service_area":
+        return `<input class="bib-row-input bib-servicearea-input" data-id="${el.id}" value="${escapeHtml(c.area || "")}" placeholder="e.g. Within 25km of Hamilton, ON" style="font-size:14px" />`;
+
+      case "booking_deposit": {
+        const on = Number(c.deposit_amount) > 0 || el._depositOn;
         return `
-          <div class="field"><label>Deposit amount (USD)</label><input class="input bib-f" data-field="deposit_amount" type="number" min="0" step="0.01" value="${escapeHtml(content.deposit_amount || "")}" /></div>
-          <p class="text-muted" style="font-size:12px;margin-top:6px">Won't show on your page until Stripe is connected — see Booking deposits in your dashboard.</p>`;
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <button type="button" class="bib-toggle bib-deposit-toggle" data-id="${el.id}" style="background:${on ? "var(--bib-accent)" : "oklch(88% 0.015 60)"}">
+              <span class="bib-toggle-knob" style="transform:translateX(${on ? "16px" : "0px"})"></span>
+            </button>
+            <div style="font-size:13.5px;font-weight:600">Require a deposit to book</div>
+          </div>
+          ${on ? `<input class="bib-row-input bib-deposit-amount" data-id="${el.id}" value="${escapeHtml(c.deposit_amount || "")}" placeholder="Deposit amount, e.g. 25" style="font-size:14px" />
+          <p class="text-muted" style="font-size:12px;margin-top:6px;color:var(--bib-muted)">Won't show on your page until Stripe is connected — see Booking deposits in your dashboard.</p>` : ""}`;
+      }
+
       case "product_shop":
-        return `<p class="text-muted" style="font-size:13px">Controls where your shop appears on the page. Manage products in the Shop section of your dashboard.</p>`;
+        return `<p style="font-size:13px;color:var(--bib-muted);line-height:1.5">Products, photos, and pricing are managed on your dashboard — this section just controls where your shop appears on the page.</p>
+          <a href="/app/dashboard.html" class="bib-add-link" style="display:inline-block;margin-top:6px">Manage products →</a>`;
+
       default:
         return "";
     }
   }
 
-  function elementCardHtml(el) {
-    const type = ELEMENT_TYPES[el.type] || { label: el.type };
-    const gated = isGated(el.type);
+  const REPEATABLE_TYPES = new Set(["services_list", "portfolio_gallery"]);
+
+  function addCardHtml(type) {
+    const meta = SECTION_META[type];
+    const gated = isGated(type);
+    const alreadyAdded = !REPEATABLE_TYPES.has(type) && elements.some((e) => e.type === type);
     return `
-      <div class="blueprint bib-el-card" data-id="${el.id}" style="position:relative;margin-bottom:var(--space-2);padding:0;overflow:visible">
-        <div class="bib-el-head" style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);cursor:pointer">
-          <span class="bib-drag-handle">${GRIP_ICON}</span>
-          <div class="cat-icon-chip">${typeIcon(el.type)}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-weight:600;font-family:var(--font-heading)">${escapeHtml(type.label)}</div>
-            <div class="bib-el-preview text-muted" style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(previewFor(el))}</div>
-          </div>
-          <button type="button" class="bib-delete-btn bib-icon-btn" data-id="${el.id}" title="Delete section">${TRASH_ICON}</button>
-          <span class="bib-chevron" style="display:flex;flex:none;color:color-mix(in srgb,var(--color-text) 40%,transparent)">${CHEVRON_ICON}</span>
+      <button type="button" class="bib-add-card bib-add-section-item" data-type="${type}" data-gated="${gated}" ${alreadyAdded ? "disabled" : ""} style="${alreadyAdded ? "opacity:.55;cursor:not-allowed" : ""}">
+        ${meta.paywalled ? `<div class="bib-all-access-badge">ALL ACCESS</div>` : ""}
+        <div class="bib-add-icon" style="background:${alreadyAdded ? "oklch(95% 0.008 60)" : hueBg(meta.hue)};color:${alreadyAdded ? "oklch(78% 0.01 60)" : hueFg(meta.hue)}">${sectionIconSvg(type, 18)}</div>
+        <div class="bib-add-title" style="color:${alreadyAdded ? "oklch(65% 0.015 60)" : "var(--bib-text)"}">${escapeHtml(meta.title)}</div>
+      </button>`;
+  }
+
+  // ---------------------------------------------------------------------
+  // Live preview — an approximate client-side re-render (not a pixel copy
+  // of render-page's actual HTML), reflecting header/theme/about/contact/
+  // gallery/social/services in the same position order the real page uses.
+  function renderPreview() {
+    const screen = document.getElementById("preview-screen");
+    const isCustom = theme.paletteId === "custom";
+    const palette = isCustom
+      ? { primary: theme.customAccent, bg: theme.customBg, text: CUSTOM_TEXT }
+      : PALETTES.find((p) => p.id === theme.paletteId) || PALETTES[0];
+    const fonts = FONT_PAIRS.find((f) => f.id === theme.fontPairId) || FONT_PAIRS[0];
+
+    const contactEl = elements.find((e) => e.type === "contact");
+    const visibleContacts = contactEl ? (contactEl.content.methods || []).filter((m) => m.enabled && (m.value || "").trim()) : [];
+
+    const bodyParts = elements.map((el) => {
+      if (isGated(el.type) && el.type !== "portfolio_gallery" && el.type !== "services_list") return "";
+      switch (el.type) {
+        case "about":
+          return el.content.bio ? `<div style="font-size:14.5px;line-height:1.6;text-align:center;margin-top:22px;opacity:.85">${escapeHtml(el.content.bio)}</div>` : "";
+        case "portfolio_gallery": {
+          const photos = el.content.photos || [];
+          if (!photos.length) return "";
+          return `<div style="position:relative;width:100%;margin-top:26px">
+            ${isGated(el.type) ? `<div style="position:absolute;top:6px;right:6px;background:rgba(20,20,20,.55);color:#fff;font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em;z-index:2">All Access</div>` : ""}
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+              ${photos.map((url) => `<div style="aspect-ratio:1;border-radius:10px;overflow:hidden"><img src="${escapeHtml(url)}" style="width:100%;height:100%;object-fit:cover;display:block" /></div>`).join("")}
+            </div>
+          </div>`;
+        }
+        case "social_link": {
+          const links = (el.content.links || []).filter((l) => (l.label || l.url || "").trim());
+          if (!links.length) return "";
+          return `<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:24px">
+            ${links.map((l) => `<div style="padding:9px 16px;border-radius:999px;background:color-mix(in srgb, ${palette.primary} 14%, transparent);color:${palette.primary};font-size:13px;font-weight:700">${escapeHtml(l.label || l.url)}</div>`).join("")}
+          </div>`;
+        }
+        case "services_list": {
+          const services = el.content.services || [];
+          if (!services.length) return "";
+          return `<div style="width:100%;margin-top:28px;display:flex;flex-direction:column;gap:10px;position:relative">
+            ${isGated(el.type) ? `<div style="position:absolute;top:-14px;right:0;background:rgba(20,20,20,.55);color:#fff;font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em">All Access</div>` : ""}
+            <div style="font-family:${fonts.display};font-weight:700;font-size:16px">Services</div>
+            ${services.map((s) => `<div style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:14px;background:color-mix(in srgb, ${palette.primary} 7%, white)">
+              <span style="font-size:14px;font-weight:600">${escapeHtml(s.name || "")}</span>
+              <span style="font-size:14px;font-weight:700;color:${palette.primary}">${escapeHtml(s.price_range || "")}</span>
+            </div>`).join("")}
+          </div>`;
+        }
+        default:
+          return "";
+      }
+    }).join("");
+
+    screen.innerHTML = `
+      <div style="min-height:100%;background:${palette.bg};font-family:${fonts.body};color:${palette.text}">
+        <div style="width:100%;height:190px;background:oklch(93% 0.01 70)">
+          ${headerContent.cover_image_url ? `<img src="${escapeHtml(headerContent.cover_image_url)}" style="width:100%;height:100%;object-fit:cover;display:block" />` : ""}
         </div>
-        <div class="bib-el-panel" style="display:none;padding:0 var(--space-4) var(--space-4)">
-          ${gated ? `<div style="background:var(--color-accent-100);color:var(--color-accent-700);border-radius:var(--radius-md);padding:var(--space-3);font-size:13px;margin-bottom:var(--space-3)">This section is part of <strong>All Access</strong> ($9.99/mo) — anything you add here is saved, but won't show on your live page until you <a href="/app/dashboard.html" style="color:inherit;text-decoration:underline">upgrade</a>.</div>` : ""}
-          ${editFormHtml(el)}
-          <button type="button" class="btn btn-primary bib-save-el-btn" data-id="${el.id}" style="margin-top:var(--space-3)">Save</button>
-          <p class="text-muted bib-el-msg" style="font-size:12px;margin-top:6px;min-height:16px"></p>
+        <div style="display:flex;flex-direction:column;align-items:center;padding:0 24px 40px;margin-top:-38px">
+          <div style="width:84px;height:84px;border-radius:50%;border:4px solid ${palette.bg};overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.15);background:#eee">
+            ${headerContent.logo_url ? `<img src="${escapeHtml(headerContent.logo_url)}" style="width:100%;height:100%;object-fit:cover;display:block" />` : ""}
+          </div>
+          <div style="font-family:${fonts.display};font-size:24px;font-weight:700;margin-top:14px;text-align:center">${escapeHtml(headerContent.business_name) || "Your business name"}</div>
+          ${headerContent.location ? `<div style="font-size:13px;opacity:.65;margin-top:3px">${escapeHtml(headerContent.location)}</div>` : ""}
+          ${visibleContacts.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px">
+            ${visibleContacts.map((m) => `<div style="display:inline-flex;align-items:center;gap:7px;background:${palette.primary};color:#fff;font-weight:700;font-size:13px;padding:${m.showValue ? "11px 18px" : "13px"};border-radius:999px">${contactIconSvg(m.type, 13)}${m.showValue ? `<span>${escapeHtml(m.value)}</span>` : ""}</div>`).join("")}
+          </div>` : ""}
+          ${bodyParts}
+          <div style="font-size:10.5px;opacity:.4;margin-top:32px">Made with bizinbio</div>
         </div>
       </div>`;
   }
 
-  function wireGalleryDrag(id) {
-    const container = document.querySelector(`.bib-el-card[data-id="${id}"] .bib-gallery-thumbs`);
-    if (!container) return;
-    initDragList(container, "bib-gallery-thumb", (orderedEls) => {
-      const newIdx = orderedEls.map((el) => Number(el.dataset.index));
-      pendingContent[id].photos = newIdx.map((i) => pendingContent[id].photos[i]);
-      refreshPanelBody(id);
+  // ---------------------------------------------------------------------
+  // Event wiring (delegated on the editor panel; re-attached each
+  // renderEditor() call since the DOM is rebuilt).
+  function wireEditorEvents(panel) {
+    // Header
+    const nameStatic = document.getElementById("h-name-static");
+    if (nameStatic) nameStatic.addEventListener("click", () => { editingField = "businessName"; renderEditor(); });
+    const locStatic = document.getElementById("h-location-static");
+    if (locStatic) locStatic.addEventListener("click", () => { editingField = "location"; renderEditor(); });
+    const nameInput = document.getElementById("h-name-input");
+    if (nameInput) {
+      nameInput.focus();
+      nameInput.setSelectionRange(nameInput.value.length, nameInput.value.length);
+      nameInput.addEventListener("input", (e) => { headerContent.business_name = e.target.value; markDirty(); renderPreview(); updateElementSummaries(); });
+      nameInput.addEventListener("blur", () => { editingField = null; renderEditor(); });
+      nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") nameInput.blur(); });
+    }
+    const locInput = document.getElementById("h-location-input");
+    if (locInput) {
+      locInput.focus();
+      locInput.setSelectionRange(locInput.value.length, locInput.value.length);
+      locInput.addEventListener("input", (e) => { headerContent.location = e.target.value; markDirty(); renderPreview(); });
+      locInput.addEventListener("blur", () => { editingField = null; renderEditor(); });
+      locInput.addEventListener("keydown", (e) => { if (e.key === "Enter") locInput.blur(); });
+    }
+    wireImageDrop(document.getElementById("h-cover-drop"), document.getElementById("h-cover-input"), (url) => { headerContent.cover_image_url = url; });
+    wireImageDrop(document.getElementById("h-avatar-drop"), document.getElementById("h-avatar-input"), (url) => { headerContent.logo_url = url; });
+
+    // Theme
+    panel.querySelectorAll(".bib-palette-btn").forEach((btn) => {
+      btn.addEventListener("click", () => { theme.paletteId = btn.dataset.id; markDirty(); renderEditor(); renderPreview(); });
+    });
+    const customBtn = panel.querySelector(".bib-select-custom-btn");
+    if (customBtn) customBtn.addEventListener("click", () => { theme.paletteId = "custom"; markDirty(); renderEditor(); renderPreview(); });
+    const accentInput = document.getElementById("custom-accent-input");
+    if (accentInput) accentInput.addEventListener("input", (e) => { theme.customAccent = e.target.value; theme.paletteId = "custom"; markDirty(); renderPreview(); });
+    const bgInput = document.getElementById("custom-bg-input");
+    if (bgInput) bgInput.addEventListener("input", (e) => { theme.customBg = e.target.value; theme.paletteId = "custom"; markDirty(); renderPreview(); });
+    panel.querySelectorAll(".bib-fontpair-item").forEach((btn) => {
+      btn.addEventListener("click", () => { theme.fontPairId = btn.dataset.id; markDirty(); renderEditor(); renderPreview(); });
+    });
+
+    // Section list — toggle/remove
+    panel.querySelectorAll(".bib-el-toggle").forEach((head) => {
+      head.addEventListener("click", (e) => {
+        if (e.target.closest(".bib-drag-handle") || e.target.closest(".bib-remove-el-btn")) return;
+        const id = head.dataset.id;
+        expandedId = expandedId === id ? null : id;
+        renderEditor();
+      });
+    });
+    panel.querySelectorAll(".bib-remove-el-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (!confirm("Delete this section? This can't be undone.")) return;
+        const id = btn.dataset.id;
+        if (!isTemp(id)) deletedIds.add(id);
+        elements = elements.filter((el) => el.id !== id);
+        if (expandedId === id) expandedId = null;
+        markDirty();
+        renderEditor();
+        renderPreview();
+      });
+    });
+
+    // About
+    const aboutInput = panel.querySelector(".bib-about-input");
+    if (aboutInput) aboutInput.addEventListener("input", (e) => { elById(e.target.dataset.id).content.bio = e.target.value; markDirty(); renderPreview(); updateElementSummaries(); });
+
+    // Contact
+    panel.querySelectorAll(".bib-contact-toggle").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const m = elById(btn.dataset.id).content.methods.find((x) => x.id === btn.dataset.method);
+        m.enabled = !m.enabled;
+        markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-contact-showvalue").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const m = elById(btn.dataset.id).content.methods.find((x) => x.id === btn.dataset.method);
+        m.showValue = !m.showValue;
+        markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-contact-value").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        const m = elById(e.target.dataset.id).content.methods.find((x) => x.id === e.target.dataset.method);
+        m.value = e.target.value;
+        markDirty(); renderPreview(); updateElementSummaries();
+      });
+    });
+
+    // Gallery
+    panel.querySelectorAll(".bib-remove-photo").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        elById(btn.dataset.id).content.photos.splice(Number(btn.dataset.index), 1);
+        markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    panel.querySelectorAll("[id^='gallery-drop-']").forEach((drop) => {
+      const id = drop.id.replace("gallery-drop-", "");
+      const input = drop.querySelector(".bib-gallery-input");
+      wireGalleryDrop(drop, input, id);
+    });
+
+    // Social links
+    panel.querySelectorAll(".bib-link-label").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        elById(e.target.dataset.id).content.links[Number(e.target.dataset.index)].label = e.target.value;
+        markDirty(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-link-url").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        elById(e.target.dataset.id).content.links[Number(e.target.dataset.index)].url = e.target.value;
+        markDirty();
+      });
+    });
+    panel.querySelectorAll(".bib-remove-link").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        elById(btn.dataset.id).content.links.splice(Number(btn.dataset.index), 1);
+        markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-add-link-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const el = elById(btn.dataset.id);
+        if (!el.content.links) el.content.links = [];
+        el.content.links.push({ label: "", url: "" });
+        markDirty(); renderEditor();
+      });
+    });
+
+    // Services
+    panel.querySelectorAll(".bib-service-name").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        elById(e.target.dataset.id).content.services[Number(e.target.dataset.index)].name = e.target.value;
+        markDirty(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-service-price").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        elById(e.target.dataset.id).content.services[Number(e.target.dataset.index)].price_range = e.target.value;
+        markDirty(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-remove-service").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        elById(btn.dataset.id).content.services.splice(Number(btn.dataset.index), 1);
+        markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-add-service-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const el = elById(btn.dataset.id);
+        if (!el.content.services) el.content.services = [];
+        el.content.services.push({ name: "", price_range: "" });
+        markDirty(); renderEditor();
+      });
+    });
+
+    // Quote request form
+    panel.querySelectorAll(".bib-quote-toggle").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const f = elById(btn.dataset.id).content.fields.find((x) => x.id === btn.dataset.field);
+        f.enabled = !f.enabled;
+        markDirty(); renderEditor();
+      });
+    });
+
+    // Service area
+    const areaInput = panel.querySelector(".bib-servicearea-input");
+    if (areaInput) areaInput.addEventListener("input", (e) => { elById(e.target.dataset.id).content.area = e.target.value; markDirty(); updateElementSummaries(); });
+
+    // Booking deposit
+    panel.querySelectorAll(".bib-deposit-toggle").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const el = elById(btn.dataset.id);
+        const on = Number(el.content.deposit_amount) > 0 || el._depositOn;
+        if (on) { el.content.deposit_amount = ""; el._depositOn = false; }
+        else { el._depositOn = true; }
+        markDirty(); renderEditor();
+      });
+    });
+    const depositInput = panel.querySelector(".bib-deposit-amount");
+    if (depositInput) depositInput.addEventListener("input", (e) => { elById(e.target.dataset.id).content.deposit_amount = e.target.value; markDirty(); updateElementSummaries(); });
+
+    // Add section
+    const addToggle = document.getElementById("add-section-toggle");
+    if (addToggle) addToggle.addEventListener("click", () => { addMenuOpen = !addMenuOpen; renderEditor(); });
+    panel.querySelectorAll(".bib-add-section-item").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (btn.disabled) return;
+        const type = btn.dataset.type;
+        if (btn.dataset.gated === "true") {
+          if (confirm(`${SECTION_META[type].title} is part of All Access ($9.99/mo) — it won't appear on your page until you upgrade. Go to upgrade now?`)) {
+            window.location.href = "/app/dashboard.html";
+          }
+          return;
+        }
+        const content = JSON.parse(JSON.stringify(ELEMENT_DEFAULTS[type]));
+        elements.push({ id: tempId(), type, position: elements.length, content });
+        addMenuOpen = false;
+        markDirty();
+        renderEditor(); renderPreview();
+      });
     });
   }
 
-  function refreshPanelBody(id) {
-    const card = document.querySelector(`.bib-el-card[data-id="${id}"]`);
-    const el = elements.find((e) => e.id === id);
-    const panel = card.querySelector(".bib-el-panel");
-    panel.innerHTML = editFormHtml(el)
-      + `<button type="button" class="btn btn-primary bib-save-el-btn" data-id="${id}" style="margin-top:var(--space-3)">Save</button>`
-      + `<p class="text-muted bib-el-msg" style="font-size:12px;margin-top:6px;min-height:16px"></p>`;
-    if (el.type === "portfolio_gallery") wireGalleryDrag(id);
-  }
-
-  function togglePanel(card) {
-    const panel = card.querySelector(".bib-el-panel");
-    const chevron = card.querySelector(".bib-chevron");
-    const isOpen = panel.style.display !== "none";
-    panel.style.display = isOpen ? "none" : "block";
-    chevron.style.transform = isOpen ? "" : "rotate(180deg)";
-    if (!isOpen) {
-      const id = card.dataset.id;
-      const el = elements.find((e) => e.id === id);
-      // Seed lazily, only if there's no pending state yet — resetting on
-      // every open would silently discard unsaved edits (typed text, added
-      // links/services/photos) the moment a panel is closed and reopened
-      // without hitting Save.
-      if (!pendingContent[id]) pendingContent[id] = JSON.parse(JSON.stringify(el.content || {}));
-      if (el.type === "portfolio_gallery") wireGalleryDrag(id);
-    }
-  }
-
-  function renderElementList() {
-    const container = document.getElementById("element-list");
-    const body = elements.filter((e) => e.type !== "header");
-    container.innerHTML = body.map((el) => elementCardHtml(el)).join("");
-    initDragList(container, "bib-el-card", (orderedEls) => {
-      reorderElements(orderedEls.map((el) => el.dataset.id));
+  // Cheap targeted update for the small section-summary text while typing,
+  // without a full editor re-render (which would steal focus from the
+  // input the user is actively typing into).
+  function updateElementSummaries() {
+    document.querySelectorAll(".bib-el-card").forEach((card) => {
+      const el = elById(card.dataset.id);
+      if (!el) return;
+      const summaryEl = card.querySelector(".bib-el-summary");
+      if (summaryEl) summaryEl.textContent = summaryFor(el);
     });
   }
 
-  function renderAddPicker() {
-    const picker = document.getElementById("add-element-picker");
-    const presentTypes = new Set(elements.map((e) => e.type));
-    picker.innerHTML = Object.entries(ELEMENT_TYPES).map(([type, def]) => {
-      const full = def.singleton && presentTypes.has(type);
-      const gated = isGated(type);
-      const disabled = full && !gated;
-      return `
-        <button type="button" class="cat-btn" data-type="${type}" data-gated="${gated}" ${disabled ? "disabled" : ""} style="${disabled ? "opacity:.4;cursor:not-allowed" : ""}position:relative">
-          ${gated ? `<span class="bib-lock-badge" style="position:absolute;top:6px;right:6px;font-size:9px;font-weight:600;letter-spacing:.02em;color:var(--color-accent-700);background:var(--color-accent-100);border-radius:99px;padding:2px 6px">ALL ACCESS</span>` : ""}
-          <div class="cat-icon-chip" style="margin-bottom:6px">${typeIcon(type)}</div>
-          <span class="name">${escapeHtml(def.label)}</span>
-        </button>`;
-    }).join("");
+  function wireImageDrop(dropEl, inputEl, onUploaded) {
+    if (!dropEl || !inputEl) return;
+    inputEl.addEventListener("change", (e) => { if (e.target.files[0]) uploadImage(e.target.files[0], onUploaded); });
+    dropEl.addEventListener("dragover", (e) => { e.preventDefault(); dropEl.classList.add("drag-over"); });
+    dropEl.addEventListener("dragleave", () => dropEl.classList.remove("drag-over"));
+    dropEl.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropEl.classList.remove("drag-over");
+      const file = e.dataTransfer.files[0];
+      if (file) uploadImage(file, onUploaded);
+    });
   }
 
-  async function reorderElements(ids) {
-    const byId = new Map(elements.map((e) => [e.id, e]));
-    const newBody = ids.map((id) => byId.get(id)).filter(Boolean);
-    newBody.forEach((e, i) => { e.position = i; });
-    const h = headerEl();
-    elements = h ? [h, ...newBody] : newBody;
-    try {
-      await Promise.all(newBody.map((e) => sb.from("elements").update({ position: e.position }).eq("id", e.id)));
-      await callFunction("render-page", { page_id: page.id }, session);
-    } catch (err) {
-      console.error(err);
-    }
+  async function uploadImage(file, onUploaded) {
+    const path = `${session.user.id}/${Date.now()}-${file.name}`;
+    const { error } = await sb.storage.from("page-photos").upload(path, file);
+    if (error) { alert("Upload failed: " + error.message); return; }
+    const { data } = sb.storage.from("page-photos").getPublicUrl(path);
+    onUploaded(data.publicUrl);
+    markDirty();
+    renderEditor(); renderPreview();
   }
 
-  async function deleteElement(id) {
-    try {
-      await sb.from("elements").delete().eq("id", id);
-      elements = elements.filter((e) => e.id !== id);
-      delete pendingContent[id];
-      renderElementList();
-      renderAddPicker();
-      await callFunction("render-page", { page_id: page.id }, session);
-    } catch (err) {
-      alert(err.message || "Something went wrong.");
-    }
+  function wireGalleryDrop(dropEl, inputEl, elId) {
+    if (!dropEl || !inputEl) return;
+    inputEl.addEventListener("change", (e) => { if (e.target.files.length) uploadGalleryPhotos(elId, e.target.files); });
+    dropEl.addEventListener("dragover", (e) => { e.preventDefault(); dropEl.classList.add("drag-over"); });
+    dropEl.addEventListener("dragleave", () => dropEl.classList.remove("drag-over"));
+    dropEl.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropEl.classList.remove("drag-over");
+      if (e.dataTransfer.files.length) uploadGalleryPhotos(elId, e.dataTransfer.files);
+    });
   }
 
-  async function addElement(type) {
-    const maxPos = Math.max(0, ...elements.filter((e) => e.type !== "header").map((e) => e.position));
-    try {
-      const { data, error } = await sb.from("elements").insert({
-        page_id: page.id, type, position: maxPos + 1, content: ELEMENT_DEFAULTS[type] || {},
-      }).select().single();
-      if (error) throw error;
-      elements.push(data);
-      document.getElementById("add-element-picker").style.display = "none";
-      renderElementList();
-      renderAddPicker();
-      const card = document.querySelector(`.bib-el-card[data-id="${data.id}"]`);
-      if (card) togglePanel(card);
-      await callFunction("render-page", { page_id: page.id }, session);
-    } catch (err) {
-      alert(err.message || "Something went wrong.");
-    }
-  }
-
-  function deleteRow(id, kind, index) {
-    const field = kind === "services" ? "services" : kind === "gallery" ? "photos" : "links";
-    pendingContent[id][field].splice(index, 1);
-    refreshPanelBody(id);
-  }
-
-  function moveRow(id, kind, index, dir) {
-    const field = kind === "services" ? "services" : kind === "gallery" ? "photos" : "links";
-    const arr = pendingContent[id][field];
-    const target = index + dir;
-    if (target < 0 || target >= arr.length) return;
-    [arr[index], arr[target]] = [arr[target], arr[index]];
-    refreshPanelBody(id);
-  }
-
-  function addService(id) {
-    const panel = document.querySelector(`.bib-el-card[data-id="${id}"] .bib-el-panel`);
-    const name = panel.querySelector(".bib-new-service-name").value.trim();
-    const price = panel.querySelector(".bib-new-service-price").value.trim();
-    if (!name) return;
-    if (!pendingContent[id].services) pendingContent[id].services = [];
-    pendingContent[id].services.push({ name, price_range: price });
-    refreshPanelBody(id);
-  }
-
-  function addSocialLink(id, platformId) {
-    const platform = SOCIAL_PLATFORMS.find((p) => p.id === platformId);
-    if (!pendingContent[id].links) pendingContent[id].links = [];
-    pendingContent[id].links.push({ platform: platformId, url: "", label: platform ? platform.defaultLabel : "Visit link" });
-    refreshPanelBody(id);
-  }
-
-  // Writes content to the DB, republishes, and re-seeds pendingContent (not
-  // deletes — the panel stays open after a save, and list-type elements
-  // need a live pendingContent entry for add/remove/reorder to keep working
-  // without a full page reload). Shared by the explicit Save button and by
-  // gallery uploads, which persist immediately rather than waiting on Save
-  // (see handleGalleryUpload).
-  async function persistElement(id, content) {
-    const el = elements.find((e) => e.id === id);
-    await sb.from("elements").update({ content }).eq("id", id);
-    el.content = content;
-    pendingContent[id] = JSON.parse(JSON.stringify(content));
-    await callFunction("render-page", { page_id: page.id }, session);
-    const card = document.querySelector(`.bib-el-card[data-id="${id}"]`);
-    const preview = card.querySelector(".bib-el-preview");
-    if (preview) preview.textContent = previewFor(el);
-  }
-
-  async function handleGalleryUpload(id, files) {
-    const panel = document.querySelector(`.bib-el-card[data-id="${id}"] .bib-el-panel`);
-    const msg = panel.querySelector(".bib-el-msg");
-    if (!pendingContent[id].photos) pendingContent[id].photos = [];
+  async function uploadGalleryPhotos(elId, files) {
+    const el = elById(elId);
+    if (!el.content.photos) el.content.photos = [];
     for (const file of files) {
-      msg.textContent = "Uploading...";
       const path = `${session.user.id}/${Date.now()}-${file.name}`;
       const { error } = await sb.storage.from("page-photos").upload(path, file);
-      if (error) { msg.textContent = "Upload failed: " + error.message; continue; }
+      if (error) { alert("Upload failed: " + error.message); continue; }
       const { data } = sb.storage.from("page-photos").getPublicUrl(path);
-      pendingContent[id].photos.push(data.publicUrl);
-      // Persist after every photo (not just at the end of the batch) so a
-      // partial upload — user closes the tab, phone locks, one file in a
-      // multi-select fails — still keeps what already succeeded.
-      try {
-        await persistElement(id, pendingContent[id]);
-      } catch (err) {
-        msg.textContent = "Saved to storage but failed to save to your page: " + (err.message || "unknown error");
-        continue;
-      }
+      el.content.photos.push(data.publicUrl);
     }
-    // Rebuild the panel from the re-seeded state before the final status
-    // message — refreshPanelBody replaces the .bib-el-msg node.
-    refreshPanelBody(id);
-    document.querySelector(`.bib-el-card[data-id="${id}"] .bib-el-msg`).textContent = "Photos saved.";
+    markDirty();
+    renderEditor(); renderPreview();
   }
-
-  async function saveElement(id) {
-    const el = elements.find((e) => e.id === id);
-    const card = document.querySelector(`.bib-el-card[data-id="${id}"]`);
-    const panel = card.querySelector(".bib-el-panel");
-    const msg = panel.querySelector(".bib-el-msg");
-    msg.textContent = "Saving...";
-    try {
-      const content = { ...(pendingContent[id] || el.content || {}) };
-
-      panel.querySelectorAll(".bib-f").forEach((input) => {
-        content[input.dataset.field] = input.type === "number" ? Number(input.value || 0) : input.value;
-      });
-
-      if (el.type === "social_link" && content.links) {
-        panel.querySelectorAll(".bib-link-label").forEach((input) => {
-          const i = Number(input.dataset.index);
-          if (content.links[i]) content.links[i].label = input.value;
-        });
-        panel.querySelectorAll(".bib-link-url").forEach((input) => {
-          const i = Number(input.dataset.index);
-          if (content.links[i]) content.links[i].url = normalizeUrl(input.value);
-        });
-      }
-
-      await persistElement(id, content);
-      // Rebuild the panel from the re-seeded state (resyncs row inputs to
-      // saved values) — must happen before setting the status text, since
-      // it replaces the .bib-el-msg node the old `msg` reference points to.
-      refreshPanelBody(id);
-      card.querySelector(".bib-el-msg").textContent = "Saved.";
-    } catch (err) {
-      msg.textContent = err.message || "Something went wrong.";
-    }
-  }
-
-  document.getElementById("element-list").addEventListener("click", (e) => {
-    const delBtn = e.target.closest(".bib-delete-btn");
-    const saveBtn = e.target.closest(".bib-save-el-btn");
-    const addServiceBtn = e.target.closest(".bib-add-service");
-    const platformBtn = e.target.closest(".bib-platform-btn");
-    const delRow = e.target.closest(".bib-row-delete");
-    const upBtn = e.target.closest(".bib-row-up");
-    const downBtn = e.target.closest(".bib-row-down");
-    const head = e.target.closest(".bib-el-head");
-
-    if (delBtn) {
-      e.stopPropagation();
-      if (confirm("Delete this section? This can't be undone.")) deleteElement(delBtn.dataset.id);
-      return;
-    }
-    if (saveBtn) { saveElement(saveBtn.dataset.id); return; }
-    if (addServiceBtn) { addService(addServiceBtn.closest(".bib-el-card").dataset.id); return; }
-    if (platformBtn) { addSocialLink(platformBtn.closest(".bib-el-card").dataset.id, platformBtn.dataset.platform); return; }
-    if (delRow) { deleteRow(delRow.closest(".bib-el-card").dataset.id, delRow.dataset.kind, Number(delRow.dataset.index)); return; }
-    if (upBtn) { moveRow(upBtn.closest(".bib-el-card").dataset.id, upBtn.dataset.kind, Number(upBtn.dataset.index), -1); return; }
-    if (downBtn) { moveRow(downBtn.closest(".bib-el-card").dataset.id, downBtn.dataset.kind, Number(downBtn.dataset.index), 1); return; }
-    if (head && !e.target.closest(".bib-drag-handle")) { togglePanel(head.closest(".bib-el-card")); return; }
-  });
-
-  document.getElementById("element-list").addEventListener("change", (e) => {
-    if (e.target.classList.contains("bib-gallery-upload")) {
-      const id = e.target.closest(".bib-el-card").dataset.id;
-      handleGalleryUpload(id, e.target.files);
-    }
-  });
-
-  document.getElementById("add-section-toggle").addEventListener("click", () => {
-    const picker = document.getElementById("add-element-picker");
-    picker.style.display = picker.style.display === "grid" ? "none" : "grid";
-  });
-
-  document.getElementById("add-element-picker").addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-type]");
-    if (!btn || btn.disabled) return;
-    if (btn.dataset.gated === "true") {
-      if (confirm(`${ELEMENT_TYPES[btn.dataset.type].label} is part of All Access ($9.99/mo) — it won't appear on your page until you upgrade. Go to upgrade now?`)) {
-        window.location.href = "/app/dashboard.html";
-      }
-      return;
-    }
-    addElement(btn.dataset.type);
-  });
 
   // ---------------------------------------------------------------------
-  // Header card (pinned — not part of the reorderable list).
-  let uploadedCoverUrl = "", uploadedAvatarUrl = "";
-
-  function renderHeaderCard() {
-    document.getElementById("header-icon-chip").innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${HEADER_ICON}</svg>`;
-    const h = headerEl();
-    const c = (h && h.content) || {};
-    document.getElementById("h-business-name").value = c.business_name || page.business_name || "";
-    document.getElementById("h-location").value = c.location || "";
-    if (c.cover_image_url) document.getElementById("h-cover-preview").innerHTML = `<img src="${escapeHtml(c.cover_image_url)}" style="width:100%;height:100%;object-fit:cover" />`;
-    if (c.logo_url) document.getElementById("h-avatar-preview").innerHTML = `<img src="${escapeHtml(c.logo_url)}" style="width:100%;height:100%;object-fit:cover" />`;
-  }
-
-  document.getElementById("h-cover-input").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const path = `${session.user.id}/${Date.now()}-${file.name}`;
-    const { error } = await sb.storage.from("page-photos").upload(path, file);
-    if (error) { alert("Upload failed: " + error.message); return; }
-    const { data } = sb.storage.from("page-photos").getPublicUrl(path);
-    uploadedCoverUrl = data.publicUrl;
-    document.getElementById("h-cover-preview").innerHTML = `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover" />`;
-  });
-
-  document.getElementById("h-avatar-input").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const path = `${session.user.id}/${Date.now()}-${file.name}`;
-    const { error } = await sb.storage.from("page-photos").upload(path, file);
-    if (error) { alert("Upload failed: " + error.message); return; }
-    const { data } = sb.storage.from("page-photos").getPublicUrl(path);
-    uploadedAvatarUrl = data.publicUrl;
-    document.getElementById("h-avatar-preview").innerHTML = `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover" />`;
-  });
-
-  document.getElementById("h-save-btn").addEventListener("click", async () => {
-    const msg = document.getElementById("h-msg");
-    msg.textContent = "Saving...";
+  // Save & republish — the single persistence point for every edit made
+  // since load (or since the last save).
+  async function saveAndRepublish() {
+    const btn = document.getElementById("save-republish-btn");
+    btn.disabled = true;
+    btn.textContent = "Saving...";
     try {
-      const businessName = document.getElementById("h-business-name").value.trim();
-      const location = document.getElementById("h-location").value.trim();
-      let h = headerEl();
-      const content = {
-        business_name: businessName,
-        location,
-        logo_url: uploadedAvatarUrl || (h && h.content.logo_url) || "",
-        cover_image_url: uploadedCoverUrl || (h && h.content.cover_image_url) || "",
-      };
-      if (h) {
-        await sb.from("elements").update({ content }).eq("id", h.id);
-        h.content = content;
-      } else {
-        const { data, error } = await sb.from("elements").insert({ page_id: page.id, type: "header", position: 0, content }).select().single();
+      elements.forEach((el) => {
+        if (el.type === "social_link" && el.content.links) {
+          el.content.links.forEach((l) => { l.url = normalizeUrl(l.url); });
+        }
+        if (el.type === "booking_deposit" && !el._depositOn && !(Number(el.content.deposit_amount) > 0)) {
+          el.content.deposit_amount = "";
+        }
+      });
+
+      if (headerElId) {
+        const { error } = await sb.from("elements").update({ content: headerContent }).eq("id", headerElId);
         if (error) throw error;
-        elements.unshift(data);
+      } else {
+        const { data, error } = await sb.from("elements").insert({ page_id: page.id, type: "header", position: 0, content: headerContent }).select().single();
+        if (error) throw error;
+        headerElId = data.id;
       }
-      await sb.from("pages").update({ business_name: businessName, og_title: businessName }).eq("id", page.id);
-      page.business_name = businessName;
+
+      for (let i = 0; i < elements.length; i++) {
+        const el = elements[i];
+        if (isTemp(el.id)) {
+          const { data, error } = await sb.from("elements").insert({ page_id: page.id, type: el.type, position: i + 1, content: el.content }).select().single();
+          if (error) throw error;
+          el.id = data.id;
+        } else {
+          const { error } = await sb.from("elements").update({ content: el.content, position: i + 1 }).eq("id", el.id);
+          if (error) throw error;
+        }
+      }
+
+      if (deletedIds.size) {
+        const { error } = await sb.from("elements").delete().in("id", [...deletedIds]);
+        if (error) throw error;
+        deletedIds.clear();
+      }
+
+      const { error: pageErr } = await sb.from("pages").update({
+        business_name: headerContent.business_name,
+        og_title: headerContent.business_name,
+        theme: theme.paletteId,
+        custom_accent_color: theme.customAccent || null,
+        custom_bg_color: theme.customBg || null,
+        font_pair: theme.fontPairId,
+      }).eq("id", page.id);
+      if (pageErr) throw pageErr;
+      page.business_name = headerContent.business_name;
+      page.theme = theme.paletteId;
+
       await callFunction("render-page", { page_id: page.id }, session);
-      msg.textContent = "Saved and republished.";
+
+      dirty = false;
+      showToast("Saved — live in a few seconds");
     } catch (err) {
-      msg.textContent = err.message || "Something went wrong.";
+      showToast(err.message || "Something went wrong.", true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Save & republish";
     }
-  });
+  }
+  document.getElementById("save-republish-btn").addEventListener("click", saveAndRepublish);
 
   // ---------------------------------------------------------------------
   (async () => {
@@ -654,21 +1023,35 @@
     const { data: pageData } = await sb.from("pages").select("*").eq("user_id", session.user.id).maybeSingle();
     if (!pageData) { window.location.href = "/app/onboarding.html"; return; }
     page = pageData;
-    applyTheme(page.theme || "classic", page.custom_accent_color, page.custom_bg_color, page.custom_text_color, page.custom_font);
+
+    theme = {
+      paletteId: page.theme || "coral",
+      customAccent: page.custom_accent_color || PALETTES[0].primary,
+      customBg: page.custom_bg_color || PALETTES[0].bg,
+      fontPairId: page.font_pair || "playful",
+    };
 
     const { data: sub } = await sb.from("subscriptions").select("tier, status").eq("user_id", session.user.id).maybeSingle();
     isPaid = !!(sub && sub.status === "active");
 
     document.getElementById("page-url").href = `https://bizinbio.net/${page.slug}/`;
     document.getElementById("page-url").textContent = `bizinbio.net/${page.slug}/`;
-    document.getElementById("status-badge").textContent = page.published ? "Live" : "Not published yet";
+    document.getElementById("status-badge-text").textContent = page.published ? "Live" : "Not published yet";
 
     const { data: elData } = await sb.from("elements").select("*").eq("page_id", page.id).order("position", { ascending: true });
-    elements = elData || [];
+    const all = elData || [];
+    const header = all.find((e) => e.type === "header");
+    if (header) {
+      headerElId = header.id;
+      headerContent = { business_name: "", location: "", logo_url: "", cover_image_url: "", ...header.content };
+    }
+    elements = all.filter((e) => e.type !== "header").map((e) => {
+      if (e.type === "booking_deposit") e._depositOn = Number(e.content.deposit_amount) > 0;
+      return e;
+    });
 
-    renderHeaderCard();
-    renderElementList();
-    renderAddPicker();
+    renderEditor();
+    renderPreview();
   })();
 </script>
 </body>
