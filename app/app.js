@@ -68,6 +68,14 @@ const THEMES = [
     radius: 4, cardBlur: 0, borderWidth: 1, avatarRadius: "50%", headingTransform: "none", headingLetterSpacing: "-.015em" },
 ];
 
+// Element types visible on a free-tier page — mirrors FREE_ELEMENTS in
+// supabase/functions/render-page/index.ts (same manual-sync convention as
+// THEMES/SOCIAL_PLATFORMS). Every paid tier ("website_shop"/All Access and
+// "custom_domain") unlocks every element type, so the builder only needs
+// this one free/paid boundary, not the full per-tier breakdown render-page
+// enforces server-side.
+const FREE_ELEMENT_TYPES = new Set(["header", "social_link", "contact", "about"]);
+
 // Curated font choices for the "Custom" theme — mirrors FONT_OPTIONS in
 // supabase/functions/render-page/index.ts (same manual-sync convention as
 // THEMES/THEME_PRESETS). Deliberately a fixed list, not free-text: every

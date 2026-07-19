@@ -67,7 +67,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="app.js?v=10"></script>
+<script src="app.js?v=11"></script>
 <script>
   // ---------------------------------------------------------------------
   // Icons — hand-drawn inline SVGs matching the rest of the app (viewBox
@@ -175,7 +175,9 @@
   }
 
   // ---------------------------------------------------------------------
-  let session, page, elements = [];
+  let session, page, elements = [], isPaid = false;
+
+  function isGated(type) { return !isPaid && !FREE_ELEMENT_TYPES.has(type); }
   const pendingContent = {};
 
   function headerEl() { return elements.find((e) => e.type === "header"); }
@@ -288,6 +290,7 @@
 
   function elementCardHtml(el) {
     const type = ELEMENT_TYPES[el.type] || { label: el.type };
+    const gated = isGated(el.type);
     return `
       <div class="blueprint bib-el-card" data-id="${el.id}" style="position:relative;margin-bottom:var(--space-2);padding:0;overflow:visible">
         <div class="bib-el-head" style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);cursor:pointer">
@@ -301,6 +304,7 @@
           <span class="bib-chevron" style="display:flex;flex:none;color:color-mix(in srgb,var(--color-text) 40%,transparent)">${CHEVRON_ICON}</span>
         </div>
         <div class="bib-el-panel" style="display:none;padding:0 var(--space-4) var(--space-4)">
+          ${gated ? `<div style="background:var(--color-accent-100);color:var(--color-accent-700);border-radius:var(--radius-md);padding:var(--space-3);font-size:13px;margin-bottom:var(--space-3)">This section is part of <strong>All Access</strong> ($9.99/mo) — anything you add here is saved, but won't show on your live page until you <a href="/app/dashboard.html" style="color:inherit;text-decoration:underline">upgrade</a>.</div>` : ""}
           ${editFormHtml(el)}
           <button type="button" class="btn btn-primary bib-save-el-btn" data-id="${el.id}" style="margin-top:var(--space-3)">Save</button>
           <p class="text-muted bib-el-msg" style="font-size:12px;margin-top:6px;min-height:16px"></p>
@@ -359,9 +363,12 @@
     const picker = document.getElementById("add-element-picker");
     const presentTypes = new Set(elements.map((e) => e.type));
     picker.innerHTML = Object.entries(ELEMENT_TYPES).map(([type, def]) => {
-      const disabled = def.singleton && presentTypes.has(type);
+      const full = def.singleton && presentTypes.has(type);
+      const gated = isGated(type);
+      const disabled = full && !gated;
       return `
-        <button type="button" class="cat-btn" data-type="${type}" ${disabled ? "disabled" : ""} style="${disabled ? "opacity:.4;cursor:not-allowed" : ""}">
+        <button type="button" class="cat-btn" data-type="${type}" data-gated="${gated}" ${disabled ? "disabled" : ""} style="${disabled ? "opacity:.4;cursor:not-allowed" : ""}position:relative">
+          ${gated ? `<span class="bib-lock-badge" style="position:absolute;top:6px;right:6px;font-size:9px;font-weight:600;letter-spacing:.02em;color:var(--color-accent-700);background:var(--color-accent-100);border-radius:99px;padding:2px 6px">ALL ACCESS</span>` : ""}
           <div class="cat-icon-chip" style="margin-bottom:6px">${typeIcon(type)}</div>
           <span class="name">${escapeHtml(def.label)}</span>
         </button>`;
@@ -564,6 +571,12 @@
   document.getElementById("add-element-picker").addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-type]");
     if (!btn || btn.disabled) return;
+    if (btn.dataset.gated === "true") {
+      if (confirm(`${ELEMENT_TYPES[btn.dataset.type].label} is part of All Access ($9.99/mo) — it won't appear on your page until you upgrade. Go to upgrade now?`)) {
+        window.location.href = "/app/dashboard.html";
+      }
+      return;
+    }
     addElement(btn.dataset.type);
   });
 
@@ -642,6 +655,9 @@
     if (!pageData) { window.location.href = "/app/onboarding.html"; return; }
     page = pageData;
     applyTheme(page.theme || "classic", page.custom_accent_color, page.custom_bg_color, page.custom_text_color, page.custom_font);
+
+    const { data: sub } = await sb.from("subscriptions").select("tier, status").eq("user_id", session.user.id).maybeSingle();
+    isPaid = !!(sub && sub.status === "active");
 
     document.getElementById("page-url").href = `https://bizinbio.net/${page.slug}/`;
     document.getElementById("page-url").textContent = `bizinbio.net/${page.slug}/`;
