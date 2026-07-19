@@ -337,7 +337,11 @@
     if (!isOpen) {
       const id = card.dataset.id;
       const el = elements.find((e) => e.id === id);
-      pendingContent[id] = JSON.parse(JSON.stringify(el.content || {}));
+      // Seed lazily, only if there's no pending state yet — resetting on
+      // every open would silently discard unsaved edits (typed text, added
+      // links/services/photos) the moment a panel is closed and reopened
+      // without hitting Save.
+      if (!pendingContent[id]) pendingContent[id] = JSON.parse(JSON.stringify(el.content || {}));
       if (el.type === "portfolio_gallery") wireGalleryDrag(id);
     }
   }
@@ -442,6 +446,23 @@
     refreshPanelBody(id);
   }
 
+  // Writes content to the DB, republishes, and re-seeds pendingContent (not
+  // deletes — the panel stays open after a save, and list-type elements
+  // need a live pendingContent entry for add/remove/reorder to keep working
+  // without a full page reload). Shared by the explicit Save button and by
+  // gallery uploads, which persist immediately rather than waiting on Save
+  // (see handleGalleryUpload).
+  async function persistElement(id, content) {
+    const el = elements.find((e) => e.id === id);
+    await sb.from("elements").update({ content }).eq("id", id);
+    el.content = content;
+    pendingContent[id] = JSON.parse(JSON.stringify(content));
+    await callFunction("render-page", { page_id: page.id }, session);
+    const card = document.querySelector(`.bib-el-card[data-id="${id}"]`);
+    const preview = card.querySelector(".bib-el-preview");
+    if (preview) preview.textContent = previewFor(el);
+  }
+
   async function handleGalleryUpload(id, files) {
     const panel = document.querySelector(`.bib-el-card[data-id="${id}"] .bib-el-panel`);
     const msg = panel.querySelector(".bib-el-msg");
@@ -453,9 +474,20 @@
       if (error) { msg.textContent = "Upload failed: " + error.message; continue; }
       const { data } = sb.storage.from("page-photos").getPublicUrl(path);
       pendingContent[id].photos.push(data.publicUrl);
+      // Persist after every photo (not just at the end of the batch) so a
+      // partial upload — user closes the tab, phone locks, one file in a
+      // multi-select fails — still keeps what already succeeded.
+      try {
+        await persistElement(id, pendingContent[id]);
+      } catch (err) {
+        msg.textContent = "Saved to storage but failed to save to your page: " + (err.message || "unknown error");
+        continue;
+      }
     }
-    msg.textContent = "";
+    // Rebuild the panel from the re-seeded state before the final status
+    // message — refreshPanelBody replaces the .bib-el-msg node.
     refreshPanelBody(id);
+    document.querySelector(`.bib-el-card[data-id="${id}"] .bib-el-msg`).textContent = "Photos saved.";
   }
 
   async function saveElement(id) {
@@ -482,16 +514,7 @@
         });
       }
 
-      await sb.from("elements").update({ content }).eq("id", id);
-      el.content = content;
-      // Re-seed rather than delete: the panel stays open after a save, and
-      // list-type elements (social links, services, gallery) need a live
-      // pendingContent entry for their add/remove/reorder controls to keep
-      // working without a full page reload.
-      pendingContent[id] = JSON.parse(JSON.stringify(content));
-      await callFunction("render-page", { page_id: page.id }, session);
-      const preview = card.querySelector(".bib-el-preview");
-      if (preview) preview.textContent = previewFor(el);
+      await persistElement(id, content);
       // Rebuild the panel from the re-seeded state (resyncs row inputs to
       // saved values) — must happen before setting the status text, since
       // it replaces the .bib-el-msg node the old `msg` reference points to.
