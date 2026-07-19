@@ -16,6 +16,11 @@
   <h4 style="margin:0">Page builder</h4>
 </nav>
 
+<div style="padding:var(--space-4) var(--space-4) 0;text-align:center">
+  <a id="page-url" href="#" target="_blank" style="font-size:13px;word-break:break-all"></a>
+  <span class="tag live" id="status-badge" style="margin-left:6px"></span>
+</div>
+
 <div style="padding:var(--space-6) var(--space-4);display:flex;flex-direction:column;gap:var(--space-6)">
 
   <section class="blueprint" id="header-card" style="position:relative;padding:var(--space-4)">
@@ -87,17 +92,7 @@
     product_shop: { label: "Shop", singleton: true, icon: `<path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>` },
   };
 
-  const ELEMENT_DEFAULTS = {
-    about: { bio: "" },
-    services_list: { services: [] },
-    portfolio_gallery: { photos: [] },
-    social_link: { links: [] },
-    contact: { phone: "", whatsapp: "", email: "" },
-    service_area: { area: "" },
-    quote_request_form: {},
-    booking_deposit: { deposit_amount: 0 },
-    product_shop: {},
-  };
+  // ELEMENT_DEFAULTS is shared from app.js (also used by onboarding.html).
 
   function escapeHtml(str) {
     return String(str ?? "")
@@ -606,6 +601,10 @@
     if (!pageData) { window.location.href = "/app/onboarding.html"; return; }
     page = pageData;
     applyTheme(page.theme || "classic", page.custom_accent_color, page.custom_bg_color, page.custom_text_color, page.custom_font);
+
+    document.getElementById("page-url").href = `https://bizinbio.net/${page.slug}/`;
+    document.getElementById("page-url").textContent = `bizinbio.net/${page.slug}/`;
+    document.getElementById("status-badge").textContent = page.published ? "Live" : "Not published yet";
 
     const { data: elData } = await sb.from("elements").select("*").eq("page_id", page.id).order("position", { ascending: true });
     elements = elData || [];

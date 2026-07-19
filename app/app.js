@@ -113,6 +113,22 @@ function socialIcon(platformId) {
   return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${platform.icon}</svg>`;
 }
 
+// Default (empty) content shape per element type — used both by onboarding
+// (creating a page's starter elements) and the builder (adding a new
+// element). Kept here rather than duplicated in both pages.
+const ELEMENT_DEFAULTS = {
+  header: { business_name: "", location: "", logo_url: "", cover_image_url: "" },
+  about: { bio: "" },
+  services_list: { services: [] },
+  portfolio_gallery: { photos: [] },
+  social_link: { links: [] },
+  contact: { phone: "", whatsapp: "", email: "" },
+  service_area: { area: "" },
+  quote_request_form: {},
+  booking_deposit: { deposit_amount: 0 },
+  product_shop: {},
+};
+
 // Applies a theme's full token set to the document root, so the
 // onboarding/dashboard form itself becomes a live preview of the chosen
 // look (not just a small static swatch) — same CSS vars themeStyleBlock()

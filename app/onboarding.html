@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Set up your page — BizInBio</title>
+<title>Start your page — BizInBio</title>
 <link rel="icon" href="../assets/favicon-32.png?v=1" />
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=1" />
 <link rel="stylesheet" href="../assets/site.css?v=11" />
@@ -12,8 +12,8 @@
 <div class="page-wrap" style="padding:var(--space-6) var(--space-4) calc(var(--space-8)*2);gap:calc(var(--space-8)*1.5)">
 
   <div style="text-align:center">
-    <h1>Set up your page</h1>
-    <p class="text-muted" style="font-size:13px;margin-top:4px">Takes about 2–3 minutes.</p>
+    <h1>Start your page</h1>
+    <p class="text-muted" style="font-size:13px;margin-top:4px">Pick a category and a name — you'll build out everything else next.</p>
   </div>
 
   <section>
@@ -22,58 +22,14 @@
   </section>
 
   <section>
-    <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-4)"><span class="step-num">2</span><h6 style="margin:0">The basics</h6></div>
-    <label class="upload" for="cover_photo" style="margin-bottom:var(--space-3);aspect-ratio:21/9;padding:0;overflow:hidden;position:relative">
-      <div id="cover-photo-preview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
-          <div class="upload-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></div>
-          <span class="text-muted" style="font-size:11px">Cover photo (optional)</span>
-        </div>
-      </div>
-      <input type="file" id="cover_photo" accept="image/*" capture="environment" />
-    </label>
-    <div style="display:flex;justify-content:center;margin-bottom:var(--space-3)">
-      <label class="upload" for="profile_photo" style="width:88px;height:88px;border-radius:50%;padding:0;overflow:hidden">
-        <div id="profile-photo-preview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
-          <div class="upload-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></div>
-        </div>
-        <input type="file" id="profile_photo" accept="image/*" capture="environment" />
-      </label>
-    </div>
-    <p class="text-muted" style="text-align:center;font-size:11px;margin-bottom:var(--space-4)">Profile photo or logo (optional)</p>
-    <div style="display:flex;flex-direction:column;gap:var(--space-3)">
-      <div class="field"><label>Business name</label><input class="input" id="business_name" /></div>
-      <div class="field"><label>Location (optional)</label><input class="input" id="location" placeholder="e.g. Hamilton, Ontario" /></div>
-      <div class="field"><label>Tagline (optional)</label><input class="input" id="tagline" placeholder="A short line about your business" /></div>
-      <div class="field"><label>Phone</label><input class="input" id="phone" /></div>
-      <div class="field"><label>WhatsApp (optional)</label><input class="input" id="whatsapp" placeholder="Include country code, e.g. +1 555 555 1234" /></div>
-      <div class="field"><label>Service area / neighborhood</label><input class="input" id="service_area" /></div>
+    <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-4)"><span class="step-num">2</span><h6 style="margin:0">Name</h6></div>
+    <div class="field">
+      <input class="input" id="business_name" placeholder="Your business name" />
+      <p class="text-muted" style="font-size:12px;margin-top:6px">This will be the name shown on your page.</p>
     </div>
   </section>
 
-  <section>
-    <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-4)"><span class="step-num">3</span><h6 style="margin:0">A few photos</h6></div>
-    <label class="upload" for="photos">
-      <div class="upload-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></div>
-      <span style="font-size:13px" id="upload-label">Drag photos here, or tap to take one</span>
-      <span class="text-muted" style="font-size:11px">JPG or PNG, up to 6 photos</span>
-      <input type="file" id="photos" accept="image/*" capture="environment" multiple />
-    </label>
-    <div id="thumbs" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:var(--space-2)"></div>
-  </section>
-
-  <section>
-    <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-4)"><span class="step-num">4</span><h6 style="margin:0">Pick a look</h6></div>
-    <div id="theme-row" style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-2)"></div>
-    <div id="custom-color-row" style="display:none;margin-top:var(--space-3);flex-direction:column;gap:var(--space-3)">
-      <div class="field"><label>Accent color</label><input type="color" id="custom-color-input" value="#ff0000" style="width:100%;height:44px;padding:2px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-surface)" /></div>
-      <div class="field"><label>Background color</label><input type="color" id="custom-bg-input" value="#ffffff" style="width:100%;height:44px;padding:2px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-surface)" /></div>
-      <div class="field"><label>Text color</label><input type="color" id="custom-text-input" value="#0f0f0f" style="width:100%;height:44px;padding:2px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-surface)" /></div>
-      <div class="field"><label>Font</label><select class="input" id="custom-font-input"></select></div>
-    </div>
-  </section>
-
-  <button id="publish" class="btn btn-primary btn-block" style="padding:14px" disabled>Publish my page</button>
+  <button id="create-page" class="btn btn-primary btn-block" style="padding:14px" disabled>Create my page</button>
   <p class="text-muted" style="text-align:center;font-size:13px;min-height:18px" id="msg"></p>
 
 </div>
@@ -81,23 +37,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="app.js?v=7"></script>
 <script>
-  let session, selectedCategory = null, selectedTheme = "classic";
-  let uploadedPhotoUrls = [];
+  let session, selectedCategory = null;
 
   const categoryGrid = document.getElementById("category-grid");
-  const themeRow = document.getElementById("theme-row");
-  const customColorRow = document.getElementById("custom-color-row");
-  const customColorInput = document.getElementById("custom-color-input");
-  const customBgInput = document.getElementById("custom-bg-input");
-  const customTextInput = document.getElementById("custom-text-input");
-  const customFontInput = document.getElementById("custom-font-input");
-  customFontInput.innerHTML = FONT_OPTIONS.map((f) => `<option value="${f.id}">${f.label}</option>`).join("");
-  const publishBtn = document.getElementById("publish");
+  const nameInput = document.getElementById("business_name");
+  const createBtn = document.getElementById("create-page");
   const msg = document.getElementById("msg");
-
-  function applyCurrentTheme() {
-    applyTheme(selectedTheme, customColorInput.value, customBgInput.value, customTextInput.value, customFontInput.value);
-  }
 
   CATEGORIES.forEach((cat, i) => {
     const btn = document.createElement("button");
@@ -113,103 +58,20 @@
     categoryGrid.appendChild(btn);
   });
 
-  THEMES.forEach((theme, i) => {
-    const btn = document.createElement("button");
-    btn.className = "theme-swatch" + (i === 0 ? " sel" : "");
-    btn.type = "button";
-    btn.innerHTML = `${themeSwatchPreview(theme)}<span style="font-family:${theme.fontHeading}">${theme.label}</span>`;
-    btn.addEventListener("click", () => {
-      selectedTheme = theme.id;
-      [...themeRow.children].forEach((c) => c.classList.remove("sel"));
-      btn.classList.add("sel");
-      customColorRow.style.display = theme.id === "custom" ? "flex" : "none";
-      applyCurrentTheme();
-    });
-    themeRow.appendChild(btn);
-  });
-
-  [customColorInput, customBgInput, customTextInput, customFontInput].forEach((input) => {
-    input.addEventListener("input", () => {
-      if (selectedTheme === "custom") applyCurrentTheme();
-    });
-  });
-
-  applyCurrentTheme();
-
-  document.getElementById("photos").addEventListener("change", async (e) => {
-    const files = [...e.target.files];
-    msg.textContent = "Uploading photos...";
-    const thumbs = document.getElementById("thumbs");
-    for (const file of files) {
-      const path = `${session.user.id}/${Date.now()}-${file.name}`;
-      const { error } = await sb.storage.from("page-photos").upload(path, file);
-      if (error) { msg.textContent = "Photo upload failed: " + error.message; continue; }
-      const { data } = sb.storage.from("page-photos").getPublicUrl(path);
-      uploadedPhotoUrls.push(data.publicUrl);
-      const img = document.createElement("img");
-      img.src = data.publicUrl;
-      img.style.cssText = "width:56px;height:56px;object-fit:cover;border:1px solid var(--color-divider)";
-      thumbs.appendChild(img);
-    }
-    document.getElementById("upload-label").textContent = uploadedPhotoUrls.length + " photo(s) added";
-    msg.textContent = "";
-    checkReady();
-  });
-
-  let uploadedCoverPhotoUrl = "";
-  document.getElementById("cover_photo").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    msg.textContent = "Uploading cover photo...";
-    const path = `${session.user.id}/${Date.now()}-${file.name}`;
-    const { error } = await sb.storage.from("page-photos").upload(path, file);
-    if (error) { msg.textContent = "Photo upload failed: " + error.message; return; }
-    const { data } = sb.storage.from("page-photos").getPublicUrl(path);
-    uploadedCoverPhotoUrl = data.publicUrl;
-    document.getElementById("cover-photo-preview").innerHTML =
-      `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover" />`;
-    msg.textContent = "";
-  });
-
-  let uploadedProfilePhotoUrl = "";
-  document.getElementById("profile_photo").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    msg.textContent = "Uploading photo...";
-    const path = `${session.user.id}/${Date.now()}-${file.name}`;
-    const { error } = await sb.storage.from("page-photos").upload(path, file);
-    if (error) { msg.textContent = "Photo upload failed: " + error.message; return; }
-    const { data } = sb.storage.from("page-photos").getPublicUrl(path);
-    uploadedProfilePhotoUrl = data.publicUrl;
-    document.getElementById("profile-photo-preview").innerHTML =
-      `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover" />`;
-    msg.textContent = "";
-  });
-
-  ["business_name", "phone"].forEach((id) => {
-    document.getElementById(id).addEventListener("input", checkReady);
-  });
-
   // default-select the first category on load
   selectedCategory = CATEGORIES[0];
 
+  nameInput.addEventListener("input", checkReady);
+
   function checkReady() {
-    const ready = selectedCategory
-      && document.getElementById("business_name").value.trim()
-      && document.getElementById("phone").value.trim();
-    publishBtn.disabled = !ready;
+    createBtn.disabled = !(selectedCategory && nameInput.value.trim());
   }
 
-  publishBtn.addEventListener("click", async () => {
-    publishBtn.disabled = true;
-    msg.textContent = "Publishing your page...";
+  createBtn.addEventListener("click", async () => {
+    createBtn.disabled = true;
+    msg.textContent = "Creating your page...";
     try {
-      const businessName = document.getElementById("business_name").value.trim();
-      const location = document.getElementById("location").value.trim();
-      const tagline = document.getElementById("tagline").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const whatsapp = document.getElementById("whatsapp").value.trim();
-      const serviceArea = document.getElementById("service_area").value.trim();
+      const businessName = nameInput.value.trim();
       const slug = slugify(businessName);
 
       const { data: page, error: pageErr } = await sb
@@ -217,55 +79,31 @@
         .insert({
           user_id: session.user.id,
           slug,
-          theme: selectedTheme,
-          custom_accent_color: selectedTheme === "custom" ? customColorInput.value : null,
-          custom_bg_color: selectedTheme === "custom" ? customBgInput.value : null,
-          custom_text_color: selectedTheme === "custom" ? customTextInput.value : null,
-          custom_font: selectedTheme === "custom" ? customFontInput.value : null,
+          theme: "classic",
           business_category: selectedCategory.id,
           business_name: businessName,
-          service_area: serviceArea,
           og_title: businessName,
         })
         .select()
         .single();
       if (pageErr) throw pageErr;
 
-      const order = [...CATEGORY_ELEMENTS[selectedCategory.id]];
-      // Contractor's default template has no "about" slot (matches its
-      // lead-gen-focused mockup), but a tagline should still show up near
-      // the name if the user bothered to type one.
-      if (tagline && !order.includes("about")) order.splice(1, 0, "about");
-
-      const contentFor = (type) => {
-        switch (type) {
-          case "header": return { business_name: businessName, tagline: "", location, logo_url: uploadedProfilePhotoUrl, cover_image_url: uploadedCoverPhotoUrl };
-          case "about": return { bio: tagline };
-          case "contact": return { phone, whatsapp, email: session.user.email };
-          case "portfolio_gallery": return { photos: uploadedPhotoUrls };
-          case "services_list": return { services: [] };
-          case "service_area": return { area: serviceArea };
-          case "social_link": return { links: [] };
-          case "quote_request_form": return {};
-          default: return {};
-        }
-      };
-
-      const elements = order.map((type, i) => ({
-        page_id: page.id,
-        type,
-        position: i,
-        content: contentFor(type),
-      }));
+      const order = CATEGORY_ELEMENTS[selectedCategory.id];
+      const elements = order.map((type, i) => {
+        const content = { ...ELEMENT_DEFAULTS[type] };
+        if (type === "header") content.business_name = businessName;
+        if (type === "contact") content.email = session.user.email;
+        return { page_id: page.id, type, position: i, content };
+      });
       const { error: elErr } = await sb.from("elements").insert(elements);
       if (elErr) throw elErr;
 
       await callFunction("render-page", { page_id: page.id }, session);
 
-      window.location.href = "/app/dashboard.html";
+      window.location.href = "/app/builder.html";
     } catch (err) {
       msg.textContent = err.message || "Something went wrong.";
-      publishBtn.disabled = false;
+      createBtn.disabled = false;
     }
   });
 
