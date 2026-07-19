@@ -86,7 +86,14 @@
         })
         .select()
         .single();
-      if (pageErr) throw pageErr;
+      if (pageErr) {
+        // Unique violation on user_id: a page already exists for this
+        // account (e.g. a double-click, or a retry after a network
+        // hiccup on a previous attempt that actually succeeded) — go
+        // straight to it instead of showing a raw DB error.
+        if (pageErr.code === "23505") { window.location.href = "/app/builder.html"; return; }
+        throw pageErr;
+      }
 
       const order = CATEGORY_ELEMENTS[selectedCategory.id];
       const elements = order.map((type, i) => {
