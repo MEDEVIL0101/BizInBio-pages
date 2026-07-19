@@ -142,7 +142,10 @@ button{font-family:inherit}
 .gallery-photo{position:relative;aspect-ratio:1}
 .gallery-photo.wide{grid-column:span 2;aspect-ratio:16/10}
 
-.social-row{display:flex;gap:var(--space-2);flex-wrap:wrap;justify-content:center}
+/* Full-width stacked rows, not auto-width pills — reads cleanly whether
+   there's one link or a dozen, unlike a wrapped row of pill buttons. */
+.social-row{display:flex;flex-direction:column;gap:var(--space-2)}
+.social-row a{width:100%;justify-content:flex-start;padding-left:var(--space-4)}
 
 /* Form fields (quote request, onboarding, dashboard edit) */
 .field{display:flex;flex-direction:column;gap:5px;margin-bottom:var(--space-3)}

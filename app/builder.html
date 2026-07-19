@@ -6,7 +6,7 @@
 <title>Page builder — BizInBio</title>
 <link rel="icon" href="../assets/favicon-32.png?v=1" />
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=1" />
-<link rel="stylesheet" href="../assets/site.css?v=11" />
+<link rel="stylesheet" href="../assets/site.css?v=12" />
 </head>
 <body>
 <div class="page-wrap" style="display:block;min-height:0">
@@ -97,6 +97,16 @@
   function escapeHtml(str) {
     return String(str ?? "")
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  // Users routinely type "instagram.com/handle" instead of a full URL —
+  // without a scheme that renders as a link relative to the page itself
+  // (bizinbio.net/slug/instagram.com/handle), a 404. Default to https://
+  // whenever no scheme is present.
+  function normalizeUrl(raw) {
+    const url = String(raw || "").trim();
+    if (!url) return "";
+    return /^[a-z][a-z0-9+.-]*:/i.test(url) ? url : `https://${url}`;
   }
 
   function typeIcon(type) {
@@ -468,17 +478,25 @@
         });
         panel.querySelectorAll(".bib-link-url").forEach((input) => {
           const i = Number(input.dataset.index);
-          if (content.links[i]) content.links[i].url = input.value;
+          if (content.links[i]) content.links[i].url = normalizeUrl(input.value);
         });
       }
 
       await sb.from("elements").update({ content }).eq("id", id);
       el.content = content;
-      delete pendingContent[id];
+      // Re-seed rather than delete: the panel stays open after a save, and
+      // list-type elements (social links, services, gallery) need a live
+      // pendingContent entry for their add/remove/reorder controls to keep
+      // working without a full page reload.
+      pendingContent[id] = JSON.parse(JSON.stringify(content));
       await callFunction("render-page", { page_id: page.id }, session);
-      msg.textContent = "Saved.";
       const preview = card.querySelector(".bib-el-preview");
       if (preview) preview.textContent = previewFor(el);
+      // Rebuild the panel from the re-seeded state (resyncs row inputs to
+      // saved values) — must happen before setting the status text, since
+      // it replaces the .bib-el-msg node the old `msg` reference points to.
+      refreshPanelBody(id);
+      card.querySelector(".bib-el-msg").textContent = "Saved.";
     } catch (err) {
       msg.textContent = err.message || "Something went wrong.";
     }
