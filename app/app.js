@@ -189,6 +189,18 @@ async function requireSession() {
     window.location.href = "/app/index.html";
     return null;
   }
+  // getSession() only reads the locally cached token — a JWT stays valid
+  // (unexpired) for up to an hour even after the underlying account is
+  // deleted, since deleting a user doesn't revoke already-issued access
+  // tokens. getUser() actually round-trips to the server, so a
+  // meanwhile-deleted account gets caught here instead of silently
+  // treating a stale local token as a real logged-in user.
+  const { data: { user }, error } = await sb.auth.getUser();
+  if (error || !user) {
+    await sb.auth.signOut();
+    window.location.href = "/app/index.html";
+    return null;
+  }
   return session;
 }
 
