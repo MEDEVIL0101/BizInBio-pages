@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Page builder — BizInBio</title>
+<link rel="icon" href="../assets/favicon-32.png?v=1" />
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=1" />
+<link rel="stylesheet" href="../assets/site.css?v=11" />
+</head>
+<body>
+<div class="page-wrap" style="display:block;min-height:0">
+
+<nav style="display:flex;align-items:center;padding:var(--space-4);border-bottom:1px solid var(--color-divider)">
+  <a href="/app/dashboard.html" style="margin-right:auto;font-size:13px">&larr; Back to dashboard</a>
+  <h4 style="margin:0">Page builder</h4>
+</nav>
+
+<div style="padding:var(--space-6) var(--space-4);display:flex;flex-direction:column;gap:var(--space-6)">
+
+  <section class="blueprint" id="header-card" style="position:relative;padding:var(--space-4)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:var(--space-3)">
+      <div class="cat-icon-chip" id="header-icon-chip"></div>
+      <div>
+        <h6 style="margin:0">Header</h6>
+        <p class="text-muted" style="font-size:12px;margin:0">Always shown first — not reorderable</p>
+      </div>
+    </div>
+    <label class="upload" for="h-cover-input" style="margin-bottom:var(--space-3);aspect-ratio:21/9;padding:0;overflow:hidden;position:relative">
+      <div id="h-cover-preview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+          <div class="upload-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></div>
+          <span class="text-muted" style="font-size:11px">Cover photo</span>
+        </div>
+      </div>
+      <input type="file" id="h-cover-input" accept="image/*" capture="environment" />
+    </label>
+    <div style="display:flex;justify-content:center;margin-bottom:var(--space-3)">
+      <label class="upload" for="h-avatar-input" style="width:88px;height:88px;border-radius:50%;padding:0;overflow:hidden">
+        <div id="h-avatar-preview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
+          <div class="upload-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></div>
+        </div>
+        <input type="file" id="h-avatar-input" accept="image/*" capture="environment" />
+      </label>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+      <div class="field"><label>Business name</label><input class="input" id="h-business-name" /></div>
+      <div class="field"><label>Location (optional)</label><input class="input" id="h-location" placeholder="e.g. Hamilton, Ontario" /></div>
+    </div>
+    <button type="button" id="h-save-btn" class="btn btn-primary btn-block" style="margin-top:var(--space-4)">Save &amp; republish</button>
+    <p id="h-msg" class="text-muted" style="text-align:center;font-size:13px;margin-top:var(--space-2);min-height:18px"></p>
+  </section>
+
+  <section>
+    <h6 style="margin-bottom:var(--space-3)">Page content</h6>
+    <div id="element-list"></div>
+    <button type="button" id="add-section-toggle" class="btn btn-secondary btn-block" style="margin-top:var(--space-2)">+ Add section</button>
+    <div id="add-element-picker" style="display:none;grid-template-columns:repeat(2,1fr);gap:var(--space-2);margin-top:var(--space-3)"></div>
+  </section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="app.js?v=7"></script>
+<script>
+  // ---------------------------------------------------------------------
+  // Icons — hand-drawn inline SVGs matching the rest of the app (viewBox
+  // 0 0 24 24, stroke=currentColor, stroke-width 1.5, round caps/joins).
+  const GRIP_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.3"/><circle cx="9" cy="12" r="1.3"/><circle cx="9" cy="18" r="1.3"/><circle cx="15" cy="6" r="1.3"/><circle cx="15" cy="12" r="1.3"/><circle cx="15" cy="18" r="1.3"/></svg>`;
+  const TRASH_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/></svg>`;
+  const CHEVRON_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`;
+  const UP_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>`;
+  const DOWN_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`;
+  const UPLOAD_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>`;
+  const HEADER_ICON = `<path d="M3 4h18v16H3z"/><circle cx="8.5" cy="10" r="2"/><path d="M6 16c.5-2 2-3 2.5-3s2 1 2.5 3"/><path d="M14 9h4M14 13h4"/>`;
+
+  const ELEMENT_TYPES = {
+    about: { label: "About", singleton: true, icon: `<path d="M4 6h16M4 12h16M4 18h10"/>` },
+    services_list: { label: "Services", singleton: false, icon: `<path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1" fill="currentColor" stroke="none"/>` },
+    portfolio_gallery: { label: "Gallery", singleton: false, icon: `<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M21 16l-5-5-4 4-3-3-6 6"/>` },
+    social_link: { label: "Social & links", singleton: true, icon: `<path d="M9 15l6-6"/><path d="M13 5l1-1a4 4 0 1 1 6 6l-1 1"/><path d="M11 19l-1 1a4 4 0 1 1-6-6l1-1"/>` },
+    contact: { label: "Contact", singleton: true, icon: `<path d="M6.5 3h3l1.5 5-2 2a12 12 0 0 0 5 5l2-2 5 1.5v3a2 2 0 0 1-2 2C9.5 20.5 3.5 14.5 4.5 5a2 2 0 0 1 2-2Z"/>` },
+    service_area: { label: "Service area", singleton: true, icon: `<path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>` },
+    quote_request_form: { label: "Quote request form", singleton: true, icon: `<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>` },
+    booking_deposit: { label: "Booking deposit", singleton: true, icon: `<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>` },
+    product_shop: { label: "Shop", singleton: true, icon: `<path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>` },
+  };
+
+  const ELEMENT_DEFAULTS = {
+    about: { bio: "" },
+    services_list: { services: [] },
+    portfolio_gallery: { photos: [] },
+    social_link: { links: [] },
+    contact: { phone: "", whatsapp: "", email: "" },
+    service_area: { area: "" },
+    quote_request_form: {},
+    booking_deposit: { deposit_amount: 0 },
+    product_shop: {},
+  };
+
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function typeIcon(type) {
+    const def = ELEMENT_TYPES[type];
+    if (!def) return "";
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${def.icon}</svg>`;
+  }
+
+  // ---------------------------------------------------------------------
+  // Drag-and-drop — Pointer Events, not the HTML5 native DnD API (no
+  // reliable touch support there, and this app's usage skews mobile).
+  // Pointer capture routes subsequent move/up events straight to the
+  // dragged item regardless of where the pointer physically travels, so
+  // move/up listeners live on the item itself and die with it — nothing
+  // to leak across repeated re-renders.
+  function initDragList(container, itemClass, onReorder) {
+    container.addEventListener("pointerdown", (e) => {
+      const handle = e.target.closest(".bib-drag-handle");
+      if (!handle) return;
+      const item = handle.closest("." + itemClass);
+      if (!item || item.parentElement !== container) return;
+
+      let curStartY = e.clientY;
+      item.setPointerCapture(e.pointerId);
+      item.classList.add("bib-drag-lift");
+      e.preventDefault();
+
+      function onMove(ev) {
+        const delta = ev.clientY - curStartY;
+        item.style.transform = `translateY(${delta}px)`;
+        const rect = item.getBoundingClientRect();
+        const prev = item.previousElementSibling;
+        if (prev && prev.classList.contains(itemClass)) {
+          const pr = prev.getBoundingClientRect();
+          if (rect.top < pr.top + pr.height / 2) {
+            container.insertBefore(item, prev);
+            curStartY -= pr.height;
+            item.style.transform = `translateY(${ev.clientY - curStartY}px)`;
+            return; // DOM just changed — let the next pointermove re-evaluate from fresh siblings
+          }
+        }
+        const next = item.nextElementSibling;
+        if (next && next.classList.contains(itemClass)) {
+          const nr = next.getBoundingClientRect();
+          if (rect.bottom > nr.top + nr.height / 2) {
+            container.insertBefore(next, item);
+            curStartY += nr.height;
+            item.style.transform = `translateY(${ev.clientY - curStartY}px)`;
+          }
+        }
+      }
+      function onUp(ev) {
+        item.releasePointerCapture(ev.pointerId);
+        item.removeEventListener("pointermove", onMove);
+        item.removeEventListener("pointerup", onUp);
+        item.removeEventListener("pointercancel", onUp);
+        item.classList.remove("bib-drag-lift");
+        item.style.transform = "";
+        const orderedEls = [...container.querySelectorAll(":scope > ." + itemClass)];
+        onReorder(orderedEls);
+      }
+      item.addEventListener("pointermove", onMove);
+      item.addEventListener("pointerup", onUp);
+      item.addEventListener("pointercancel", onUp);
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  let session, page, elements = [];
+  const pendingContent = {};
+
+  function headerEl() { return elements.find((e) => e.type === "header"); }
+
+  function previewFor(el) {
+    const c = el.content || {};
+    switch (el.type) {
+      case "about": return c.bio ? c.bio.slice(0, 60) : "No bio yet";
+      case "services_list": { const n = (c.services || []).length; return n ? `${n} service${n === 1 ? "" : "s"}` : "No services yet"; }
+      case "portfolio_gallery": { const n = (c.photos || []).length; return n ? `${n} photo${n === 1 ? "" : "s"}` : "No photos yet"; }
+      case "social_link": { const n = (c.links || []).length; return n ? `${n} link${n === 1 ? "" : "s"}` : "No links yet"; }
+      case "contact": return c.phone || c.email || c.whatsapp || "No contact info yet";
+      case "service_area": return c.area || "Not set";
+      case "quote_request_form": return "Visitors can request a quote";
+      case "booking_deposit": return c.deposit_amount ? `$${Number(c.deposit_amount).toFixed(2)} deposit` : "No amount set";
+      case "product_shop": return "Manage products in the Shop section on your dashboard";
+      default: return "";
+    }
+  }
+
+  function serviceRowHtml(s, i) {
+    return `
+      <div class="bib-row" style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--color-divider)">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600">${escapeHtml(s.name || "")}</div>
+          ${s.price_range ? `<div class="text-muted" style="font-size:12px">${escapeHtml(s.price_range)}</div>` : ""}
+        </div>
+        <button type="button" class="bib-row-up bib-icon-btn" data-kind="services" data-index="${i}" title="Move up">${UP_ICON}</button>
+        <button type="button" class="bib-row-down bib-icon-btn" data-kind="services" data-index="${i}" title="Move down">${DOWN_ICON}</button>
+        <button type="button" class="bib-row-delete bib-icon-btn" data-kind="services" data-index="${i}" title="Remove" style="font-size:18px">&times;</button>
+      </div>`;
+  }
+
+  function galleryThumbHtml(url, i) {
+    return `
+      <div class="bib-gallery-thumb bib-drag-handle" data-index="${i}" style="position:relative;width:64px;height:64px;flex:none;cursor:grab">
+        <img src="${escapeHtml(url)}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-md);border:1px solid var(--color-divider);display:block" />
+        <button type="button" class="bib-row-delete" data-kind="gallery" data-index="${i}" title="Remove" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--color-accent);color:#fff;border:2px solid var(--color-card-bg);display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;cursor:pointer;padding:0">&times;</button>
+      </div>`;
+  }
+
+  function linkRowHtml(l, i) {
+    return `
+      <div class="bib-row" style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--color-divider);border-radius:var(--radius-md)">
+        <span style="flex:none">${socialIcon(l.platform)}</span>
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+          <input class="input bib-link-label" data-index="${i}" value="${escapeHtml(l.label || "")}" placeholder="Link text" style="font-size:13px;padding:6px 8px" />
+          <input class="input bib-link-url" data-index="${i}" value="${escapeHtml(l.url || "")}" placeholder="https://..." style="font-size:12px;padding:6px 8px" />
+        </div>
+        <button type="button" class="bib-row-up bib-icon-btn" data-kind="links" data-index="${i}" title="Move up">${UP_ICON}</button>
+        <button type="button" class="bib-row-down bib-icon-btn" data-kind="links" data-index="${i}" title="Move down">${DOWN_ICON}</button>
+        <button type="button" class="bib-row-delete bib-icon-btn" data-kind="links" data-index="${i}" title="Remove" style="font-size:18px">&times;</button>
+      </div>`;
+  }
+
+  function editFormHtml(el) {
+    const content = pendingContent[el.id] || el.content || {};
+    switch (el.type) {
+      case "about":
+        return `<div class="field"><label>Bio</label><textarea class="input bib-f" data-field="bio">${escapeHtml(content.bio || "")}</textarea></div>`;
+      case "services_list":
+        return `
+          <div class="bib-services-list" style="display:flex;flex-direction:column;margin-bottom:var(--space-3)">
+            ${(content.services || []).map((s, i) => serviceRowHtml(s, i)).join("") || `<p class="text-muted" style="font-size:13px">No services yet.</p>`}
+          </div>
+          <div style="display:flex;gap:6px">
+            <input class="input bib-new-service-name" placeholder="Service name" style="flex:1" />
+            <input class="input bib-new-service-price" placeholder="Price" style="width:80px" />
+            <button type="button" class="btn btn-secondary bib-add-service">Add</button>
+          </div>`;
+      case "portfolio_gallery":
+        return `
+          <div class="bib-gallery-thumbs" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:var(--space-3)">
+            ${(content.photos || []).map((url, i) => galleryThumbHtml(url, i)).join("")}
+          </div>
+          <label class="upload" style="padding:var(--space-4);text-align:center">
+            <div class="upload-icon" style="margin:0 auto 6px">${UPLOAD_ICON}</div>
+            <span class="text-muted" style="font-size:12px">Add photos</span>
+            <input type="file" accept="image/*" capture="environment" multiple class="bib-gallery-upload" style="display:none" />
+          </label>`;
+      case "social_link":
+        return `
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--space-3)">
+            ${SOCIAL_PLATFORMS.map((p) => `<button type="button" class="btn btn-secondary bib-platform-btn" data-platform="${p.id}" title="${escapeHtml(p.label)}" style="padding:8px">${socialIcon(p.id)}</button>`).join("")}
+          </div>
+          <div class="bib-links-list" style="display:flex;flex-direction:column;gap:8px">
+            ${(content.links || []).map((l, i) => linkRowHtml(l, i)).join("") || `<p class="text-muted" style="font-size:13px">No links yet — pick a platform above.</p>`}
+          </div>`;
+      case "contact":
+        return `
+          <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+            <div class="field"><label>Phone</label><input class="input bib-f" data-field="phone" value="${escapeHtml(content.phone || "")}" /></div>
+            <div class="field"><label>WhatsApp (optional)</label><input class="input bib-f" data-field="whatsapp" value="${escapeHtml(content.whatsapp || "")}" placeholder="Include country code, e.g. +1 555 555 1234" /></div>
+            <div class="field"><label>Email</label><input class="input bib-f" data-field="email" type="email" value="${escapeHtml(content.email || "")}" /></div>
+          </div>`;
+      case "service_area":
+        return `<div class="field"><label>Area you serve</label><input class="input bib-f" data-field="area" value="${escapeHtml(content.area || "")}" /></div>`;
+      case "quote_request_form":
+        return `<p class="text-muted" style="font-size:13px">Visitors will see a form to request a quote — no setup needed.</p>`;
+      case "booking_deposit":
+        return `
+          <div class="field"><label>Deposit amount (USD)</label><input class="input bib-f" data-field="deposit_amount" type="number" min="0" step="0.01" value="${escapeHtml(content.deposit_amount || "")}" /></div>
+          <p class="text-muted" style="font-size:12px;margin-top:6px">Won't show on your page until Stripe is connected — see Booking deposits in your dashboard.</p>`;
+      case "product_shop":
+        return `<p class="text-muted" style="font-size:13px">Controls where your shop appears on the page. Manage products in the Shop section of your dashboard.</p>`;
+      default:
+        return "";
+    }
+  }
+
+  function elementCardHtml(el) {
+    const type = ELEMENT_TYPES[el.type] || { label: el.type };
+    return `
+      <div class="blueprint bib-el-card" data-id="${el.id}" style="position:relative;margin-bottom:var(--space-2);padding:0;overflow:visible">
+        <div class="bib-el-head" style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);cursor:pointer">
+          <span class="bib-drag-handle">${GRIP_ICON}</span>
+          <div class="cat-icon-chip">${typeIcon(el.type)}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-family:var(--font-heading)">${escapeHtml(type.label)}</div>
+            <div class="bib-el-preview text-muted" style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(previewFor(el))}</div>
+          </div>
+          <button type="button" class="bib-delete-btn bib-icon-btn" data-id="${el.id}" title="Delete section">${TRASH_ICON}</button>
+          <span class="bib-chevron" style="display:flex;flex:none;color:color-mix(in srgb,var(--color-text) 40%,transparent)">${CHEVRON_ICON}</span>
+        </div>
+        <div class="bib-el-panel" style="display:none;padding:0 var(--space-4) var(--space-4)">
+          ${editFormHtml(el)}
+          <button type="button" class="btn btn-primary bib-save-el-btn" data-id="${el.id}" style="margin-top:var(--space-3)">Save</button>
+          <p class="text-muted bib-el-msg" style="font-size:12px;margin-top:6px;min-height:16px"></p>
+        </div>
+      </div>`;
+  }
+
+  function wireGalleryDrag(id) {
+    const container = document.querySelector(`.bib-el-card[data-id="${id}"] .bib-gallery-thumbs`);
+    if (!container) return;
+    initDragList(container, "bib-gallery-thumb", (orderedEls) => {
+      const newIdx = orderedEls.map((el) => Number(el.dataset.index));
+      pendingContent[id].photos = newIdx.map((i) => pendingContent[id].photos[i]);
+      refreshPanelBody(id);
+    });
+  }
+
+  function refreshPanelBody(id) {
+    const card = document.querySelector(`.bib-el-card[data-id="${id}"]`);
+    const el = elements.find((e) => e.id === id);
+    const panel = card.querySelector(".bib-el-panel");
+    panel.innerHTML = editFormHtml(el)
+      + `<button type="button" class="btn btn-primary bib-save-el-btn" data-id="${id}" style="margin-top:var(--space-3)">Save</button>`
+      + `<p class="text-muted bib-el-msg" style="font-size:12px;margin-top:6px;min-height:16px"></p>`;
+    if (el.type === "portfolio_gallery") wireGalleryDrag(id);
+  }
+
+  function togglePanel(card) {
+    const panel = card.querySelector(".bib-el-panel");
+    const chevron = card.querySelector(".bib-chevron");
+    const isOpen = panel.style.display !== "none";
+    panel.style.display = isOpen ? "none" : "block";
+    chevron.style.transform = isOpen ? "" : "rotate(180deg)";
+    if (!isOpen) {
+      const id = card.dataset.id;
+      const el = elements.find((e) => e.id === id);
+      pendingContent[id] = JSON.parse(JSON.stringify(el.content || {}));
+      if (el.type === "portfolio_gallery") wireGalleryDrag(id);
+    }
+  }
+
+  function renderElementList() {
+    const container = document.getElementById("element-list");
+    const body = elements.filter((e) => e.type !== "header");
+    container.innerHTML = body.map((el) => elementCardHtml(el)).join("");
+    initDragList(container, "bib-el-card", (orderedEls) => {
+      reorderElements(orderedEls.map((el) => el.dataset.id));
+    });
+  }
+
+  function renderAddPicker() {
+    const picker = document.getElementById("add-element-picker");
+    const presentTypes = new Set(elements.map((e) => e.type));
+    picker.innerHTML = Object.entries(ELEMENT_TYPES).map(([type, def]) => {
+      const disabled = def.singleton && presentTypes.has(type);
+      return `
+        <button type="button" class="cat-btn" data-type="${type}" ${disabled ? "disabled" : ""} style="${disabled ? "opacity:.4;cursor:not-allowed" : ""}">
+          <div class="cat-icon-chip" style="margin-bottom:6px">${typeIcon(type)}</div>
+          <span class="name">${escapeHtml(def.label)}</span>
+        </button>`;
+    }).join("");
+  }
+
+  async function reorderElements(ids) {
+    const byId = new Map(elements.map((e) => [e.id, e]));
+    const newBody = ids.map((id) => byId.get(id)).filter(Boolean);
+    newBody.forEach((e, i) => { e.position = i; });
+    const h = headerEl();
+    elements = h ? [h, ...newBody] : newBody;
+    try {
+      await Promise.all(newBody.map((e) => sb.from("elements").update({ position: e.position }).eq("id", e.id)));
+      await callFunction("render-page", { page_id: page.id }, session);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function deleteElement(id) {
+    try {
+      await sb.from("elements").delete().eq("id", id);
+      elements = elements.filter((e) => e.id !== id);
+      delete pendingContent[id];
+      renderElementList();
+      renderAddPicker();
+      await callFunction("render-page", { page_id: page.id }, session);
+    } catch (err) {
+      alert(err.message || "Something went wrong.");
+    }
+  }
+
+  async function addElement(type) {
+    const maxPos = Math.max(0, ...elements.filter((e) => e.type !== "header").map((e) => e.position));
+    try {
+      const { data, error } = await sb.from("elements").insert({
+        page_id: page.id, type, position: maxPos + 1, content: ELEMENT_DEFAULTS[type] || {},
+      }).select().single();
+      if (error) throw error;
+      elements.push(data);
+      document.getElementById("add-element-picker").style.display = "none";
+      renderElementList();
+      renderAddPicker();
+      const card = document.querySelector(`.bib-el-card[data-id="${data.id}"]`);
+      if (card) togglePanel(card);
+      await callFunction("render-page", { page_id: page.id }, session);
+    } catch (err) {
+      alert(err.message || "Something went wrong.");
+    }
+  }
+
+  function deleteRow(id, kind, index) {
+    const field = kind === "services" ? "services" : kind === "gallery" ? "photos" : "links";
+    pendingContent[id][field].splice(index, 1);
+    refreshPanelBody(id);
+  }
+
+  function moveRow(id, kind, index, dir) {
+    const field = kind === "services" ? "services" : kind === "gallery" ? "photos" : "links";
+    const arr = pendingContent[id][field];
+    const target = index + dir;
+    if (target < 0 || target >= arr.length) return;
+    [arr[index], arr[target]] = [arr[target], arr[index]];
+    refreshPanelBody(id);
+  }
+
+  function addService(id) {
+    const panel = document.querySelector(`.bib-el-card[data-id="${id}"] .bib-el-panel`);
+    const name = panel.querySelector(".bib-new-service-name").value.trim();
+    const price = panel.querySelector(".bib-new-service-price").value.trim();
+    if (!name) return;
+    if (!pendingContent[id].services) pendingContent[id].services = [];
+    pendingContent[id].services.push({ name, price_range: price });
+    refreshPanelBody(id);
+  }
+
+  function addSocialLink(id, platformId) {
+    const platform = SOCIAL_PLATFORMS.find((p) => p.id === platformId);
+    if (!pendingContent[id].links) pendingContent[id].links = [];
+    pendingContent[id].links.push({ platform: platformId, url: "", label: platform ? platform.defaultLabel : "Visit link" });
+    refreshPanelBody(id);
+  }
+
+  async function handleGalleryUpload(id, files) {
+    const panel = document.querySelector(`.bib-el-card[data-id="${id}"] .bib-el-panel`);
+    const msg = panel.querySelector(".bib-el-msg");
+    if (!pendingContent[id].photos) pendingContent[id].photos = [];
+    for (const file of files) {
+      msg.textContent = "Uploading...";
+      const path = `${session.user.id}/${Date.now()}-${file.name}`;
+      const { error } = await sb.storage.from("page-photos").upload(path, file);
+      if (error) { msg.textContent = "Upload failed: " + error.message; continue; }
+      const { data } = sb.storage.from("page-photos").getPublicUrl(path);
+      pendingContent[id].photos.push(data.publicUrl);
+    }
+    msg.textContent = "";
+    refreshPanelBody(id);
+  }
+
+  async function saveElement(id) {
+    const el = elements.find((e) => e.id === id);
+    const card = document.querySelector(`.bib-el-card[data-id="${id}"]`);
+    const panel = card.querySelector(".bib-el-panel");
+    const msg = panel.querySelector(".bib-el-msg");
+    msg.textContent = "Saving...";
+    try {
+      const content = { ...(pendingContent[id] || el.content || {}) };
+
+      panel.querySelectorAll(".bib-f").forEach((input) => {
+        content[input.dataset.field] = input.type === "number" ? Number(input.value || 0) : input.value;
+      });
+
+      if (el.type === "social_link" && content.links) {
+        panel.querySelectorAll(".bib-link-label").forEach((input) => {
+          const i = Number(input.dataset.index);
+          if (content.links[i]) content.links[i].label = input.value;
+        });
+        panel.querySelectorAll(".bib-link-url").forEach((input) => {
+          const i = Number(input.dataset.index);
+          if (content.links[i]) content.links[i].url = input.value;
+        });
+      }
+
+      await sb.from("elements").update({ content }).eq("id", id);
+      el.content = content;
+      delete pendingContent[id];
+      await callFunction("render-page", { page_id: page.id }, session);
+      msg.textContent = "Saved.";
+      const preview = card.querySelector(".bib-el-preview");
+      if (preview) preview.textContent = previewFor(el);
+    } catch (err) {
+      msg.textContent = err.message || "Something went wrong.";
+    }
+  }
+
+  document.getElementById("element-list").addEventListener("click", (e) => {
+    const delBtn = e.target.closest(".bib-delete-btn");
+    const saveBtn = e.target.closest(".bib-save-el-btn");
+    const addServiceBtn = e.target.closest(".bib-add-service");
+    const platformBtn = e.target.closest(".bib-platform-btn");
+    const delRow = e.target.closest(".bib-row-delete");
+    const upBtn = e.target.closest(".bib-row-up");
+    const downBtn = e.target.closest(".bib-row-down");
+    const head = e.target.closest(".bib-el-head");
+
+    if (delBtn) {
+      e.stopPropagation();
+      if (confirm("Delete this section? This can't be undone.")) deleteElement(delBtn.dataset.id);
+      return;
+    }
+    if (saveBtn) { saveElement(saveBtn.dataset.id); return; }
+    if (addServiceBtn) { addService(addServiceBtn.closest(".bib-el-card").dataset.id); return; }
+    if (platformBtn) { addSocialLink(platformBtn.closest(".bib-el-card").dataset.id, platformBtn.dataset.platform); return; }
+    if (delRow) { deleteRow(delRow.closest(".bib-el-card").dataset.id, delRow.dataset.kind, Number(delRow.dataset.index)); return; }
+    if (upBtn) { moveRow(upBtn.closest(".bib-el-card").dataset.id, upBtn.dataset.kind, Number(upBtn.dataset.index), -1); return; }
+    if (downBtn) { moveRow(downBtn.closest(".bib-el-card").dataset.id, downBtn.dataset.kind, Number(downBtn.dataset.index), 1); return; }
+    if (head && !e.target.closest(".bib-drag-handle")) { togglePanel(head.closest(".bib-el-card")); return; }
+  });
+
+  document.getElementById("element-list").addEventListener("change", (e) => {
+    if (e.target.classList.contains("bib-gallery-upload")) {
+      const id = e.target.closest(".bib-el-card").dataset.id;
+      handleGalleryUpload(id, e.target.files);
+    }
+  });
+
+  document.getElementById("add-section-toggle").addEventListener("click", () => {
+    const picker = document.getElementById("add-element-picker");
+    picker.style.display = picker.style.display === "grid" ? "none" : "grid";
+  });
+
+  document.getElementById("add-element-picker").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-type]");
+    if (!btn || btn.disabled) return;
+    addElement(btn.dataset.type);
+  });
+
+  // ---------------------------------------------------------------------
+  // Header card (pinned — not part of the reorderable list).
+  let uploadedCoverUrl = "", uploadedAvatarUrl = "";
+
+  function renderHeaderCard() {
+    document.getElementById("header-icon-chip").innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${HEADER_ICON}</svg>`;
+    const h = headerEl();
+    const c = (h && h.content) || {};
+    document.getElementById("h-business-name").value = c.business_name || page.business_name || "";
+    document.getElementById("h-location").value = c.location || "";
+    if (c.cover_image_url) document.getElementById("h-cover-preview").innerHTML = `<img src="${escapeHtml(c.cover_image_url)}" style="width:100%;height:100%;object-fit:cover" />`;
+    if (c.logo_url) document.getElementById("h-avatar-preview").innerHTML = `<img src="${escapeHtml(c.logo_url)}" style="width:100%;height:100%;object-fit:cover" />`;
+  }
+
+  document.getElementById("h-cover-input").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const path = `${session.user.id}/${Date.now()}-${file.name}`;
+    const { error } = await sb.storage.from("page-photos").upload(path, file);
+    if (error) { alert("Upload failed: " + error.message); return; }
+    const { data } = sb.storage.from("page-photos").getPublicUrl(path);
+    uploadedCoverUrl = data.publicUrl;
+    document.getElementById("h-cover-preview").innerHTML = `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover" />`;
+  });
+
+  document.getElementById("h-avatar-input").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const path = `${session.user.id}/${Date.now()}-${file.name}`;
+    const { error } = await sb.storage.from("page-photos").upload(path, file);
+    if (error) { alert("Upload failed: " + error.message); return; }
+    const { data } = sb.storage.from("page-photos").getPublicUrl(path);
+    uploadedAvatarUrl = data.publicUrl;
+    document.getElementById("h-avatar-preview").innerHTML = `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover" />`;
+  });
+
+  document.getElementById("h-save-btn").addEventListener("click", async () => {
+    const msg = document.getElementById("h-msg");
+    msg.textContent = "Saving...";
+    try {
+      const businessName = document.getElementById("h-business-name").value.trim();
+      const location = document.getElementById("h-location").value.trim();
+      let h = headerEl();
+      const content = {
+        business_name: businessName,
+        location,
+        logo_url: uploadedAvatarUrl || (h && h.content.logo_url) || "",
+        cover_image_url: uploadedCoverUrl || (h && h.content.cover_image_url) || "",
+      };
+      if (h) {
+        await sb.from("elements").update({ content }).eq("id", h.id);
+        h.content = content;
+      } else {
+        const { data, error } = await sb.from("elements").insert({ page_id: page.id, type: "header", position: 0, content }).select().single();
+        if (error) throw error;
+        elements.unshift(data);
+      }
+      await sb.from("pages").update({ business_name: businessName, og_title: businessName }).eq("id", page.id);
+      page.business_name = businessName;
+      await callFunction("render-page", { page_id: page.id }, session);
+      msg.textContent = "Saved and republished.";
+    } catch (err) {
+      msg.textContent = err.message || "Something went wrong.";
+    }
+  });
+
+  // ---------------------------------------------------------------------
+  (async () => {
+    session = await requireSession();
+    if (!session) return;
+
+    const { data: pageData } = await sb.from("pages").select("*").eq("user_id", session.user.id).maybeSingle();
+    if (!pageData) { window.location.href = "/app/onboarding.html"; return; }
+    page = pageData;
+    applyTheme(page.theme || "classic", page.custom_accent_color, page.custom_bg_color, page.custom_text_color, page.custom_font);
+
+    const { data: elData } = await sb.from("elements").select("*").eq("page_id", page.id).order("position", { ascending: true });
+    elements = elData || [];
+
+    renderHeaderCard();
+    renderElementList();
+    renderAddPicker();
+  })();
+</script>
+</body>
+</html>

@@ -68,23 +68,73 @@ const THEMES = [
     radius: 4, cardBlur: 0, borderWidth: 1, avatarRadius: "50%", headingTransform: "none", headingLetterSpacing: "-.015em" },
 ];
 
+// Curated font choices for the "Custom" theme — mirrors FONT_OPTIONS in
+// supabase/functions/render-page/index.ts (same manual-sync convention as
+// THEMES/THEME_PRESETS). Deliberately a fixed list, not free-text: every
+// option here is already loaded via the Google Fonts import at the top of
+// site.css, so a custom font choice can never reference an unloaded family.
+const FONT_OPTIONS = [
+  { id: "barlow_condensed", label: "Barlow Condensed", css: '"Barlow Condensed",system-ui,sans-serif' },
+  { id: "barlow", label: "Barlow", css: '"Barlow",system-ui,sans-serif' },
+  { id: "inter", label: "Inter", css: '"Inter",system-ui,sans-serif' },
+  { id: "fraunces", label: "Fraunces (serif)", css: '"Fraunces","Georgia",serif' },
+  { id: "oswald", label: "Oswald", css: '"Oswald",system-ui,sans-serif' },
+  { id: "bebas_neue", label: "Bebas Neue", css: '"Bebas Neue",system-ui,sans-serif' },
+  { id: "manrope", label: "Manrope", css: '"Manrope",system-ui,sans-serif' },
+];
+
+// Social platform icons for the builder's link picker — mirrors
+// SOCIAL_PLATFORMS in supabase/functions/render-page/index.ts exactly (same
+// hand-drawn inline-SVG style as every other icon in this app: viewBox 0 0
+// 24 24, stroke=currentColor, stroke-width 1.5, round caps/joins).
+const SOCIAL_PLATFORMS = [
+  { id: "instagram", label: "Instagram", defaultLabel: "Follow on Instagram",
+    icon: `<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/>` },
+  { id: "tiktok", label: "TikTok", defaultLabel: "Watch on TikTok",
+    icon: `<path d="M14 4v10.8a3.3 3.3 0 1 1-2.6-3.23"/><path d="M14 4a5 5 0 0 0 5 5"/>` },
+  { id: "facebook", label: "Facebook", defaultLabel: "Follow on Facebook",
+    icon: `<circle cx="12" cy="12" r="9"/><path d="M14 8.5h-1.5A1.5 1.5 0 0 0 11 10v2H9v3h2v5h3v-5h2l.5-3H14v-1.5c0-.4.2-.5.5-.5H15z"/>` },
+  { id: "youtube", label: "YouTube", defaultLabel: "Watch on YouTube",
+    icon: `<rect x="3" y="6" width="18" height="12" rx="3"/><path d="M10.5 9.5l4.5 2.5-4.5 2.5z" fill="currentColor" stroke="none"/>` },
+  { id: "twitter", label: "X (Twitter)", defaultLabel: "Follow on X",
+    icon: `<path d="M5 5l14 14M19 5L5 19"/>` },
+  { id: "linkedin", label: "LinkedIn", defaultLabel: "Connect on LinkedIn",
+    icon: `<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8.5" r="1.1" fill="currentColor" stroke="none"/><path d="M8 11v6"/><path d="M13 17v-3.5a2 2 0 0 1 4 0V17"/><path d="M13 11v6"/>` },
+  { id: "pinterest", label: "Pinterest", defaultLabel: "Follow on Pinterest",
+    icon: `<circle cx="12" cy="12" r="9"/><path d="M9.5 17c.8-3 1.3-5.3 1.3-6.8a1.8 1.8 0 1 1 3.6 0c0 1.6-.9 3.3-2 3.3-.9 0-1.4-.6-1.4-1.4"/>` },
+  { id: "amazon", label: "Amazon", defaultLabel: "Shop on Amazon",
+    icon: `<path d="M4.5 8h15l-1.3 8.5a2 2 0 0 1-2 1.7H7.8a2 2 0 0 1-2-1.7z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/><path d="M6 20c4 2 8 2 12 0"/>` },
+  { id: "other", label: "Other link", defaultLabel: "Visit link",
+    icon: `<path d="M9 15l6-6"/><path d="M13 5l1-1a4 4 0 1 1 6 6l-1 1"/><path d="M11 19l-1 1a4 4 0 1 1-6-6l1-1"/>` },
+];
+
+function socialIcon(platformId) {
+  const platform = SOCIAL_PLATFORMS.find((p) => p.id === platformId) || SOCIAL_PLATFORMS[SOCIAL_PLATFORMS.length - 1];
+  return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${platform.icon}</svg>`;
+}
+
 // Applies a theme's full token set to the document root, so the
 // onboarding/dashboard form itself becomes a live preview of the chosen
 // look (not just a small static swatch) — same CSS vars themeStyleBlock()
 // injects for the actual published page in render-page/index.ts.
-function applyTheme(themeId, customAccentColor) {
+function applyTheme(themeId, customAccentColor, customBgColor, customTextColor, customFont) {
   const theme = THEMES.find((t) => t.id === themeId) || THEMES[0];
-  const accent = themeId === "custom" && customAccentColor ? customAccentColor : theme.accent;
+  const isCustom = themeId === "custom";
+  const accent = isCustom && customAccentColor ? customAccentColor : theme.accent;
+  const bg = isCustom && customBgColor ? customBgColor : theme.bg;
+  const bodyBg = isCustom && customBgColor ? customBgColor : (theme.bodyBg || theme.bg);
+  const text = isCustom && customTextColor ? customTextColor : theme.text;
+  const font = isCustom ? FONT_OPTIONS.find((f) => f.id === customFont) : undefined;
   const root = document.documentElement.style;
-  root.setProperty("--color-bg", theme.bg);
-  root.setProperty("--body-bg", theme.bodyBg || theme.bg);
+  root.setProperty("--color-bg", bg);
+  root.setProperty("--body-bg", bodyBg);
   root.setProperty("--color-card-bg", theme.cardBg);
   root.setProperty("--color-surface", theme.surface);
-  root.setProperty("--color-text", theme.text);
+  root.setProperty("--color-text", text);
   root.setProperty("--color-accent", accent);
-  root.setProperty("--font-heading", theme.fontHeading);
+  root.setProperty("--font-heading", font ? font.css : theme.fontHeading);
   root.setProperty("--font-heading-weight", theme.fontHeadingWeight);
-  root.setProperty("--font-body", theme.fontBody);
+  root.setProperty("--font-body", font ? font.css : theme.fontBody);
   root.setProperty("--radius-md", theme.radius + "px");
   root.setProperty("--card-blur", theme.cardBlur + "px");
   root.setProperty("--card-border-width", theme.borderWidth + "px");

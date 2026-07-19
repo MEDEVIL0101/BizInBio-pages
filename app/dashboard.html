@@ -83,42 +83,19 @@
   </section>
 
   <section class="blueprint" style="position:relative;padding:var(--space-4)">
-    <h6 style="margin-bottom:var(--space-3)">Edit details</h6>
-    <label class="upload" for="cover_photo" style="margin-bottom:var(--space-3);aspect-ratio:21/9;padding:0;overflow:hidden;position:relative">
-      <div id="cover-photo-preview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
-          <div class="upload-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></div>
-          <span class="text-muted" style="font-size:11px">Cover photo</span>
-        </div>
-      </div>
-      <input type="file" id="cover_photo" accept="image/*" capture="environment" />
-    </label>
-    <div style="display:flex;justify-content:center;margin-bottom:var(--space-3)">
-      <label class="upload" for="profile_photo" style="width:88px;height:88px;border-radius:50%;padding:0;overflow:hidden">
-        <div id="profile-photo-preview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
-          <div class="upload-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></div>
-        </div>
-        <input type="file" id="profile_photo" accept="image/*" capture="environment" />
-      </label>
-    </div>
-    <p class="text-muted" style="text-align:center;font-size:11px;margin-bottom:var(--space-3)">Profile photo or logo</p>
-    <div style="display:flex;flex-direction:column;gap:var(--space-3)">
-      <div class="field"><label>Business name</label><input class="input" id="business_name" /></div>
-      <div class="field"><label>Location (optional)</label><input class="input" id="location" placeholder="e.g. Hamilton, Ontario" /></div>
-      <div class="field"><label>Phone</label><input class="input" id="phone" /></div>
-      <div class="field"><label>WhatsApp (optional)</label><input class="input" id="whatsapp" placeholder="Include country code, e.g. +1 555 555 1234" /></div>
-      <div class="field"><label>Service area</label><input class="input" id="service_area" /></div>
-      <div class="field"><label>Tagline / about</label><textarea class="input" id="bio" placeholder="A short line about your business"></textarea></div>
-    </div>
-    <button id="save" class="btn btn-primary btn-block" style="margin-top:var(--space-4)">Save &amp; republish</button>
-    <p id="save-msg" class="text-muted" style="text-align:center;font-size:13px;margin-top:var(--space-2);min-height:18px"></p>
+    <h6 style="margin-bottom:var(--space-2)">Page content</h6>
+    <p class="text-muted" style="font-size:13px;margin-bottom:var(--space-3)">Add, edit, and reorder everything on your page — header, about, services, gallery, social links, and more.</p>
+    <a href="/app/builder.html" class="btn btn-primary btn-block">Edit page content</a>
   </section>
 
   <section class="blueprint" style="position:relative;padding:var(--space-4)">
     <h6 style="margin-bottom:var(--space-3)">Design</h6>
     <div id="dash-theme-row" style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-2)"></div>
-    <div id="dash-custom-color-row" style="display:none;margin-top:var(--space-3)">
-      <div class="field"><label>Your accent color</label><input type="color" id="dash-custom-color-input" value="#ff0000" style="width:100%;height:44px;padding:2px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-surface)" /></div>
+    <div id="dash-custom-color-row" style="display:none;margin-top:var(--space-3);flex-direction:column;gap:var(--space-3)">
+      <div class="field"><label>Accent color</label><input type="color" id="dash-custom-color-input" value="#ff0000" style="width:100%;height:44px;padding:2px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-surface)" /></div>
+      <div class="field"><label>Background color</label><input type="color" id="dash-custom-bg-input" value="#ffffff" style="width:100%;height:44px;padding:2px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-surface)" /></div>
+      <div class="field"><label>Text color</label><input type="color" id="dash-custom-text-input" value="#0f0f0f" style="width:100%;height:44px;padding:2px;border:1px solid var(--color-divider);border-radius:var(--radius-md);background:var(--color-surface)" /></div>
+      <div class="field"><label>Font</label><select class="input" id="dash-custom-font-input"></select></div>
     </div>
     <button id="save-theme" class="btn btn-primary btn-block" style="margin-top:var(--space-4)">Save look &amp; republish</button>
     <p id="theme-msg" class="text-muted" style="text-align:center;font-size:13px;margin-top:var(--space-2);min-height:18px"></p>
@@ -133,11 +110,9 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="app.js?v=6"></script>
+<script src="app.js?v=7"></script>
 <script>
   let session, page, elementsByType = {};
-  let uploadedProfilePhotoUrl = "";
-  let uploadedCoverPhotoUrl = "";
 
   document.getElementById("logout").addEventListener("click", async (e) => {
     e.preventDefault();
@@ -145,61 +120,30 @@
     window.location.href = "/app/index.html";
   });
 
-  document.getElementById("save").addEventListener("click", async () => {
-    const saveMsg = document.getElementById("save-msg");
-    saveMsg.textContent = "Saving...";
-    try {
-      const businessName = document.getElementById("business_name").value.trim();
-      const location = document.getElementById("location").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const whatsapp = document.getElementById("whatsapp").value.trim();
-      const serviceArea = document.getElementById("service_area").value.trim();
-      const bio = document.getElementById("bio").value.trim();
-
-      await sb.from("pages").update({
-        business_name: businessName,
-        service_area: serviceArea,
-        og_title: businessName,
-      }).eq("id", page.id);
-
-      if (elementsByType.header) {
-        await sb.from("elements").update({
-          content: {
-            ...elementsByType.header.content,
-            business_name: businessName,
-            location,
-            logo_url: uploadedProfilePhotoUrl || elementsByType.header.content.logo_url || "",
-            cover_image_url: uploadedCoverPhotoUrl || elementsByType.header.content.cover_image_url || "",
-          },
-        }).eq("id", elementsByType.header.id);
-      }
-      if (elementsByType.about) {
-        await sb.from("elements").update({ content: { ...elementsByType.about.content, bio } }).eq("id", elementsByType.about.id);
-      } else if (bio) {
-        // Some category templates (e.g. Contractor) don't create an "about"
-        // element by default — add one now so the tagline has somewhere to go.
-        await sb.from("elements").insert({ page_id: page.id, type: "about", position: 99, content: { bio } });
-      }
-      if (elementsByType.contact) {
-        await sb.from("elements").update({
-          content: { ...elementsByType.contact.content, phone, whatsapp },
-        }).eq("id", elementsByType.contact.id);
-      }
-      if (elementsByType.service_area) {
-        await sb.from("elements").update({ content: { area: serviceArea } }).eq("id", elementsByType.service_area.id);
-      }
-
-      await callFunction("render-page", { page_id: page.id }, session);
-      saveMsg.textContent = "Saved and republished.";
-    } catch (err) {
-      saveMsg.textContent = err.message || "Something went wrong.";
-    }
-  });
-
   let selectedDashTheme = "classic";
   const dashThemeRow = document.getElementById("dash-theme-row");
   const dashCustomColorRow = document.getElementById("dash-custom-color-row");
   const dashCustomColorInput = document.getElementById("dash-custom-color-input");
+  const dashCustomBgInput = document.getElementById("dash-custom-bg-input");
+  const dashCustomTextInput = document.getElementById("dash-custom-text-input");
+  const dashCustomFontInput = document.getElementById("dash-custom-font-input");
+
+  dashCustomFontInput.innerHTML = FONT_OPTIONS.map((f) => `<option value="${f.id}">${f.label}</option>`).join("");
+
+  function currentCustomTheme() {
+    return {
+      themeId: selectedDashTheme,
+      accent: dashCustomColorInput.value,
+      bg: dashCustomBgInput.value,
+      text: dashCustomTextInput.value,
+      font: dashCustomFontInput.value,
+    };
+  }
+
+  function applyCurrentTheme() {
+    const t = currentCustomTheme();
+    applyTheme(t.themeId, t.accent, t.bg, t.text, t.font);
+  }
 
   function renderThemePicker() {
     dashThemeRow.innerHTML = "";
@@ -211,60 +155,36 @@
       btn.addEventListener("click", () => {
         selectedDashTheme = theme.id;
         renderThemePicker();
-        dashCustomColorRow.style.display = theme.id === "custom" ? "block" : "none";
-        applyTheme(theme.id, dashCustomColorInput.value);
+        dashCustomColorRow.style.display = theme.id === "custom" ? "flex" : "none";
+        applyCurrentTheme();
       });
       dashThemeRow.appendChild(btn);
     });
   }
 
-  dashCustomColorInput.addEventListener("input", () => {
-    if (selectedDashTheme === "custom") applyTheme("custom", dashCustomColorInput.value);
+  [dashCustomColorInput, dashCustomBgInput, dashCustomTextInput, dashCustomFontInput].forEach((input) => {
+    input.addEventListener("input", () => {
+      if (selectedDashTheme === "custom") applyCurrentTheme();
+    });
   });
 
   document.getElementById("save-theme").addEventListener("click", async () => {
     const themeMsg = document.getElementById("theme-msg");
     themeMsg.textContent = "Saving...";
     try {
+      const isCustom = selectedDashTheme === "custom";
       await sb.from("pages").update({
         theme: selectedDashTheme,
-        custom_accent_color: selectedDashTheme === "custom" ? dashCustomColorInput.value : null,
+        custom_accent_color: isCustom ? dashCustomColorInput.value : null,
+        custom_bg_color: isCustom ? dashCustomBgInput.value : null,
+        custom_text_color: isCustom ? dashCustomTextInput.value : null,
+        custom_font: isCustom ? dashCustomFontInput.value : null,
       }).eq("id", page.id);
       await callFunction("render-page", { page_id: page.id }, session);
       themeMsg.textContent = "Saved and republished.";
     } catch (err) {
       themeMsg.textContent = err.message || "Something went wrong.";
     }
-  });
-
-  document.getElementById("profile_photo").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const saveMsg = document.getElementById("save-msg");
-    saveMsg.textContent = "Uploading photo...";
-    const path = `${session.user.id}/${Date.now()}-${file.name}`;
-    const { error } = await sb.storage.from("page-photos").upload(path, file);
-    if (error) { saveMsg.textContent = "Photo upload failed: " + error.message; return; }
-    const { data } = sb.storage.from("page-photos").getPublicUrl(path);
-    uploadedProfilePhotoUrl = data.publicUrl;
-    document.getElementById("profile-photo-preview").innerHTML =
-      `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover" />`;
-    saveMsg.textContent = "Photo uploaded — click Save & republish to apply.";
-  });
-
-  document.getElementById("cover_photo").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const saveMsg = document.getElementById("save-msg");
-    saveMsg.textContent = "Uploading cover photo...";
-    const path = `${session.user.id}/${Date.now()}-${file.name}`;
-    const { error } = await sb.storage.from("page-photos").upload(path, file);
-    if (error) { saveMsg.textContent = "Photo upload failed: " + error.message; return; }
-    const { data } = sb.storage.from("page-photos").getPublicUrl(path);
-    uploadedCoverPhotoUrl = data.publicUrl;
-    document.getElementById("cover-photo-preview").innerHTML =
-      `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover" />`;
-    saveMsg.textContent = "Photo uploaded — click Save & republish to apply.";
   });
 
   async function connectStripe(statusElId) {
@@ -558,14 +478,14 @@
     document.getElementById("page-url").textContent = `bizinbio.net/${page.slug}/`;
     document.getElementById("status-badge").textContent = page.published ? "Live" : "Not published";
 
-    document.getElementById("business_name").value = page.business_name || "";
-    document.getElementById("service_area").value = page.service_area || "";
-
     selectedDashTheme = page.theme || "classic";
     if (page.custom_accent_color) dashCustomColorInput.value = page.custom_accent_color;
+    if (page.custom_bg_color) dashCustomBgInput.value = page.custom_bg_color;
+    if (page.custom_text_color) dashCustomTextInput.value = page.custom_text_color;
+    if (page.custom_font) dashCustomFontInput.value = page.custom_font;
     renderThemePicker();
-    if (selectedDashTheme === "custom") dashCustomColorRow.style.display = "block";
-    applyTheme(selectedDashTheme, dashCustomColorInput.value);
+    if (selectedDashTheme === "custom") dashCustomColorRow.style.display = "flex";
+    applyCurrentTheme();
 
     if (page.stripe_connect_onboarding_complete) {
       document.getElementById("connect-status").textContent = "Connected — deposits are enabled.";
@@ -593,19 +513,6 @@
       await callFunction("render-page", { page_id: page.id }, session);
       window.history.replaceState({}, "", "/app/dashboard.html");
       await loadPlan();
-    }
-
-    if (elementsByType.contact) document.getElementById("phone").value = elementsByType.contact.content.phone || "";
-    if (elementsByType.contact) document.getElementById("whatsapp").value = elementsByType.contact.content.whatsapp || "";
-    if (elementsByType.header) document.getElementById("location").value = elementsByType.header.content.location || "";
-    if (elementsByType.about) document.getElementById("bio").value = elementsByType.about.content.bio || "";
-    if (elementsByType.header && elementsByType.header.content.logo_url) {
-      document.getElementById("profile-photo-preview").innerHTML =
-        `<img src="${elementsByType.header.content.logo_url}" style="width:100%;height:100%;object-fit:cover" />`;
-    }
-    if (elementsByType.header && elementsByType.header.content.cover_image_url) {
-      document.getElementById("cover-photo-preview").innerHTML =
-        `<img src="${elementsByType.header.content.cover_image_url}" style="width:100%;height:100%;object-fit:cover" />`;
     }
 
     await loadLeads();
