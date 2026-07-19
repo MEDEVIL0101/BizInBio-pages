@@ -204,14 +204,26 @@ async function requireSession() {
   return session;
 }
 
+// Clean, human-readable default — "Harvey Medcalf" -> "harvey-medcalf", not
+// a random-suffixed string. Uniqueness is handled by letting the owner see
+// and edit their URL (slugAvailable below), not by silently appending
+// noise they never see or agreed to.
 function slugify(name) {
-  const base = (name || "biz")
+  return (name || "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "")
     .slice(0, 40) || "biz";
-  const suffix = Math.random().toString(36).slice(2, 7);
-  return `${base}-${suffix}`;
+}
+
+// pageId: pass the current page's id when checking availability for an
+// existing page's own (unchanged) slug, so it doesn't flag itself as taken.
+async function slugAvailable(slug, pageId) {
+  if (!slug) return false;
+  let query = sb.from("pages").select("id").eq("slug", slug);
+  if (pageId) query = query.neq("id", pageId);
+  const { data } = await query.maybeSingle();
+  return !data;
 }
 
 async function callFunction(name, payload, session) {

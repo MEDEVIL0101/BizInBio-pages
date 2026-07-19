@@ -22,6 +22,12 @@
     <h6>Status</h6>
     <a id="page-url" href="#" target="_blank" style="display:block;margin-top:var(--space-2);font-size:14px;word-break:break-all"></a>
     <span class="tag live" id="status-badge" style="margin-top:var(--space-3)"></span>
+    <div style="display:flex;align-items:center;background:var(--color-surface);border-radius:var(--radius-md);padding:0 12px;margin-top:var(--space-3)">
+      <span class="text-muted" style="font-size:13px;white-space:nowrap">bizinbio.net/</span>
+      <input class="input" id="dash-slug-input" style="border:none;background:transparent;padding:9px 4px;font-size:13px" />
+    </div>
+    <p class="text-muted" style="font-size:12px;margin-top:4px;min-height:16px" id="dash-slug-status"></p>
+    <button id="dash-slug-save" class="btn btn-secondary btn-block" style="margin-top:var(--space-2)" disabled>Update URL</button>
   </section>
 
   <section class="blueprint" style="position:relative;padding:var(--space-4)">
@@ -110,7 +116,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="app.js?v=9"></script>
+<script src="app.js?v=10"></script>
 <script>
   let session, page, elementsByType = {};
 
@@ -118,6 +124,53 @@
     e.preventDefault();
     await sb.auth.signOut();
     window.location.href = "/app/index.html";
+  });
+
+  const dashSlugInput = document.getElementById("dash-slug-input");
+  const dashSlugStatus = document.getElementById("dash-slug-status");
+  const dashSlugSave = document.getElementById("dash-slug-save");
+  let dashSlugCheckToken = 0;
+  let dashSlugIsAvailable = false;
+
+  dashSlugInput.addEventListener("input", async () => {
+    dashSlugInput.value = dashSlugInput.value.toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+    const slug = dashSlugInput.value.trim();
+    const token = ++dashSlugCheckToken;
+    if (!slug || slug === page.slug) {
+      dashSlugIsAvailable = false;
+      dashSlugStatus.textContent = "";
+      dashSlugSave.disabled = true;
+      return;
+    }
+    dashSlugStatus.textContent = "Checking...";
+    const available = await slugAvailable(slug, page.id);
+    if (token !== dashSlugCheckToken) return;
+    dashSlugIsAvailable = available;
+    dashSlugStatus.textContent = available ? "Available" : "Already taken — try something else";
+    dashSlugStatus.style.color = available ? "" : "var(--color-accent-700)";
+    dashSlugSave.disabled = !available;
+  });
+
+  dashSlugSave.addEventListener("click", async () => {
+    if (!dashSlugIsAvailable) return;
+    const newSlug = dashSlugInput.value.trim();
+    const oldSlug = page.slug;
+    dashSlugSave.disabled = true;
+    dashSlugStatus.textContent = "Updating...";
+    try {
+      const { error } = await sb.from("pages").update({ slug: newSlug }).eq("id", page.id);
+      if (error) throw error;
+      page.slug = newSlug;
+      document.getElementById("page-url").href = `https://bizinbio.net/${newSlug}/`;
+      document.getElementById("page-url").textContent = `bizinbio.net/${newSlug}/`;
+      // Republish under the new slug, and clean up the old published file
+      // so the page doesn't stay live under two URLs indefinitely.
+      await callFunction("render-page", { page_id: page.id, old_slug: oldSlug }, session);
+      dashSlugStatus.textContent = "URL updated.";
+    } catch (err) {
+      dashSlugStatus.textContent = err.message || "Something went wrong.";
+      dashSlugSave.disabled = false;
+    }
   });
 
   let selectedDashTheme = "classic";
@@ -477,6 +530,7 @@
     document.getElementById("page-url").href = `https://bizinbio.net/${page.slug}/`;
     document.getElementById("page-url").textContent = `bizinbio.net/${page.slug}/`;
     document.getElementById("status-badge").textContent = page.published ? "Live" : "Not published";
+    document.getElementById("dash-slug-input").value = page.slug;
 
     selectedDashTheme = page.theme || "classic";
     if (page.custom_accent_color) dashCustomColorInput.value = page.custom_accent_color;

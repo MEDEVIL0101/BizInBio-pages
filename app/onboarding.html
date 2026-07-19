@@ -29,18 +29,32 @@
     </div>
   </section>
 
+  <section>
+    <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-4)"><span class="step-num">3</span><h6 style="margin:0">Your URL</h6></div>
+    <div style="display:flex;align-items:center;background:var(--color-surface);border-radius:var(--radius-md);padding:0 12px">
+      <span class="text-muted" style="font-size:14px;white-space:nowrap">bizinbio.net/</span>
+      <input class="input" id="slug-input" style="border:none;background:transparent;padding:11px 4px" placeholder="yourname" />
+    </div>
+    <p class="text-muted" style="font-size:12px;margin-top:6px;min-height:16px" id="slug-status"></p>
+  </section>
+
   <button id="create-page" class="btn btn-primary btn-block" style="padding:14px" disabled>Create my page</button>
   <p class="text-muted" style="text-align:center;font-size:13px;min-height:18px" id="msg"></p>
 
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="app.js?v=9"></script>
+<script src="app.js?v=10"></script>
 <script>
   let session, selectedCategory = null;
+  let slugEditedManually = false;
+  let slugIsAvailable = false;
+  let slugCheckToken = 0;
 
   const categoryGrid = document.getElementById("category-grid");
   const nameInput = document.getElementById("business_name");
+  const slugInput = document.getElementById("slug-input");
+  const slugStatus = document.getElementById("slug-status");
   const createBtn = document.getElementById("create-page");
   const msg = document.getElementById("msg");
 
@@ -61,10 +75,40 @@
   // default-select the first category on load
   selectedCategory = CATEGORIES[0];
 
-  nameInput.addEventListener("input", checkReady);
+  async function checkSlug() {
+    const slug = slugInput.value.trim();
+    const token = ++slugCheckToken;
+    if (!slug) {
+      slugIsAvailable = false;
+      slugStatus.textContent = "";
+      checkReady();
+      return;
+    }
+    slugStatus.textContent = "Checking...";
+    const available = await slugAvailable(slug);
+    if (token !== slugCheckToken) return; // a newer check superseded this one
+    slugIsAvailable = available;
+    slugStatus.textContent = available ? "Available" : "Already taken — try something else";
+    slugStatus.style.color = available ? "" : "var(--color-accent-700)";
+    checkReady();
+  }
+
+  nameInput.addEventListener("input", () => {
+    checkReady();
+    if (!slugEditedManually) {
+      slugInput.value = slugify(nameInput.value.trim());
+      checkSlug();
+    }
+  });
+
+  slugInput.addEventListener("input", () => {
+    slugEditedManually = true;
+    slugInput.value = slugInput.value.toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+    checkSlug();
+  });
 
   function checkReady() {
-    createBtn.disabled = !(selectedCategory && nameInput.value.trim());
+    createBtn.disabled = !(selectedCategory && nameInput.value.trim() && slugInput.value.trim() && slugIsAvailable);
   }
 
   createBtn.addEventListener("click", async () => {
@@ -72,7 +116,7 @@
     msg.textContent = "Creating your page...";
     try {
       const businessName = nameInput.value.trim();
-      const slug = slugify(businessName);
+      const slug = slugInput.value.trim();
 
       const { data: page, error: pageErr } = await sb
         .from("pages")
@@ -91,7 +135,17 @@
         // account (e.g. a double-click, or a retry after a network
         // hiccup on a previous attempt that actually succeeded) — go
         // straight to it instead of showing a raw DB error.
-        if (pageErr.code === "23505") { window.location.href = "/app/builder.html"; return; }
+        if (pageErr.message && pageErr.message.includes("pages_one_per_user_idx")) {
+          window.location.href = "/app/builder.html";
+          return;
+        }
+        // Someone else grabbed this exact URL between the availability
+        // check and submitting — rare, but possible.
+        if (pageErr.message && pageErr.message.includes("pages_slug_key")) {
+          msg.textContent = "That URL was just taken — please choose another.";
+          createBtn.disabled = false;
+          return;
+        }
         throw pageErr;
       }
 
