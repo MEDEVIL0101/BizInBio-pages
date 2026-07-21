@@ -17,14 +17,13 @@
   </div>
 
   <div class="blueprint" style="position:relative;padding:var(--space-6)">
-    <div id="tabs-row" style="display:flex;gap:var(--space-2);margin-bottom:var(--space-4)">
-      <button class="btn" id="tab-signup" style="flex:1">Sign up</button>
-      <button class="btn" id="tab-login" style="flex:1">Log in</button>
-    </div>
+    <!-- New account creation is temporarily closed for testing — log in
+         only. See CLAUDE.md / this session for how to reopen it. -->
+    <p class="text-muted" style="text-align:center;font-size:13px;margin-bottom:var(--space-4)">New accounts are closed right now — log in below.</p>
     <form id="auth-form" style="display:flex;flex-direction:column;gap:var(--space-3)">
       <input class="input" type="email" name="email" placeholder="Email" required />
       <input class="input" type="password" name="password" placeholder="Password" required minlength="6" />
-      <button type="submit" class="btn btn-primary btn-block" id="submit-btn" style="margin-top:var(--space-2)">Create my page</button>
+      <button type="submit" class="btn btn-primary btn-block" id="submit-btn" style="margin-top:var(--space-2)">Log in</button>
     </form>
     <p class="text-muted" style="text-align:center;font-size:13px;margin-top:var(--space-3);min-height:18px" id="msg"></p>
 
@@ -42,12 +41,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="app.js?v=13"></script>
 <script>
-  let mode = "signup";
+  // New account creation is temporarily closed for testing — login only.
+  // (No signUp() call anywhere in this file. To reopen signups: restore
+  // the tab UI/mode toggle from git history and re-enable the sb.auth.signUp
+  // path, plus flip "Allow new users to sign up" back on in the Supabase
+  // dashboard under Authentication.)
   let pendingEmail = "";
-  const tabsRow = document.getElementById("tabs-row");
-  const tabSignup = document.getElementById("tab-signup");
-  const tabLogin = document.getElementById("tab-login");
-  const submitBtn = document.getElementById("submit-btn");
   const msg = document.getElementById("msg");
   const authForm = document.getElementById("auth-form");
   const confirmScreen = document.getElementById("confirm-screen");
@@ -56,20 +55,10 @@
   const resendMsg = document.getElementById("resend-msg");
   const backToSignIn = document.getElementById("back-to-sign-in");
 
-  function setMode(next) {
-    mode = next;
-    tabSignup.classList.toggle("btn-primary", mode === "signup");
-    tabLogin.classList.toggle("btn-primary", mode === "login");
-    submitBtn.textContent = mode === "signup" ? "Create my page" : "Log in";
-  }
-  setMode("signup");
-
-  // Shown instead of the form whenever Supabase reports a signup with no
-  // session yet (email confirmation pending) or a login blocked on an
-  // unconfirmed address — either way, the visitor needs the same next step.
+  // Shown instead of the form whenever Supabase reports a login blocked on
+  // an unconfirmed address.
   function showConfirmScreen(email) {
     pendingEmail = email;
-    tabsRow.style.display = "none";
     authForm.style.display = "none";
     msg.textContent = "";
     confirmEmail.textContent = email;
@@ -77,16 +66,11 @@
     confirmScreen.style.display = "block";
   }
 
-  function showAuthForm(nextMode) {
+  function showAuthForm() {
     confirmScreen.style.display = "none";
-    tabsRow.style.display = "flex";
     authForm.style.display = "flex";
     authForm.reset();
-    setMode(nextMode);
   }
-
-  tabSignup.addEventListener("click", () => setMode("signup"));
-  tabLogin.addEventListener("click", () => setMode("login"));
 
   authForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -94,13 +78,7 @@
     const password = e.target.password.value;
     msg.textContent = "Working...";
     try {
-      const { error } = mode === "signup"
-        ? await sb.auth.signUp({
-            email,
-            password,
-            options: { emailRedirectTo: `${window.location.origin}/app/index.html` },
-          })
-        : await sb.auth.signInWithPassword({ email, password });
+      const { error } = await sb.auth.signInWithPassword({ email, password });
       if (error) {
         if (/email/i.test(error.message || "") && /confirm/i.test(error.message || "")) {
           showConfirmScreen(email);
@@ -145,7 +123,7 @@
 
   backToSignIn.addEventListener("click", (e) => {
     e.preventDefault();
-    showAuthForm("login");
+    showAuthForm();
   });
 
   (async () => {
