@@ -576,7 +576,7 @@
       if (isGated(el.type) && el.type !== "portfolio_gallery" && el.type !== "services_list" && el.type !== "youtube_video") return "";
       switch (el.type) {
         case "about":
-          return el.content.bio ? `<div style="font-size:14.5px;line-height:1.6;text-align:center;margin-top:22px;opacity:.85">${escapeHtml(el.content.bio)}</div>` : "";
+          return el.content.bio ? `<div style="font-size:13px;line-height:1.55;text-align:center;margin-top:22px;opacity:.85">${escapeHtml(el.content.bio)}</div>` : "";
         case "portfolio_gallery": {
           const photos = el.content.photos || [];
           if (!photos.length) return "";
@@ -619,8 +619,8 @@
             ${isGated(el.type) ? `<div style="position:absolute;top:-14px;right:0;background:rgba(20,20,20,.55);color:#fff;font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em">All Access</div>` : ""}
             <div style="font-family:${fonts.display};font-weight:700;font-size:16px">Services</div>
             ${services.map((s) => `<div style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:14px;background:color-mix(in srgb, ${palette.primary} 7%, white)">
-              <span style="font-size:14px;font-weight:600">${escapeHtml(s.name || "")}</span>
-              <span style="font-size:14px;font-weight:700;color:${palette.primary}">${escapeHtml(s.price_range || "")}</span>
+              <span style="font-size:13px;font-weight:600">${escapeHtml(s.name || "")}</span>
+              <span style="font-size:13px;font-weight:700;color:${palette.primary}">${escapeHtml(s.price_range || "")}</span>
             </div>`).join("")}
           </div>`;
         }
@@ -638,7 +638,7 @@
           <div style="width:84px;height:84px;border-radius:50%;border:4px solid ${palette.bg};overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.15);background:#eee">
             ${headerContent.logo_url ? `<img src="${escapeHtml(headerContent.logo_url)}" style="width:100%;height:100%;object-fit:cover;display:block" />` : ""}
           </div>
-          <div style="font-family:${fonts.display};font-size:24px;font-weight:700;margin-top:14px;text-align:center">${escapeHtml(headerContent.business_name) || "Your business name"}</div>
+          <div style="font-family:${fonts.display};font-size:21px;font-weight:700;margin-top:14px;text-align:center">${escapeHtml(headerContent.business_name) || "Your business name"}</div>
           ${headerContent.location ? `<div style="font-size:13px;opacity:.65;margin-top:3px">${escapeHtml(headerContent.location)}</div>` : ""}
           ${visibleContacts.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px">
             ${visibleContacts.map((m) => `<div style="display:inline-flex;align-items:center;gap:7px;background:${palette.primary};color:#fff;font-weight:700;font-size:13px;padding:${m.showValue ? "11px 18px" : "13px"};border-radius:999px">${contactIconSvg(m.type, 13)}${m.showValue ? `<span>${escapeHtml(m.value)}</span>` : ""}</div>`).join("")}
