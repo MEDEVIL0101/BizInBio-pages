@@ -107,7 +107,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="app.js?v=12"></script>
+<script src="app.js?v=13"></script>
 <script>
   // ---------------------------------------------------------------------
   // Section catalog — title/hue/paywalled/icon per non-header element type.
@@ -124,6 +124,8 @@
       icon: `<path d="M10 13a5 5 0 007.07 0l2-2a5 5 0 00-7.07-7.07l-1 1M14 11a5 5 0 00-7.07 0l-2 2a5 5 0 007.07 7.07l1-1" stroke-linecap="round"/>` },
     portfolio_gallery: { title: "Gallery", hue: 320, paywalled: true,
       icon: `<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M3 17l5-4 4 3 4-5 5 6" stroke-linecap="round" stroke-linejoin="round"/>` },
+    youtube_video: { title: "YouTube videos", hue: 0, paywalled: true,
+      icon: `<circle cx="12" cy="12" r="9"/><path d="M10 9l5 3-5 3V9z" fill="currentColor" stroke="none"/>` },
     services_list: { title: "Services", hue: 90, paywalled: true,
       icon: `<path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/><circle cx="4" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.4" fill="currentColor" stroke="none"/>` },
     quote_request_form: { title: "Quote request form", hue: 350, paywalled: true,
@@ -285,6 +287,7 @@
       }
       case "social_link": { const n = (c.links || []).length; return n ? `${n} link${n === 1 ? "" : "s"}` : "No links yet"; }
       case "portfolio_gallery": { const n = (c.photos || []).length; return n ? `${n} photo${n === 1 ? "" : "s"}` : "No photos yet"; }
+      case "youtube_video": { const n = (c.videos || []).length; return n ? `${n} video${n === 1 ? "" : "s"}` : "No videos yet"; }
       case "services_list": { const n = (c.services || []).length; return n ? `${n} service${n === 1 ? "" : "s"}` : "No services yet"; }
       case "quote_request_form": { const n = (c.fields || []).filter((f) => f.enabled).length; return `${n} field${n === 1 ? "" : "s"} enabled`; }
       case "service_area": return c.area || "Not set";
@@ -457,6 +460,24 @@
           </label>
         </div>`;
 
+      case "youtube_video":
+        return `<div style="display:flex;flex-direction:column;gap:10px">
+          ${(c.videos || []).map((url, i) => {
+            const id = youtubeId(url);
+            return `
+            <div style="display:flex;gap:10px;align-items:center">
+              <div style="width:64px;height:36px;border-radius:8px;overflow:hidden;flex:none;background:oklch(93% 0.01 70);display:flex;align-items:center;justify-content:center;color:var(--bib-muted)">
+                ${id
+                  ? `<img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" style="width:100%;height:100%;object-fit:cover;display:block" />`
+                  : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M10 9l5 3-5 3V9z" fill="currentColor" stroke="none"/></svg>`}
+              </div>
+              <input class="bib-row-input bib-video-url" data-id="${el.id}" data-index="${i}" value="${escapeHtml(url)}" placeholder="https://youtube.com/watch?v=..." style="flex:1;min-width:0" />
+              <button type="button" class="bib-icon-btn bib-remove-video" data-id="${el.id}" data-index="${i}">${CLOSE_ICON}</button>
+            </div>`;
+          }).join("") || `<p class="text-muted" style="font-size:13px;color:var(--bib-muted)">No videos yet.</p>`}
+          <button type="button" class="bib-add-link bib-add-video-btn" data-id="${el.id}">+ Add video</button>
+        </div>`;
+
       case "social_link":
         return `<div style="display:flex;flex-direction:column;gap:8px">
           ${(c.links || []).map((l, i) => `
@@ -517,7 +538,7 @@
     }
   }
 
-  const REPEATABLE_TYPES = new Set(["services_list", "portfolio_gallery"]);
+  const REPEATABLE_TYPES = new Set(["services_list", "portfolio_gallery", "youtube_video"]);
 
   function addCardHtml(type) {
     const meta = SECTION_META[type];
@@ -547,7 +568,7 @@
     const visibleContacts = contactEl ? (contactEl.content.methods || []).filter((m) => m.enabled && (m.value || "").trim()) : [];
 
     const bodyParts = elements.map((el) => {
-      if (isGated(el.type) && el.type !== "portfolio_gallery" && el.type !== "services_list") return "";
+      if (isGated(el.type) && el.type !== "portfolio_gallery" && el.type !== "services_list" && el.type !== "youtube_video") return "";
       switch (el.type) {
         case "about":
           return el.content.bio ? `<div style="font-size:14.5px;line-height:1.6;text-align:center;margin-top:22px;opacity:.85">${escapeHtml(el.content.bio)}</div>` : "";
@@ -559,6 +580,21 @@
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
               ${photos.map((url) => `<div style="aspect-ratio:1;border-radius:10px;overflow:hidden"><img src="${escapeHtml(url)}" style="width:100%;height:100%;object-fit:cover;display:block" /></div>`).join("")}
             </div>
+          </div>`;
+        }
+        case "youtube_video": {
+          const ids = (el.content.videos || []).map(youtubeId).filter(Boolean);
+          if (!ids.length) return "";
+          // Static thumbnail + play icon, not a live iframe — the preview
+          // re-renders on every edit, and loading real YouTube players
+          // repeatedly would be slow and noisy. The real published page
+          // gets an actual embed (see render-page's videoSection).
+          return `<div style="position:relative;width:100%;margin-top:26px;display:flex;flex-direction:column;gap:10px">
+            ${isGated(el.type) ? `<div style="position:absolute;top:6px;right:6px;background:rgba(20,20,20,.55);color:#fff;font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em;z-index:2">All Access</div>` : ""}
+            ${ids.map((id) => `<div style="position:relative;width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000">
+              <img src="https://img.youtube.com/vi/${id}/hqdefault.jpg" style="width:100%;height:100%;object-fit:cover;display:block;opacity:.85" />
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><svg width="44" height="44" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="rgba(0,0,0,.5)"/><path d="M10 8l6 4-6 4V8z" fill="#fff"/></svg></div>
+            </div>`).join("")}
           </div>`;
         }
         case "social_link": {
@@ -711,6 +747,28 @@
       const id = drop.id.replace("gallery-drop-", "");
       const input = drop.querySelector(".bib-gallery-input");
       wireGalleryDrop(drop, input, id);
+    });
+
+    // YouTube videos
+    panel.querySelectorAll(".bib-video-url").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        elById(e.target.dataset.id).content.videos[Number(e.target.dataset.index)] = e.target.value;
+        markDirty(); renderPreview(); updateElementSummaries();
+      });
+    });
+    panel.querySelectorAll(".bib-remove-video").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        elById(btn.dataset.id).content.videos.splice(Number(btn.dataset.index), 1);
+        markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-add-video-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const el = elById(btn.dataset.id);
+        if (!el.content.videos) el.content.videos = [];
+        el.content.videos.push("");
+        markDirty(); renderEditor();
+      });
     });
 
     // Social links

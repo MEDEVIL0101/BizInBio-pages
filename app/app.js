@@ -93,6 +93,15 @@ function socialIcon(platformId) {
   return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${platform.icon}</svg>`;
 }
 
+// Accepts watch/embed/short/youtu.be URLs, with or without extra query
+// params (?t=30s etc) — mirrors youtubeId in
+// supabase/functions/render-page/index.ts (same manual-sync convention as
+// SOCIAL_PLATFORMS/PALETTES). Used for the builder's thumbnail preview.
+function youtubeId(url) {
+  const match = String(url || "").match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : "";
+}
+
 // Default (empty) content shape per element type — used both by onboarding
 // (creating a page's starter elements) and the builder (adding a new
 // element). Kept here rather than duplicated in both pages.
@@ -101,6 +110,7 @@ const ELEMENT_DEFAULTS = {
   about: { bio: "" },
   services_list: { services: [] },
   portfolio_gallery: { photos: [] },
+  youtube_video: { videos: [] },
   social_link: { links: [] },
   contact: {
     methods: [
