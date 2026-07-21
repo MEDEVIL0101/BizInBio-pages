@@ -146,8 +146,13 @@ button{font-family:inherit}
 
 /* Wrapped, tinted pills — icon-optional label chips in the accent color at
    low opacity, matching the builder's live-preview panel exactly. */
-.social-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.social-row a{display:inline-flex;align-items:center;gap:6px;flex:none;width:auto;justify-content:center;padding:9px 16px;border-radius:999px;background:color-mix(in srgb,var(--color-accent) 14%,transparent);color:var(--color-accent);font-weight:700;font-size:13px;border:none}
+/* Full-width, fixed-height stacked pills — every link the same size
+   regardless of label length (a long label truncates, it doesn't grow
+   the pill). Matches the reference Linktree-style layout: uniform bars,
+   not auto-width chips. */
+.social-row{display:flex;flex-direction:column;gap:10px}
+.social-row a{display:flex;align-items:center;gap:10px;width:100%;height:52px;padding:0 20px;border-radius:999px;background:color-mix(in srgb,var(--color-accent) 14%,transparent);color:var(--color-accent);font-weight:700;font-size:13px;border:none;overflow:hidden}
+.social-row a span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 
 /* Form fields (quote request, onboarding, dashboard edit) */
 .field{display:flex;flex-direction:column;gap:5px;margin-bottom:var(--space-3)}

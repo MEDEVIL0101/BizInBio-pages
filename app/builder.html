@@ -461,7 +461,7 @@
         return `<div style="display:flex;flex-direction:column;gap:8px">
           ${(c.links || []).map((l, i) => `
             <div style="display:flex;gap:8px;align-items:center">
-              <input class="bib-row-input bib-link-label" data-id="${el.id}" data-index="${i}" value="${escapeHtml(l.label || "")}" placeholder="Platform" style="width:90px;flex-shrink:0" />
+              <input class="bib-row-input bib-link-label" data-id="${el.id}" data-index="${i}" value="${escapeHtml(l.label || "")}" placeholder="Platform" maxlength="28" style="width:90px;flex-shrink:0" />
               <input class="bib-row-input bib-link-url" data-id="${el.id}" data-index="${i}" value="${escapeHtml(l.url || "")}" placeholder="Link or handle" style="flex:1;min-width:0" />
               <button type="button" class="bib-icon-btn bib-remove-link" data-id="${el.id}" data-index="${i}">${CLOSE_ICON}</button>
             </div>`).join("")}
@@ -564,8 +564,11 @@
         case "social_link": {
           const links = (el.content.links || []).filter((l) => (l.label || l.url || "").trim());
           if (!links.length) return "";
-          return `<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:24px">
-            ${links.map((l) => `<div style="padding:9px 16px;border-radius:999px;background:color-mix(in srgb, ${palette.primary} 14%, transparent);color:${palette.primary};font-size:13px;font-weight:700">${escapeHtml(l.label || l.url)}</div>`).join("")}
+          // Full-width, fixed-height pills — matches the real published
+          // page exactly (.social-row in site.css): every link the same
+          // size, a long label truncates instead of growing the pill.
+          return `<div style="display:flex;flex-direction:column;gap:10px;width:100%;margin-top:24px">
+            ${links.map((l) => `<div style="display:flex;align-items:center;gap:10px;width:100%;height:52px;padding:0 20px;border-radius:999px;background:color-mix(in srgb, ${palette.primary} 14%, transparent);color:${palette.primary};font-size:13px;font-weight:700;overflow:hidden;box-sizing:border-box"><span style="flex-shrink:0;display:flex">${socialIcon(l.platform)}</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${escapeHtml(l.label || l.url)}</span></div>`).join("")}
           </div>`;
         }
         case "services_list": {
