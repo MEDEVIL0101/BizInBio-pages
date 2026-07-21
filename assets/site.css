@@ -46,17 +46,8 @@ button{font-family:inherit}
 /* Blueprint framed component: theme-controlled corner radius + border weight */
 .blueprint{position:relative;border-style:solid;border-width:var(--card-border-width);border-color:var(--color-divider);border-radius:var(--radius-md)}
 
-/* A framed blueprint reads as a real card by default (solid or glass fill +
-   soft shadow) — photo frames (paired with .duotone) override back to flat/
-   transparent below, since a photo shouldn't get card elevation. */
+/* A framed blueprint reads as a real card (solid or glass fill + soft shadow) */
 .blueprint{background:var(--color-card-bg);box-shadow:var(--shadow-sm);backdrop-filter:blur(var(--card-blur));-webkit-backdrop-filter:blur(var(--card-blur))}
-.blueprint.duotone{background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
-
-/* Duotone photo tint — real photos get a subtle accent-red color-blend overlay */
-.duotone{position:relative;overflow:hidden}
-.duotone::after{content:"";position:absolute;inset:0;pointer-events:none;background:var(--color-accent);mix-blend-mode:color}
-.duotone img{width:100%;height:100%;object-fit:cover;display:block}
-.ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font:11px/1.3 ui-monospace,Menlo,monospace;background:repeating-linear-gradient(45deg,var(--color-neutral-200) 0 8px,var(--color-neutral-300) 8px 16px);color:var(--color-neutral-700)}
 
 /* Cover/banner photo — full-bleed, no card treatment (not a duotone photo:
    this represents the business's own imagery, left untinted like the
@@ -132,20 +123,31 @@ button{font-family:inherit}
 .nav a:hover{color:var(--color-accent)}
 .wordmark-mark{width:28px;height:28px;object-fit:contain;flex:none}
 
-/* Rate list (services/menu/rates) */
-.rate-row{display:flex;justify-content:space-between;align-items:baseline;padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--color-divider);font-size:14px}
-.rate-row:last-child{border-bottom:none}
-.rate-price{color:var(--color-accent-700);font-family:var(--font-heading);font-weight:600}
+/* Rate list (services/menu/rates) — each row its own tinted, rounded
+   card, matching the builder's live-preview panel exactly (not a bordered
+   list inside one shared card). */
+.rate-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:14px;background:color-mix(in srgb,var(--color-accent) 7%,white);font-size:14px;margin-bottom:var(--space-2)}
+.rate-row:last-child{margin-bottom:0}
+.rate-price{color:var(--color-accent);font-family:var(--font-heading);font-weight:700}
 
-/* Photo gallery grid */
+/* Shop product grid (see productGridSection). Not used by the photo
+   Gallery section anymore — that has its own .photo-gallery below,
+   sized differently since photo tiles don't need room for name/price/
+   button text like a product card does. */
 .gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-2)}
 .gallery-photo{position:relative;aspect-ratio:1}
 .gallery-photo.wide{grid-column:span 2;aspect-ratio:16/10}
 
-/* Full-width stacked rows, not auto-width pills — reads cleanly whether
-   there's one link or a dozen, unlike a wrapped row of pill buttons. */
-.social-row{display:flex;flex-direction:column;gap:var(--space-2)}
-.social-row a{width:100%;justify-content:flex-start;padding-left:var(--space-4)}
+/* Photo gallery grid — plain (no duotone tint), 3 columns, matching the
+   builder's live-preview panel exactly. */
+.photo-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.photo-gallery .photo-tile{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden}
+.photo-gallery .photo-tile img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* Wrapped, tinted pills — icon-optional label chips in the accent color at
+   low opacity, matching the builder's live-preview panel exactly. */
+.social-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.social-row a{display:inline-flex;align-items:center;gap:6px;flex:none;width:auto;justify-content:center;padding:9px 16px;border-radius:999px;background:color-mix(in srgb,var(--color-accent) 14%,transparent);color:var(--color-accent);font-weight:700;font-size:13px;border:none}
 
 /* Form fields (quote request, onboarding, dashboard edit) */
 .field{display:flex;flex-direction:column;gap:5px;margin-bottom:var(--space-3)}

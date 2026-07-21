@@ -40,15 +40,16 @@
   .bib-back:hover{background:oklch(94% 0.02 60);color:var(--bib-text)}
   .bib-divider-v{width:1px;height:24px;background:var(--bib-border)}
   .bib-wordmark{display:flex;align-items:center;gap:8px}
-  .bib-wordmark-dot{width:10px;height:10px;border-radius:50%;background:var(--bib-accent);display:inline-block}
-  .bib-wordmark-text{font-family:"Fredoka",sans-serif;font-weight:700;font-size:20px;letter-spacing:-.3px}
+  .bib-wordmark-mark{width:26px;height:26px;object-fit:contain;flex:none}
+  .bib-wordmark-text{font-family:"Fredoka",sans-serif;font-weight:700;font-size:20px;letter-spacing:-.3px;color:var(--bib-text)}
+  .bib-wordmark-text .accent{color:#ff0000}
   .bib-wordmark-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--bib-muted);margin-left:4px}
   .bib-url-pill{display:flex;align-items:center;gap:8px;background:oklch(94% 0.015 70);border-radius:999px;padding:8px 14px;font-size:13px;color:var(--bib-muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
   .bib-live-pill{display:flex;align-items:center;gap:6px;background:oklch(93% 0.09 150);color:oklch(38% 0.13 150);font-size:13px;font-weight:700;padding:7px 14px;border-radius:999px}
   .bib-live-dot{width:7px;height:7px;border-radius:50%;background:oklch(58% 0.17 150);display:inline-block}
-  .bib-save-btn{background:var(--bib-accent);color:#fff;border:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:12px;cursor:pointer;box-shadow:0 2px 0 var(--bib-accent-press),0 6px 16px oklch(64% 0.19 28 / .35);transition:transform .15s ease}
+  .bib-save-btn{background:#d6336c;color:#fff;border:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:12px;cursor:pointer;box-shadow:0 2px 0 #ab2856,0 6px 16px rgba(214,51,108,.35);transition:transform .15s ease}
   .bib-save-btn:hover:not(:disabled){transform:translateY(-1px)}
-  .bib-save-btn:active:not(:disabled){transform:translateY(1px);box-shadow:0 1px 0 var(--bib-accent-press)}
+  .bib-save-btn:active:not(:disabled){transform:translateY(1px);box-shadow:0 1px 0 #ab2856}
   .bib-save-btn:disabled{opacity:.7;cursor:default}
 
   .bib-body{flex:1;display:flex;overflow:hidden;position:relative}
@@ -129,7 +130,7 @@
 
   .bib-preview-wrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:auto;padding:40px}
   .bib-preview-label{position:absolute;top:24px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--bib-muted);display:flex;align-items:center;gap:6px}
-  .bib-phone{width:390px;height:844px;border-radius:52px;border:10px solid #111;background:#111;box-shadow:0 30px 60px rgba(0,0,0,.25);overflow:hidden;position:relative}
+  .bib-phone{width:auto;height:min(844px, calc(100vh - 180px));aspect-ratio:390/844;max-width:100%;border-radius:52px;border:10px solid #111;background:#111;box-shadow:0 30px 60px rgba(0,0,0,.25);overflow:hidden;position:relative;flex-shrink:0}
   .bib-phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:26px;background:#111;border-radius:0 0 16px 16px;z-index:5}
   .bib-phone-screen{width:100%;height:100%;overflow-y:auto;background:#fff}
 
@@ -148,15 +149,15 @@
       </a>
       <div class="bib-divider-v"></div>
       <div class="bib-wordmark">
-        <span class="bib-wordmark-dot"></span>
-        <span class="bib-wordmark-text">bizinbio</span>
+        <img src="../assets/bee-icon.png?v=1" alt="BizInBio" class="bib-wordmark-mark" />
+        <span class="bib-wordmark-text">Biz<span class="accent">In</span>Bio</span>
         <span class="bib-wordmark-label">builder</span>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:12px">
       <a id="page-url" class="bib-url-pill" href="#" target="_blank" rel="noopener"></a>
       <span id="status-badge" class="bib-live-pill"><span class="bib-live-dot"></span><span id="status-badge-text">Live</span></span>
-      <button id="save-republish-btn" class="bib-save-btn" type="button">Save &amp; republish</button>
+      <button id="save-republish-btn" class="bib-save-btn" type="button">Save &amp; publish</button>
     </div>
   </div>
 
@@ -1010,7 +1011,7 @@
       showToast(err.message || "Something went wrong.", true);
     } finally {
       btn.disabled = false;
-      btn.textContent = "Save & republish";
+      btn.textContent = "Save & publish";
     }
   }
   document.getElementById("save-republish-btn").addEventListener("click", saveAndRepublish);
