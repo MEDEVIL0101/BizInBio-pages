@@ -8,71 +8,15 @@
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=1" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../assets/bib-chrome.css?v=1" />
 <style>
-  /* Builder chrome — fixed, not user-customizable (the live-preview panel
-     is the only themed subtree; everything else here stays constant
-     regardless of the page's selected palette/font). */
-  :root{
-    --bib-bg:oklch(96.5% 0.012 75);
-    --bib-panel-bg:oklch(97.5% 0.012 75);
-    --bib-card-bg:#ffffff;
-    --bib-text:oklch(23% 0.02 50);
-    --bib-muted:oklch(55% 0.02 50);
-    --bib-border:oklch(90% 0.015 70);
-    --bib-accent:oklch(64% 0.19 28);
-    --bib-accent-press:oklch(52% 0.19 28);
-  }
-  *{box-sizing:border-box}
-  body{margin:0}
-  ::selection{background:oklch(80% 0.14 30 / .35)}
-  html,body{height:100%}
-  body{font-family:"Plus Jakarta Sans",system-ui,sans-serif;color:var(--bib-text);background:var(--bib-bg)}
-  input,textarea,button{font-family:inherit}
-  a{color:var(--bib-accent);text-decoration:none}
-  a:hover{color:var(--bib-accent-press)}
-  @keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-  @keyframes toastIn{from{opacity:0;transform:translate(-50%,12px) scale(.96)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
-
+  /* Builder-only layout/components — shared chrome (tokens, top bar,
+     cards, fields, buttons, toggles) lives in bib-chrome.css so
+     dashboard.html can match this look without duplicating it. */
   .bib-app{height:100vh;overflow:hidden;display:flex;flex-direction:column}
-
-  .bib-topbar{height:72px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:oklch(99% 0.004 75);border-bottom:1px solid var(--bib-border);position:sticky;top:0;z-index:30}
-  .bib-back{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--bib-muted);padding:8px 10px;border-radius:10px}
-  .bib-back:hover{background:oklch(94% 0.02 60);color:var(--bib-text)}
-  .bib-divider-v{width:1px;height:24px;background:var(--bib-border)}
-  .bib-wordmark{display:flex;align-items:center;gap:8px}
-  .bib-wordmark-mark{width:26px;height:26px;object-fit:contain;flex:none}
-  .bib-wordmark-text{font-family:"Fredoka",sans-serif;font-weight:700;font-size:20px;letter-spacing:-.3px;color:var(--bib-text)}
-  .bib-wordmark-text .accent{color:#ff0000}
-  .bib-wordmark-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--bib-muted);margin-left:4px}
-  .bib-url-pill{display:flex;align-items:center;gap:8px;background:oklch(94% 0.015 70);border-radius:999px;padding:8px 14px;font-size:13px;color:var(--bib-muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
-  .bib-live-pill{display:flex;align-items:center;gap:6px;background:oklch(93% 0.09 150);color:oklch(38% 0.13 150);font-size:13px;font-weight:700;padding:7px 14px;border-radius:999px}
-  .bib-live-dot{width:7px;height:7px;border-radius:50%;background:oklch(58% 0.17 150);display:inline-block}
-  .bib-save-btn{background:#d6336c;color:#fff;border:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:12px;cursor:pointer;box-shadow:0 2px 0 #ab2856,0 6px 16px rgba(214,51,108,.35);transition:transform .15s ease}
-  .bib-save-btn:hover:not(:disabled){transform:translateY(-1px)}
-  .bib-save-btn:active:not(:disabled){transform:translateY(1px);box-shadow:0 1px 0 #ab2856}
-  .bib-save-btn:disabled{opacity:.7;cursor:default}
-
   .bib-body{flex:1;display:flex;overflow:hidden;position:relative}
-
   .bib-editor{width:460px;flex-shrink:0;overflow-y:auto;padding:28px 24px 80px;display:flex;flex-direction:column;gap:18px;background:var(--bib-panel-bg);border-right:1px solid var(--bib-border)}
-
-  .bib-card{background:var(--bib-card-bg);border-radius:22px;border:1px solid var(--bib-border);padding:20px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 10px 24px oklch(60% 0.03 60 / .06);animation:cardIn .4s ease both}
-  .bib-card-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
-  .bib-card-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .bib-card-title{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--bib-muted);text-transform:uppercase}
-  .bib-card-sub{font-size:12px;color:var(--bib-muted)}
-
-  .bib-field-label{font-size:12px;font-weight:600;color:var(--bib-muted);margin-bottom:6px}
-  .bib-static-field{padding:12px 14px;border-radius:12px;background:oklch(96% 0.012 70);font-size:15px;font-weight:700;cursor:text;border:1px solid transparent}
-  .bib-static-field:hover{border-color:oklch(64% 0.19 28 / .4);background:#fff}
-  .bib-static-field.loc{font-size:14px;font-weight:400}
-  .bib-edit-input{width:100%;padding:12px 14px;border-radius:12px;background:#fff;font-size:15px;font-weight:700;border:1.5px solid var(--bib-accent);outline:none}
-
-  .bib-upload{position:relative;border-radius:12px;overflow:hidden;background:oklch(96% 0.01 70);border:1px dashed var(--bib-border);display:flex;align-items:center;justify-content:center;color:var(--bib-muted);cursor:pointer;font-size:11px;font-weight:600;text-align:center}
-  .bib-upload:hover{border-color:var(--bib-accent);color:var(--bib-accent)}
-  .bib-upload img{width:100%;height:100%;object-fit:cover;display:block}
-  .bib-upload input[type=file]{display:none}
-  .bib-upload.drag-over{border-color:var(--bib-accent);background:oklch(94% 0.05 30)}
+  .bib-card-head{margin-bottom:4px}
 
   .bib-swatch{width:42px;height:42px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;position:relative;box-shadow:0 2px 6px rgba(0,0,0,.1);transition:transform .15s ease;padding:0}
   .bib-swatch:hover{transform:scale(1.08)}
@@ -85,8 +29,6 @@
   .bib-fontpair-aa{font-size:19px;font-weight:700;margin-bottom:2px}
   .bib-fontpair-name{font-size:12px;font-weight:600;color:oklch(35% 0.02 50)}
 
-  .bib-section-heading{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--bib-muted);text-transform:uppercase;margin:6px 4px 0}
-
   .bib-el-card{background:var(--bib-card-bg);border-radius:18px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.03),0 8px 20px oklch(60% 0.03 60 / .05);animation:cardIn .35s ease both;border:1px solid var(--bib-border)}
   .bib-el-card.drag-over{border:2px dashed var(--bib-accent)}
   .bib-el-card.bib-drag-lift{opacity:.4}
@@ -95,8 +37,6 @@
   .bib-el-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .bib-el-title{font-size:14px;font-weight:700}
   .bib-el-summary{font-size:12px;color:var(--bib-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .bib-icon-btn{color:oklch(70% 0.02 50);background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;flex:none;display:flex}
-  .bib-icon-btn:hover{color:oklch(55% 0.18 25);background:oklch(95% 0.03 25)}
   .bib-chevron{color:var(--bib-muted);display:flex;flex:none;transition:transform .2s ease;padding:6px;border-radius:8px}
   .bib-chevron:hover{background:oklch(94% 0.02 60)}
   .bib-el-panel{padding:4px 16px 18px}
@@ -104,21 +44,12 @@
   .bib-gated-banner{display:flex;align-items:flex-start;gap:10px;border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.5}
   .bib-gated-banner svg{flex-shrink:0;margin-top:2px}
 
-  .bib-toggle{width:34px;height:20px;border-radius:999px;border:none;cursor:pointer;position:relative;flex-shrink:0;transition:background .15s ease}
-  .bib-toggle-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s ease;display:block}
-
-  .bib-row-input{width:100%;padding:10px 12px;border-radius:10px;background:oklch(97% 0.01 70);border:1.5px solid var(--bib-border);font-size:13px;outline:none;font-family:inherit;color:var(--bib-text)}
-  .bib-row-input:focus-visible{border-color:var(--bib-accent)}
-  .bib-textarea{width:100%;min-height:90px;padding:12px 14px;border-radius:12px;background:oklch(97% 0.01 70);border:1.5px solid var(--bib-border);font-size:14px;outline:none;resize:vertical;font-family:inherit;line-height:1.5;color:var(--bib-text)}
-
   .bib-gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
   .bib-gallery-tile{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden}
   .bib-gallery-tile img{width:100%;height:100%;object-fit:cover;display:block}
   .bib-gallery-remove{position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:50%;background:oklch(30% 0.02 30 / .65);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;padding:0}
   .bib-gallery-add{aspect-ratio:1;border-radius:12px;border:2px dashed oklch(85% 0.015 70);background:oklch(97% 0.01 70);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:var(--bib-muted)}
   .bib-gallery-add:hover{border-color:var(--bib-accent);color:var(--bib-accent)}
-
-  .bib-add-link{align-self:flex-start;margin-top:4px;font-size:12.5px;font-weight:700;color:var(--bib-accent);background:none;border:none;cursor:pointer;padding:6px 4px}
 
   .bib-add-section-btn{width:100%;padding:14px;border-radius:14px;border:1.5px dashed oklch(82% 0.02 60);background:#fff;color:var(--bib-muted);font-weight:700;font-size:13.5px;cursor:pointer}
   .bib-add-section-btn:hover{border-color:var(--bib-accent);color:var(--bib-accent)}
@@ -133,9 +64,6 @@
   .bib-phone{width:auto;height:min(844px, calc(100vh - 180px));aspect-ratio:390/844;max-width:100%;border-radius:52px;border:10px solid #111;background:#111;box-shadow:0 30px 60px rgba(0,0,0,.25);overflow:hidden;position:relative;flex-shrink:0}
   .bib-phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:26px;background:#111;border-radius:0 0 16px 16px;z-index:5}
   .bib-phone-screen{width:100%;height:100%;overflow-y:auto;background:#fff}
-
-  .bib-toast{position:fixed;bottom:32px;left:50%;background:var(--bib-text);color:#fff;padding:14px 22px;border-radius:14px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);animation:toastIn .3s ease both;z-index:100;display:none}
-  .bib-toast.error{background:oklch(45% 0.16 25)}
 </style>
 </head>
 <body>

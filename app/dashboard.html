@@ -6,100 +6,160 @@
 <title>Dashboard — BizInBio</title>
 <link rel="icon" href="../assets/favicon-32.png?v=1" />
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=1" />
-<link rel="stylesheet" href="../assets/site.css?v=14" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../assets/bib-chrome.css?v=1" />
+<style>
+  .bib-page{max-width:560px;margin:0 auto;padding:28px 24px 80px;display:flex;flex-direction:column;gap:16px}
+  .bib-card h2{font-family:"Fredoka",sans-serif;font-size:17px;font-weight:700;margin:0}
+</style>
 </head>
 <body>
-<div class="page-wrap" style="display:block;min-height:0">
 
-<nav style="display:flex;align-items:center;padding:var(--space-4);border-bottom:1px solid var(--color-divider)">
-  <h4 style="margin-right:auto">Your page</h4>
-  <a href="#" id="logout" style="font-size:13px">Log out</a>
-</nav>
+<div class="bib-topbar">
+  <div class="bib-wordmark">
+    <img src="../assets/bee-icon.png?v=1" alt="BizInBio" class="bib-wordmark-mark" />
+    <span class="bib-wordmark-text">Biz<span class="accent">In</span>Bio</span>
+    <span class="bib-wordmark-label">dashboard</span>
+  </div>
+  <a href="#" id="logout" class="bib-back">Log out</a>
+</div>
 
-<div style="padding:var(--space-6) var(--space-4);display:flex;flex-direction:column;gap:calc(var(--space-8)*1.2)">
+<div class="bib-page">
 
-  <section class="blueprint" style="position:relative;padding:var(--space-4)">
-    <h6>Status</h6>
-    <a id="page-url" href="#" target="_blank" style="display:block;margin-top:var(--space-2);font-size:14px;word-break:break-all"></a>
-    <span class="tag live" id="status-badge" style="margin-top:var(--space-3)"></span>
-    <div style="display:flex;align-items:center;background:var(--color-surface);border-radius:var(--radius-md);padding:0 12px;margin-top:var(--space-3)">
+  <section class="bib-card">
+    <div class="bib-card-head">
+      <div class="bib-card-icon" style="background:oklch(90% 0.05 190);color:oklch(49% 0.16 190)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.07 0l2-2a5 5 0 00-7.07-7.07l-1 1M14 11a5 5 0 00-7.07 0l-2 2a5 5 0 007.07 7.07l1-1"/></svg>
+      </div>
+      <h2>Status</h2>
+    </div>
+    <a id="page-url" href="#" target="_blank" style="display:block;font-size:14px;word-break:break-all;font-weight:600"></a>
+    <span class="bib-tag live" id="status-badge" style="margin-top:10px"></span>
+    <div style="display:flex;align-items:center;background:oklch(97% 0.01 70);border-radius:10px;padding:0 12px;margin-top:14px;border:1.5px solid var(--bib-border)">
       <span class="text-muted" style="font-size:13px;white-space:nowrap">bizinbio.net/</span>
-      <input class="input" id="dash-slug-input" style="border:none;background:transparent;padding:9px 4px;font-size:13px" />
+      <input class="bib-row-input" id="dash-slug-input" style="border:none;background:transparent;padding:9px 4px;font-size:13px" />
     </div>
     <p class="text-muted" style="font-size:12px;margin-top:4px;min-height:16px" id="dash-slug-status"></p>
-    <button id="dash-slug-save" class="btn btn-secondary btn-block" style="margin-top:var(--space-2)" disabled>Update URL</button>
+    <button id="dash-slug-save" class="bib-btn-secondary bib-btn-block" style="margin-top:8px" disabled>Update URL</button>
   </section>
 
-  <section class="blueprint" style="position:relative;padding:var(--space-4)">
-    <h6>Plan</h6>
-    <p id="plan-label" style="font-family:var(--font-heading);font-weight:600;font-size:17px;margin-top:var(--space-2)">Free</p>
+  <section class="bib-card">
+    <div class="bib-card-head">
+      <div class="bib-card-icon" style="background:oklch(90% 0.06 80);color:oklch(45% 0.14 80)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2l2.9 6.5L21 9.3l-5 4.6L17.4 21 12 17.6 6.6 21 8 13.9l-5-4.6 6.1-.8z"/></svg>
+      </div>
+      <h2>Plan</h2>
+    </div>
+    <p id="plan-label" style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:17px;margin:0">Free</p>
     <p id="plan-desc" class="text-muted" style="font-size:13px;margin-top:4px">Link-in-bio only — social links, contact, and about.</p>
-    <button id="upgrade-all-access" class="btn btn-primary btn-block" style="margin-top:var(--space-4)">Upgrade to All Access — $9.99/mo</button>
-    <button id="upgrade-domain" class="btn btn-secondary btn-block" style="margin-top:var(--space-2)">Upgrade to Custom Domain — $19.99/mo</button>
+    <button id="upgrade-all-access" class="bib-btn-primary bib-btn-block" style="margin-top:16px">Upgrade to All Access — $9.99/mo</button>
+    <button id="upgrade-domain" class="bib-btn-secondary bib-btn-block" style="margin-top:8px">Upgrade to Custom Domain — $19.99/mo</button>
   </section>
 
-  <section class="blueprint" id="booking-section" style="position:relative;padding:var(--space-4);display:none">
-    <h6>Booking deposits</h6>
-    <p id="connect-status" class="text-muted" style="font-size:13px;margin-top:var(--space-2)">Not connected yet.</p>
-    <button id="connect-stripe" class="btn btn-secondary btn-block" style="margin-top:var(--space-3)">Connect Stripe to accept deposits</button>
+  <section class="bib-card" id="booking-section" style="display:none">
+    <div class="bib-card-head">
+      <div class="bib-card-icon" style="background:oklch(90% 0.05 270);color:oklch(50% 0.16 270)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v4M16 3v4"/></svg>
+      </div>
+      <h2>Booking deposits</h2>
+    </div>
+    <p id="connect-status" class="text-muted" style="font-size:13px">Not connected yet.</p>
+    <button id="connect-stripe" class="bib-btn-secondary bib-btn-block" style="margin-top:10px">Connect Stripe to accept deposits</button>
   </section>
 
-  <section class="blueprint" id="shop-section" style="position:relative;padding:var(--space-4);display:none">
-    <h6>Shop</h6>
-    <p id="shop-connect-status" class="text-muted" style="font-size:13px;margin-top:var(--space-2)">Not connected yet.</p>
-    <button id="connect-stripe-shop" class="btn btn-secondary btn-block" style="margin-top:var(--space-3);margin-bottom:var(--space-4)">Connect Stripe to sell products</button>
+  <section class="bib-card" id="shop-section" style="display:none">
+    <div class="bib-card-head">
+      <div class="bib-card-icon" style="background:oklch(90% 0.06 55);color:oklch(48% 0.16 55)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 8h12l-1 12a2 2 0 01-2 2H9a2 2 0 01-2-2L6 8z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg>
+      </div>
+      <h2>Shop</h2>
+    </div>
+    <p id="shop-connect-status" class="text-muted" style="font-size:13px">Not connected yet.</p>
+    <button id="connect-stripe-shop" class="bib-btn-secondary bib-btn-block" style="margin-top:10px;margin-bottom:16px">Connect Stripe to sell products</button>
 
     <div id="shop-products" style="display:flex;flex-direction:column"></div>
 
-    <div style="display:flex;flex-direction:column;gap:var(--space-3);padding-top:var(--space-3);margin-top:var(--space-3);border-top:1px solid var(--color-divider)">
-      <p class="text-muted" style="font-size:12px;margin:0">Add a product</p>
-      <label class="upload" for="product_photo" style="width:88px;aspect-ratio:1;padding:0;overflow:hidden;position:relative">
+    <div style="display:flex;flex-direction:column;gap:12px;padding-top:14px;margin-top:14px;border-top:1px solid var(--bib-border)">
+      <p class="text-muted" style="font-size:12px;margin:0;font-weight:600">Add a product</p>
+      <label class="bib-upload" for="product_photo" style="width:88px;aspect-ratio:1;padding:0">
         <div id="product-photo-preview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
           <div class="upload-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></div>
         </div>
         <input type="file" id="product_photo" accept="image/*" capture="environment" />
       </label>
-      <div class="field"><label>Product name</label><input class="input" id="product_name" placeholder="Classic Logo Tee" /></div>
-      <div class="field"><label>Price (USD)</label><input class="input" id="product_price" type="number" min="0" step="0.01" placeholder="24.99" /></div>
-      <div class="field"><label>Category (optional)</label><input class="input" id="product_category" placeholder="e.g. Tees, Hoodies — shown as filter chips once you have 2+" /></div>
-      <button id="add-product" class="btn btn-primary btn-block">Add product</button>
+      <div>
+        <div class="bib-field-label">Product name</div>
+        <input class="bib-row-input" id="product_name" placeholder="Classic Logo Tee" />
+      </div>
+      <div>
+        <div class="bib-field-label">Price (USD)</div>
+        <input class="bib-row-input" id="product_price" type="number" min="0" step="0.01" placeholder="24.99" />
+      </div>
+      <div>
+        <div class="bib-field-label">Category (optional)</div>
+        <input class="bib-row-input" id="product_category" placeholder="e.g. Tees, Hoodies — shown as filter chips once you have 2+" />
+      </div>
+      <button id="add-product" class="bib-btn-primary bib-btn-block">Add product</button>
       <p id="product-msg" class="text-muted" style="text-align:center;font-size:13px;min-height:18px"></p>
     </div>
   </section>
 
-  <section class="blueprint" id="orders-section" style="position:relative;padding:var(--space-4);display:none">
-    <h6>Orders</h6>
-    <div id="orders-list" style="margin-top:var(--space-2)"><p class="text-muted" style="font-size:13px">No orders yet — they'll show up here once your shop is live and someone checks out.</p></div>
+  <section class="bib-card" id="orders-section" style="display:none">
+    <div class="bib-card-head">
+      <div class="bib-card-icon" style="background:oklch(90% 0.06 20);color:oklch(48% 0.16 20)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
+      </div>
+      <h2>Orders</h2>
+    </div>
+    <div id="orders-list"><p class="text-muted" style="font-size:13px">No orders yet — they'll show up here once your shop is live and someone checks out.</p></div>
   </section>
 
-  <section class="blueprint" id="domain-section" style="position:relative;padding:var(--space-4);display:none">
-    <h6>Custom domain</h6>
-    <p class="text-muted" style="font-size:13px;margin-top:var(--space-2)">Use your own domain instead of a bizinbio.net link.</p>
+  <section class="bib-card" id="domain-section" style="display:none">
+    <div class="bib-card-head">
+      <div class="bib-card-icon" style="background:oklch(90% 0.05 230);color:oklch(48% 0.14 230)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 4 5.7 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.7-4-9s1.5-6.5 4-9z"/></svg>
+      </div>
+      <h2>Custom domain</h2>
+    </div>
+    <p class="text-muted" style="font-size:13px">Use your own domain instead of a bizinbio.net link.</p>
     <div id="domain-none">
-      <div class="field" style="margin-top:var(--space-3)"><label>Your domain</label><input class="input" id="domain-input" placeholder="www.yourbusiness.com" /></div>
-      <button id="connect-domain" class="btn btn-secondary btn-block">Connect domain</button>
+      <div style="margin-top:12px">
+        <div class="bib-field-label">Your domain</div>
+        <input class="bib-row-input" id="domain-input" placeholder="www.yourbusiness.com" />
+      </div>
+      <button id="connect-domain" class="bib-btn-secondary bib-btn-block" style="margin-top:10px">Connect domain</button>
     </div>
-    <div id="domain-set" style="display:none;margin-top:var(--space-3)">
-      <p style="font-size:14px"><strong id="domain-name"></strong> <span class="tag" id="domain-status-tag" style="margin-left:6px"></span></p>
-      <p id="domain-instructions" class="text-muted" style="font-size:12px;margin-top:var(--space-2)"></p>
-      <button id="recheck-domain" class="btn btn-secondary btn-block" style="margin-top:var(--space-3)">Check status</button>
-      <button id="remove-domain" class="btn" style="margin-top:var(--space-2);width:100%;color:var(--color-accent-700)">Remove domain</button>
+    <div id="domain-set" style="display:none;margin-top:12px">
+      <p style="font-size:14px"><strong id="domain-name"></strong> <span class="bib-tag" id="domain-status-tag" style="margin-left:6px"></span></p>
+      <p id="domain-instructions" class="text-muted" style="font-size:12px;margin-top:8px"></p>
+      <button id="recheck-domain" class="bib-btn-secondary bib-btn-block" style="margin-top:10px">Check status</button>
+      <button id="remove-domain" class="bib-btn-text" style="margin-top:6px;width:100%">Remove domain</button>
     </div>
-    <p id="domain-msg" class="text-muted" style="text-align:center;font-size:13px;margin-top:var(--space-2);min-height:18px"></p>
+    <p id="domain-msg" class="text-muted" style="text-align:center;font-size:13px;margin-top:8px;min-height:18px"></p>
   </section>
 
-  <section class="blueprint" style="position:relative;padding:var(--space-4)">
-    <h6 style="margin-bottom:var(--space-2)">Page content</h6>
-    <p class="text-muted" style="font-size:13px;margin-bottom:var(--space-3)">Add, edit, and reorder everything on your page — header, about, services, gallery, social links, colors, and fonts.</p>
-    <a href="/app/builder.html" class="btn btn-primary btn-block">Edit page content</a>
+  <section class="bib-card">
+    <div class="bib-card-head">
+      <div class="bib-card-icon" style="background:oklch(90% 0.05 30);color:oklch(49% 0.16 30)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M3 17l5-4 4 3 4-5 5 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h2>Page content</h2>
+    </div>
+    <p class="text-muted" style="font-size:13px;margin-bottom:12px">Add, edit, and reorder everything on your page — header, about, services, gallery, social links, colors, and fonts.</p>
+    <a href="/app/builder.html" class="bib-btn-primary bib-btn-block">Edit page content</a>
   </section>
 
-  <section class="blueprint" style="position:relative;padding:var(--space-4)">
-    <h6>Quote requests</h6>
-    <div id="leads" style="margin-top:var(--space-2)"><p class="text-muted" style="font-size:13px">No requests yet — they'll show up here once your page is live and someone reaches out.</p></div>
+  <section class="bib-card">
+    <div class="bib-card-head">
+      <div class="bib-card-icon" style="background:oklch(90% 0.05 350);color:oklch(50% 0.16 350)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke-linecap="round"/></svg>
+      </div>
+      <h2>Quote requests</h2>
+    </div>
+    <div id="leads"><p class="text-muted" style="font-size:13px">No requests yet — they'll show up here once your page is live and someone reaches out.</p></div>
   </section>
 
-</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -134,7 +194,7 @@
     if (token !== dashSlugCheckToken) return;
     dashSlugIsAvailable = available;
     dashSlugStatus.textContent = available ? "Available" : "Already taken — try something else";
-    dashSlugStatus.style.color = available ? "" : "var(--color-accent-700)";
+    dashSlugStatus.style.color = available ? "" : "#d6336c";
     dashSlugSave.disabled = !available;
   });
 
@@ -269,15 +329,15 @@
       return;
     }
     container.innerHTML = products.map((p) => `
-      <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) 0;border-bottom:1px solid var(--color-divider)">
+      <div class="bib-list-row">
         ${p.image_url
-          ? `<img src="${p.image_url}" style="width:44px;height:44px;object-fit:cover;border-radius:var(--radius-md);flex:none" />`
-          : `<div style="width:44px;height:44px;border-radius:var(--radius-md);background:var(--color-surface);flex:none"></div>`}
+          ? `<img src="${p.image_url}" style="width:44px;height:44px;object-fit:cover;border-radius:10px;flex:none" />`
+          : `<div style="width:44px;height:44px;border-radius:10px;background:oklch(96% 0.01 70);flex:none"></div>`}
         <div style="flex:1;min-width:0">
           <div style="font-size:14px;font-weight:600">${p.name}</div>
           <div class="text-muted" style="font-size:12px">$${(p.price_cents / 100).toFixed(2)}${p.category ? ` · ${p.category}` : ""}</div>
         </div>
-        <button class="btn bib-delete-product" data-id="${p.id}" style="flex:none;font-size:12px;padding:6px 10px">Delete</button>
+        <button class="bib-btn-secondary bib-btn-sm bib-delete-product" data-id="${p.id}" style="flex:none">Delete</button>
       </div>
     `).join("");
     container.querySelectorAll(".bib-delete-product").forEach((btn) => {
@@ -333,10 +393,10 @@
       .order("created_at", { ascending: false });
     if (!orders || !orders.length) return;
     document.getElementById("orders-list").innerHTML = orders.map((o) => `
-      <div style="padding:var(--space-3) 0;border-bottom:1px solid var(--color-divider)">
+      <div class="bib-list-row" style="flex-direction:column;align-items:stretch;gap:2px">
         <div style="display:flex;justify-content:space-between;align-items:baseline">
-          <span style="font-family:var(--font-heading);font-weight:600">$${(o.total_cents / 100).toFixed(2)}</span>
-          <span class="tag${o.status === "paid" ? " live" : ""}" style="font-size:10px">${o.status}</span>
+          <span style="font-family:'Fredoka',sans-serif;font-weight:600">$${(o.total_cents / 100).toFixed(2)}</span>
+          <span class="bib-tag${o.status === "paid" ? " live" : ""}">${o.status}</span>
         </div>
         <div class="text-muted" style="font-size:13px">${o.buyer_name || o.buyer_email || "Guest"} · ${new Date(o.created_at).toLocaleDateString()}</div>
       </div>
@@ -357,11 +417,11 @@
     const statusTag = document.getElementById("domain-status-tag");
     if (page.custom_domain_status === "active") {
       statusTag.textContent = "Active";
-      statusTag.className = "tag live";
+      statusTag.className = "bib-tag live";
       document.getElementById("domain-instructions").textContent = "Your page is live at this domain.";
     } else {
       statusTag.textContent = "Pending";
-      statusTag.className = "tag tag-outline";
+      statusTag.className = "bib-tag outline";
       let text = "Add a CNAME record at your domain's registrar pointing to cf.bizinbio.net.";
       if (dcvMethod && dcvMethod.type === "txt") {
         text += ` Also add a TXT record — name: ${dcvMethod.name}, value: ${dcvMethod.value}.`;
@@ -423,9 +483,9 @@
     if (!leads || !leads.length) return;
     const container = document.getElementById("leads");
     container.innerHTML = leads.map((l) => `
-      <div style="padding:var(--space-3) 0;border-bottom:1px solid var(--color-divider)">
-        <div style="font-family:var(--font-heading);font-weight:600">${l.name}</div>
-        <div class="text-muted" style="font-size:13px">${l.contact_info} · ${new Date(l.submitted_at).toLocaleDateString()}</div>
+      <div class="bib-list-row" style="flex-direction:column;align-items:stretch;gap:2px">
+        <div style="font-family:'Fredoka',sans-serif;font-weight:600">${l.name || "Anonymous"}</div>
+        <div class="text-muted" style="font-size:13px">${l.contact_info || ""} · ${new Date(l.submitted_at).toLocaleDateString()}</div>
         ${l.message ? `<div style="margin-top:4px">${l.message}</div>` : ""}
       </div>
     `).join("");

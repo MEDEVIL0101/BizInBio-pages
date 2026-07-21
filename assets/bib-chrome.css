@@ -1,0 +1,108 @@
+/* Shared "app chrome" for BizInBio's owner-facing tools (builder.html,
+   dashboard.html) — fixed brand look, not user-customizable (unlike the
+   live-preview panel or the published page itself, which follow the
+   owner's selected palette/font via site.css's --color-* vars). Keep this
+   file in sync with anything builder-specific still living inline in
+   builder.html's own <style> block. */
+
+:root{
+  --bib-bg:oklch(96.5% 0.012 75);
+  --bib-panel-bg:oklch(97.5% 0.012 75);
+  --bib-card-bg:#ffffff;
+  --bib-text:oklch(23% 0.02 50);
+  --bib-muted:oklch(55% 0.02 50);
+  --bib-border:oklch(90% 0.015 70);
+  --bib-accent:oklch(64% 0.19 28);
+  --bib-accent-press:oklch(52% 0.19 28);
+  --bib-pink:#d6336c;
+  --bib-pink-press:#ab2856;
+}
+*{box-sizing:border-box}
+body{margin:0}
+::selection{background:oklch(80% 0.14 30 / .35)}
+html,body{height:100%}
+body{font-family:"Plus Jakarta Sans",system-ui,sans-serif;color:var(--bib-text);background:var(--bib-bg)}
+input,textarea,button{font-family:inherit}
+a{color:var(--bib-accent);text-decoration:none}
+a:hover{color:var(--bib-accent-press)}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,12px) scale(.96)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+
+/* Top bar */
+.bib-topbar{height:72px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:oklch(99% 0.004 75);border-bottom:1px solid var(--bib-border);position:sticky;top:0;z-index:30}
+.bib-back{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--bib-muted);padding:8px 10px;border-radius:10px}
+.bib-back:hover{background:oklch(94% 0.02 60);color:var(--bib-text)}
+.bib-divider-v{width:1px;height:24px;background:var(--bib-border)}
+.bib-wordmark{display:flex;align-items:center;gap:8px}
+.bib-wordmark-mark{width:26px;height:26px;object-fit:contain;flex:none}
+.bib-wordmark-text{font-family:"Fredoka",sans-serif;font-weight:700;font-size:20px;letter-spacing:-.3px;color:var(--bib-text)}
+.bib-wordmark-text .accent{color:#ff0000}
+.bib-wordmark-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--bib-muted);margin-left:4px}
+.bib-url-pill{display:flex;align-items:center;gap:8px;background:oklch(94% 0.015 70);border-radius:999px;padding:8px 14px;font-size:13px;color:var(--bib-muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.bib-live-pill{display:flex;align-items:center;gap:6px;background:oklch(93% 0.09 150);color:oklch(38% 0.13 150);font-size:13px;font-weight:700;padding:7px 14px;border-radius:999px}
+.bib-live-pill.off{background:oklch(93% 0.01 60);color:var(--bib-muted)}
+.bib-live-dot{width:7px;height:7px;border-radius:50%;background:oklch(58% 0.17 150);display:inline-block}
+.bib-live-pill.off .bib-live-dot{background:oklch(70% 0.01 60)}
+
+/* Buttons — pink primary (matches the landing page's shop/cart accent),
+   neutral secondary, plain-text tertiary. Inline-width by default (like
+   the top bar's Save button); add .bib-btn-block for full-width usage
+   (dashboard cards), same convention as site.css's .btn/.btn-block. */
+.bib-btn-primary,.bib-save-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--bib-pink);color:#fff;border:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:12px;cursor:pointer;box-shadow:0 2px 0 var(--bib-pink-press),0 6px 16px rgba(214,51,108,.35);transition:transform .15s ease;text-decoration:none}
+.bib-btn-primary:hover:not(:disabled),.bib-save-btn:hover:not(:disabled){transform:translateY(-1px);color:#fff}
+.bib-btn-primary:active:not(:disabled),.bib-save-btn:active:not(:disabled){transform:translateY(1px);box-shadow:0 1px 0 var(--bib-pink-press)}
+.bib-btn-primary:disabled,.bib-save-btn:disabled{opacity:.6;cursor:default;box-shadow:none;transform:none}
+.bib-btn-secondary{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#fff;color:var(--bib-text);border:1.5px solid var(--bib-border);font-weight:700;font-size:14px;padding:10.5px 22px;border-radius:12px;cursor:pointer;text-decoration:none}
+.bib-btn-secondary:hover:not(:disabled){border-color:var(--bib-accent);color:var(--bib-text)}
+.bib-btn-secondary:disabled{opacity:.6;cursor:default}
+.bib-btn-text{background:none;border:none;color:var(--bib-muted);font-weight:700;font-size:13px;cursor:pointer;padding:8px;text-decoration:none}
+.bib-btn-text:hover{color:oklch(55% 0.18 25)}
+.bib-btn-block{width:100%}
+.bib-btn-sm{padding:7px 14px;font-size:12.5px;border-radius:10px}
+
+.text-muted{color:var(--bib-muted)}
+.upload-icon{width:34px;height:34px;border:1px solid var(--bib-border);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--bib-muted)}
+
+/* Cards */
+.bib-card{background:var(--bib-card-bg);border-radius:22px;border:1px solid var(--bib-border);padding:20px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 10px 24px oklch(60% 0.03 60 / .06);animation:cardIn .4s ease both}
+.bib-card-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.bib-card-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bib-card-title{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--bib-muted);text-transform:uppercase}
+.bib-card-sub{font-size:12px;color:var(--bib-muted)}
+.bib-section-heading{font-size:12px;font-weight:800;letter-spacing:.08em;color:var(--bib-muted);text-transform:uppercase;margin:6px 4px 0}
+
+/* Fields */
+.bib-field-label{font-size:12px;font-weight:600;color:var(--bib-muted);margin-bottom:6px}
+.bib-static-field{padding:12px 14px;border-radius:12px;background:oklch(96% 0.012 70);font-size:15px;font-weight:700;cursor:text;border:1px solid transparent}
+.bib-static-field:hover{border-color:oklch(64% 0.19 28 / .4);background:#fff}
+.bib-static-field.loc{font-size:14px;font-weight:400}
+.bib-edit-input{width:100%;padding:12px 14px;border-radius:12px;background:#fff;font-size:15px;font-weight:700;border:1.5px solid var(--bib-accent);outline:none}
+.bib-row-input{width:100%;padding:10px 12px;border-radius:10px;background:oklch(97% 0.01 70);border:1.5px solid var(--bib-border);font-size:13px;outline:none;font-family:inherit;color:var(--bib-text)}
+.bib-row-input:focus-visible{border-color:var(--bib-accent)}
+.bib-textarea{width:100%;min-height:90px;padding:12px 14px;border-radius:12px;background:oklch(97% 0.01 70);border:1.5px solid var(--bib-border);font-size:14px;outline:none;resize:vertical;font-family:inherit;line-height:1.5;color:var(--bib-text)}
+
+.bib-upload{position:relative;border-radius:12px;overflow:hidden;background:oklch(96% 0.01 70);border:1px dashed var(--bib-border);display:flex;align-items:center;justify-content:center;color:var(--bib-muted);cursor:pointer;font-size:11px;font-weight:600;text-align:center}
+.bib-upload:hover{border-color:var(--bib-accent);color:var(--bib-accent)}
+.bib-upload img{width:100%;height:100%;object-fit:cover;display:block}
+.bib-upload input[type=file]{display:none}
+.bib-upload.drag-over{border-color:var(--bib-accent);background:oklch(94% 0.05 30)}
+
+.bib-toggle{width:34px;height:20px;border-radius:999px;border:none;cursor:pointer;position:relative;flex-shrink:0;transition:background .15s ease}
+.bib-toggle-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s ease;display:block}
+
+.bib-icon-btn{color:oklch(70% 0.02 50);background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;flex:none;display:flex}
+.bib-icon-btn:hover{color:oklch(55% 0.18 25);background:oklch(95% 0.03 25)}
+
+.bib-add-link{align-self:flex-start;margin-top:4px;font-size:12.5px;font-weight:700;color:var(--bib-accent);background:none;border:none;cursor:pointer;padding:6px 4px;text-decoration:none}
+
+/* List rows (products, orders, leads) */
+.bib-list-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--bib-border)}
+.bib-list-row:last-child{border-bottom:none}
+
+/* Status pill (order/domain state) */
+.bib-tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;letter-spacing:.02em;padding:4px 10px;border-radius:999px;background:oklch(94% 0.015 70);color:var(--bib-muted)}
+.bib-tag.live{background:oklch(93% 0.09 150);color:oklch(38% 0.13 150)}
+.bib-tag.outline{background:transparent;border:1px solid var(--bib-border)}
+
+.bib-toast{position:fixed;bottom:32px;left:50%;background:var(--bib-text);color:#fff;padding:14px 22px;border-radius:14px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);animation:toastIn .3s ease both;z-index:100;display:none}
+.bib-toast.error{background:oklch(45% 0.16 25)}
