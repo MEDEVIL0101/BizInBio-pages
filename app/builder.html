@@ -8,7 +8,7 @@
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=1" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../assets/bib-chrome.css?v=1" />
+<link rel="stylesheet" href="../assets/bib-chrome.css?v=2" />
 <style>
   /* Builder-only layout/components — shared chrome (tokens, top bar,
      cards, fields, buttons, toggles) lives in bib-chrome.css so
@@ -44,12 +44,8 @@
   .bib-gated-banner{display:flex;align-items:flex-start;gap:10px;border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:12.5px;line-height:1.5}
   .bib-gated-banner svg{flex-shrink:0;margin-top:2px}
 
-  .bib-gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-  .bib-gallery-tile{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden}
-  .bib-gallery-tile img{width:100%;height:100%;object-fit:cover;display:block}
-  .bib-gallery-remove{position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:50%;background:oklch(30% 0.02 30 / .65);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;padding:0}
-  .bib-gallery-add{aspect-ratio:1;border-radius:12px;border:2px dashed oklch(85% 0.015 70);background:oklch(97% 0.01 70);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:var(--bib-muted)}
-  .bib-gallery-add:hover{border-color:var(--bib-accent);color:var(--bib-accent)}
+  .bib-gallery-tile{cursor:pointer}
+  .bib-gallery-tile.sel{box-shadow:0 0 0 3px var(--bib-accent)}
 
   .bib-add-section-btn{width:100%;padding:14px;border-radius:14px;border:1.5px dashed oklch(82% 0.02 60);background:#fff;color:var(--bib-muted);font-weight:700;font-size:13.5px;cursor:pointer}
   .bib-add-section-btn:hover{border-color:var(--bib-accent);color:var(--bib-accent)}
@@ -248,6 +244,7 @@
   let elements = []; // all non-header elements, in position order
   let theme = { paletteId: "coral", customAccent: PALETTES[0].primary, customBg: PALETTES[0].bg, fontPairId: "playful" };
   let expandedId = null;
+  let selectedGalleryIndex = null; // index of the selected photo within the currently-open gallery panel, for editing its link
   let addMenuOpen = false;
   let editingField = null; // 'businessName' | 'location' | null
   let dirty = false;
@@ -446,11 +443,13 @@
             </div>`).join("")}
         </div>`;
 
-      case "portfolio_gallery":
+      case "portfolio_gallery": {
+        const photos = c.photos || [];
+        const selected = selectedGalleryIndex !== null ? photos[selectedGalleryIndex] : null;
         return `<div class="bib-gallery-grid">
-          ${(c.photos || []).map((url, i) => `
-            <div class="bib-gallery-tile">
-              <img src="${escapeHtml(url)}" />
+          ${photos.map((photo, i) => `
+            <div class="bib-gallery-tile bib-gallery-select${selectedGalleryIndex === i ? " sel" : ""}" data-id="${el.id}" data-index="${i}">
+              <img src="${escapeHtml(photo.url)}" />
               <button type="button" class="bib-gallery-remove bib-remove-photo" data-id="${el.id}" data-index="${i}">${CLOSE_ICON}</button>
             </div>`).join("")}
           <label class="bib-gallery-add" id="gallery-drop-${el.id}">
@@ -458,7 +457,13 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
             <span style="font-size:11px;font-weight:600">Add</span>
           </label>
-        </div>`;
+        </div>
+        ${selected ? `
+          <div style="margin-top:10px;padding:10px;background:oklch(97% 0.01 70);border-radius:10px;display:flex;gap:8px;align-items:center">
+            <span style="font-size:12px;font-weight:600;color:var(--bib-muted);flex:none">Link</span>
+            <input class="bib-row-input bib-photo-link" data-id="${el.id}" data-index="${selectedGalleryIndex}" value="${escapeHtml(selected.link || "")}" placeholder="https://... (optional — tap the photo to link it)" style="flex:1" />
+          </div>` : `<p class="text-muted" style="font-size:12px;color:var(--bib-muted);margin-top:8px">Tap a photo to give it a link — visitors can tap it on your page to open that link.</p>`}`;
+      }
 
       case "youtube_video":
         return `<div style="display:flex;flex-direction:column;gap:10px">
@@ -578,7 +583,7 @@
           return `<div style="position:relative;width:100%;margin-top:26px">
             ${isGated(el.type) ? `<div style="position:absolute;top:6px;right:6px;background:rgba(20,20,20,.55);color:#fff;font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em;z-index:2">All Access</div>` : ""}
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-              ${photos.map((url) => `<div style="aspect-ratio:1;border-radius:10px;overflow:hidden"><img src="${escapeHtml(url)}" style="width:100%;height:100%;object-fit:cover;display:block" /></div>`).join("")}
+              ${photos.map((photo) => `<div style="aspect-ratio:1;border-radius:10px;overflow:hidden"><img src="${escapeHtml(photo.url)}" style="width:100%;height:100%;object-fit:cover;display:block" /></div>`).join("")}
             </div>
           </div>`;
         }
@@ -692,6 +697,7 @@
         if (e.target.closest(".bib-drag-handle") || e.target.closest(".bib-remove-el-btn")) return;
         const id = head.dataset.id;
         expandedId = expandedId === id ? null : id;
+        selectedGalleryIndex = null;
         renderEditor();
       });
     });
@@ -738,9 +744,25 @@
 
     // Gallery
     panel.querySelectorAll(".bib-remove-photo").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
         elById(btn.dataset.id).content.photos.splice(Number(btn.dataset.index), 1);
+        selectedGalleryIndex = null; // avoid a stale index after the array shifts
         markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-gallery-select").forEach((tile) => {
+      tile.addEventListener("click", (e) => {
+        if (e.target.closest(".bib-gallery-remove")) return;
+        const i = Number(tile.dataset.index);
+        selectedGalleryIndex = selectedGalleryIndex === i ? null : i;
+        renderEditor();
+      });
+    });
+    panel.querySelectorAll(".bib-photo-link").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        elById(e.target.dataset.id).content.photos[Number(e.target.dataset.index)].link = e.target.value;
+        markDirty();
       });
     });
     panel.querySelectorAll("[id^='gallery-drop-']").forEach((drop) => {
@@ -930,7 +952,7 @@
       const { error } = await sb.storage.from("page-photos").upload(path, file);
       if (error) { alert("Upload failed: " + error.message); continue; }
       const { data } = sb.storage.from("page-photos").getPublicUrl(path);
-      el.content.photos.push(data.publicUrl);
+      el.content.photos.push({ url: data.publicUrl, link: "" });
     }
     markDirty();
     renderEditor(); renderPreview();
@@ -947,6 +969,9 @@
       elements.forEach((el) => {
         if (el.type === "social_link" && el.content.links) {
           el.content.links.forEach((l) => { l.url = normalizeUrl(l.url); });
+        }
+        if (el.type === "portfolio_gallery" && el.content.photos) {
+          el.content.photos.forEach((p) => { if (p.link) p.link = normalizeUrl(p.link); });
         }
         if (el.type === "booking_deposit" && !el._depositOn && !(Number(el.content.deposit_amount) > 0)) {
           el.content.deposit_amount = "";

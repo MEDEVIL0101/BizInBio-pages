@@ -95,6 +95,15 @@ a:hover{color:var(--bib-accent-press)}
 
 .bib-add-link{align-self:flex-start;margin-top:4px;font-size:12.5px;font-weight:700;color:var(--bib-accent);background:none;border:none;cursor:pointer;padding:6px 4px;text-decoration:none}
 
+/* Removable photo grid + dashed "add" tile — used by the builder's Gallery
+   editor and dashboard's product photo picker. */
+.bib-gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.bib-gallery-tile{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden}
+.bib-gallery-tile img{width:100%;height:100%;object-fit:cover;display:block}
+.bib-gallery-remove{position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:50%;background:oklch(30% 0.02 30 / .65);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;padding:0}
+.bib-gallery-add{aspect-ratio:1;border-radius:12px;border:2px dashed oklch(85% 0.015 70);background:oklch(97% 0.01 70);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:var(--bib-muted)}
+.bib-gallery-add:hover{border-color:var(--bib-accent);color:var(--bib-accent)}
+
 /* List rows (products, orders, leads) */
 .bib-list-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--bib-border)}
 .bib-list-row:last-child{border-bottom:none}

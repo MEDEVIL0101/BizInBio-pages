@@ -8,7 +8,7 @@
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png?v=1" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="../assets/bib-chrome.css?v=1" />
+<link rel="stylesheet" href="../assets/bib-chrome.css?v=2" />
 <style>
   .bib-page{max-width:560px;margin:0 auto;padding:28px 24px 80px;display:flex;flex-direction:column;gap:16px}
   .bib-card h2{font-family:"Fredoka",sans-serif;font-size:17px;font-weight:700;margin:0}
@@ -82,23 +82,26 @@
 
     <div style="display:flex;flex-direction:column;gap:12px;padding-top:14px;margin-top:14px;border-top:1px solid var(--bib-border)">
       <p class="text-muted" style="font-size:12px;margin:0;font-weight:600">Add a product</p>
-      <label class="bib-upload" for="product_photo" style="width:88px;aspect-ratio:1;padding:0">
-        <div id="product-photo-preview" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
-          <div class="upload-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></div>
-        </div>
-        <input type="file" id="product_photo" accept="image/*" capture="environment" />
-      </label>
+      <div class="bib-gallery-grid" id="new-product-photos" style="grid-template-columns:repeat(4,1fr)">
+        <label class="bib-gallery-add" id="new-product-photo-drop" style="font-size:9px">
+          <input type="file" id="product_photo" accept="image/*" multiple style="display:none" />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span>Add</span>
+        </label>
+      </div>
       <div>
         <div class="bib-field-label">Product name</div>
         <input class="bib-row-input" id="product_name" placeholder="Classic Logo Tee" />
       </div>
-      <div>
-        <div class="bib-field-label">Price (USD)</div>
-        <input class="bib-row-input" id="product_price" type="number" min="0" step="0.01" placeholder="24.99" />
-      </div>
-      <div>
-        <div class="bib-field-label">Category (optional)</div>
-        <input class="bib-row-input" id="product_category" placeholder="e.g. Tees, Hoodies — shown as filter chips once you have 2+" />
+      <div style="display:flex;gap:8px">
+        <div style="flex:1">
+          <div class="bib-field-label">Price (USD)</div>
+          <input class="bib-row-input" id="product_price" type="number" min="0" step="0.01" placeholder="24.99" />
+        </div>
+        <div style="flex:1">
+          <div class="bib-field-label">Category (optional)</div>
+          <input class="bib-row-input" id="product_category" placeholder="e.g. Tees, Hoodies" />
+        </div>
       </div>
       <button id="add-product" class="bib-btn-primary bib-btn-block">Add product</button>
       <p id="product-msg" class="text-muted" style="text-align:center;font-size:13px;min-height:18px"></p>
@@ -301,54 +304,55 @@
     }
   }
 
-  let uploadedProductPhotoUrl = "";
-  document.getElementById("product_photo").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const msg = document.getElementById("product-msg");
-    msg.textContent = "Uploading photo...";
-    const path = `${session.user.id}/${Date.now()}-${file.name}`;
-    const { error } = await sb.storage.from("page-photos").upload(path, file);
-    if (error) { msg.textContent = "Photo upload failed: " + error.message; return; }
-    const { data } = sb.storage.from("page-photos").getPublicUrl(path);
-    uploadedProductPhotoUrl = data.publicUrl;
-    document.getElementById("product-photo-preview").innerHTML =
-      `<img src="${data.publicUrl}" style="width:100%;height:100%;object-fit:cover" />`;
-    msg.textContent = "";
-  });
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
 
-  async function loadProducts() {
-    const { data: products } = await sb
-      .from("products")
-      .select("*")
-      .eq("page_id", page.id)
-      .order("position", { ascending: true });
-    const container = document.getElementById("shop-products");
-    if (!products || !products.length) {
-      container.innerHTML = `<p class="text-muted" style="font-size:13px">No products yet — add your first one below.</p>`;
-      return;
+  async function uploadProductPhotos(files, targetArray, msgEl) {
+    for (const file of files) {
+      msgEl.textContent = "Uploading photo...";
+      const path = `${session.user.id}/${Date.now()}-${file.name}`;
+      const { error } = await sb.storage.from("page-photos").upload(path, file);
+      if (error) { msgEl.textContent = "Photo upload failed: " + error.message; continue; }
+      const { data } = sb.storage.from("page-photos").getPublicUrl(path);
+      targetArray.push(data.publicUrl);
     }
-    container.innerHTML = products.map((p) => `
-      <div class="bib-list-row">
-        ${p.image_url
-          ? `<img src="${p.image_url}" style="width:44px;height:44px;object-fit:cover;border-radius:10px;flex:none" />`
-          : `<div style="width:44px;height:44px;border-radius:10px;background:oklch(96% 0.01 70);flex:none"></div>`}
-        <div style="flex:1;min-width:0">
-          <div style="font-size:14px;font-weight:600">${p.name}</div>
-          <div class="text-muted" style="font-size:12px">$${(p.price_cents / 100).toFixed(2)}${p.category ? ` · ${p.category}` : ""}</div>
-        </div>
-        <button class="bib-btn-secondary bib-btn-sm bib-delete-product" data-id="${p.id}" style="flex:none">Delete</button>
-      </div>
-    `).join("");
-    container.querySelectorAll(".bib-delete-product").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        btn.disabled = true;
-        await sb.from("products").delete().eq("id", btn.dataset.id);
-        await callFunction("render-page", { page_id: page.id }, session);
-        await loadProducts();
+    msgEl.textContent = "";
+  }
+
+  function photoGridHtml(urls, removeClass) {
+    return urls.map((url, i) => `
+      <div class="bib-gallery-tile">
+        <img src="${escapeHtml(url)}" />
+        <button type="button" class="bib-gallery-remove ${removeClass}" data-index="${i}">${TRASH_ICON_SM}</button>
+      </div>`).join("");
+  }
+  const TRASH_ICON_SM = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
+
+  // --- Add-product form ---
+  let newProductPhotos = [];
+  function renderNewProductPhotos() {
+    const grid = document.getElementById("new-product-photos");
+    grid.innerHTML = photoGridHtml(newProductPhotos, "bib-remove-new-photo") + `
+      <label class="bib-gallery-add" id="new-product-photo-drop" style="font-size:9px">
+        <input type="file" id="product_photo" accept="image/*" multiple style="display:none" />
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        <span>Add</span>
+      </label>`;
+    document.getElementById("product_photo").addEventListener("change", async (e) => {
+      if (!e.target.files.length) return;
+      await uploadProductPhotos(e.target.files, newProductPhotos, document.getElementById("product-msg"));
+      renderNewProductPhotos();
+    });
+    grid.querySelectorAll(".bib-remove-new-photo").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        newProductPhotos.splice(Number(btn.dataset.index), 1);
+        renderNewProductPhotos();
       });
     });
   }
+  renderNewProductPhotos();
 
   document.getElementById("add-product").addEventListener("click", async () => {
     const msg = document.getElementById("product-msg");
@@ -368,15 +372,14 @@
         name,
         price_cents: priceCents,
         category: category || null,
-        image_url: uploadedProductPhotoUrl || null,
+        image_urls: newProductPhotos,
         position: count || 0,
       });
       document.getElementById("product_name").value = "";
       document.getElementById("product_price").value = "";
       document.getElementById("product_category").value = "";
-      document.getElementById("product-photo-preview").innerHTML =
-        `<div class="upload-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg></div>`;
-      uploadedProductPhotoUrl = "";
+      newProductPhotos = [];
+      renderNewProductPhotos();
       await callFunction("render-page", { page_id: page.id }, session);
       await loadProducts();
       msg.textContent = "Added and republished.";
@@ -384,6 +387,148 @@
       msg.textContent = err.message || "Something went wrong.";
     }
   });
+
+  // --- Product list + inline edit ---
+  let allProducts = [];
+  let editingProductId = null;
+  let editingPhotos = [];
+
+  async function loadProducts() {
+    const { data: products } = await sb
+      .from("products")
+      .select("*")
+      .eq("page_id", page.id)
+      .order("position", { ascending: true });
+    allProducts = products || [];
+    renderProductsList();
+  }
+
+  function productEditPanelHtml(p) {
+    return `
+      <div class="bib-product-edit" style="padding:14px;background:oklch(97% 0.01 70);border-radius:12px;margin:8px 0 4px">
+        <div class="bib-gallery-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:10px">
+          ${photoGridHtml(editingPhotos, "bib-remove-edit-photo")}
+          <label class="bib-gallery-add" style="font-size:9px">
+            <input type="file" accept="image/*" multiple class="bib-edit-photo-input" style="display:none" />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Add</span>
+          </label>
+        </div>
+        <div style="margin-bottom:8px">
+          <div class="bib-field-label">Product name</div>
+          <input class="bib-row-input bib-edit-name" value="${escapeHtml(p.name)}" />
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div style="flex:1">
+            <div class="bib-field-label">Price (USD)</div>
+            <input class="bib-row-input bib-edit-price" type="number" min="0" step="0.01" value="${(p.price_cents / 100).toFixed(2)}" />
+          </div>
+          <div style="flex:1">
+            <div class="bib-field-label">Category</div>
+            <input class="bib-row-input bib-edit-category" value="${escapeHtml(p.category || "")}" />
+          </div>
+        </div>
+        <button type="button" class="bib-btn-primary bib-btn-block bib-save-product" data-id="${p.id}">Save changes</button>
+        <p class="text-muted bib-edit-msg" style="font-size:12px;text-align:center;margin-top:6px;min-height:16px"></p>
+      </div>`;
+  }
+
+  function renderProductsList() {
+    const container = document.getElementById("shop-products");
+    if (!allProducts.length) {
+      container.innerHTML = `<p class="text-muted" style="font-size:13px">No products yet — add your first one below.</p>`;
+      return;
+    }
+    container.innerHTML = allProducts.map((p) => {
+      const isEditing = editingProductId === p.id;
+      const thumb = (p.image_urls || [])[0];
+      const photoCount = (p.image_urls || []).length;
+      return `
+        <div class="bib-list-row">
+          ${thumb
+            ? `<img src="${escapeHtml(thumb)}" style="width:44px;height:44px;object-fit:cover;border-radius:10px;flex:none" />`
+            : `<div style="width:44px;height:44px;border-radius:10px;background:oklch(96% 0.01 70);flex:none"></div>`}
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:600">${escapeHtml(p.name)}</div>
+            <div class="text-muted" style="font-size:12px">$${(p.price_cents / 100).toFixed(2)}${p.category ? ` · ${escapeHtml(p.category)}` : ""}${photoCount > 1 ? ` · ${photoCount} photos` : ""}</div>
+          </div>
+          <button class="bib-btn-secondary bib-btn-sm bib-edit-product" data-id="${p.id}" style="flex:none">${isEditing ? "Close" : "Edit"}</button>
+          <button class="bib-btn-secondary bib-btn-sm bib-delete-product" data-id="${p.id}" style="flex:none">Delete</button>
+        </div>
+        ${isEditing ? productEditPanelHtml(p) : ""}`;
+    }).join("");
+    wireProductRowEvents(container);
+  }
+
+  function wireProductRowEvents(container) {
+    container.querySelectorAll(".bib-delete-product").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        await sb.from("products").delete().eq("id", btn.dataset.id);
+        await callFunction("render-page", { page_id: page.id }, session);
+        await loadProducts();
+      });
+    });
+    container.querySelectorAll(".bib-edit-product").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.id;
+        if (editingProductId === id) {
+          editingProductId = null;
+          editingPhotos = [];
+        } else {
+          const p = allProducts.find((x) => x.id === id);
+          editingProductId = id;
+          editingPhotos = [...(p.image_urls || [])];
+        }
+        renderProductsList();
+      });
+    });
+    container.querySelectorAll(".bib-edit-photo-input").forEach((input) => {
+      input.addEventListener("change", async (e) => {
+        if (!e.target.files.length) return;
+        const msgEl = container.querySelector(".bib-edit-msg");
+        await uploadProductPhotos(e.target.files, editingPhotos, msgEl);
+        renderProductsList();
+      });
+    });
+    container.querySelectorAll(".bib-remove-edit-photo").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        editingPhotos.splice(Number(btn.dataset.index), 1);
+        renderProductsList();
+      });
+    });
+    container.querySelectorAll(".bib-save-product").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const panel = btn.closest(".bib-product-edit");
+        const msgEl = panel.querySelector(".bib-edit-msg");
+        const name = panel.querySelector(".bib-edit-name").value.trim();
+        const priceCents = Math.round(Number(panel.querySelector(".bib-edit-price").value) * 100);
+        const category = panel.querySelector(".bib-edit-category").value.trim();
+        if (!name || !(priceCents > 0)) {
+          msgEl.textContent = "Enter a product name and a price greater than $0.";
+          return;
+        }
+        btn.disabled = true;
+        msgEl.textContent = "Saving...";
+        try {
+          const { error } = await sb.from("products").update({
+            name,
+            price_cents: priceCents,
+            category: category || null,
+            image_urls: editingPhotos,
+          }).eq("id", btn.dataset.id);
+          if (error) throw error;
+          await callFunction("render-page", { page_id: page.id }, session);
+          editingProductId = null;
+          editingPhotos = [];
+          await loadProducts();
+        } catch (err) {
+          msgEl.textContent = err.message || "Something went wrong.";
+          btn.disabled = false;
+        }
+      });
+    });
+  }
 
   async function loadOrders() {
     const { data: orders } = await sb
