@@ -107,9 +107,36 @@
           <input class="bib-row-input" id="product_category" placeholder="e.g. Tees, Hoodies" />
         </div>
       </div>
-      <div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1">
+          <div class="bib-field-label">Type</div>
+          <select class="bib-row-input" id="product_type">
+            <option value="physical">Physical</option>
+            <option value="digital">Digital</option>
+          </select>
+        </div>
+        <div style="flex:1">
+          <div class="bib-field-label">Original price (optional)</div>
+          <input class="bib-row-input" id="product_compare_price" type="number" min="0" step="0.01" placeholder="49.99" />
+        </div>
+      </div>
+      <div id="product-physical-fields">
         <div class="bib-field-label">Weight in grams <span id="product-weight-required-note" class="text-muted" style="display:none">(required for shipping)</span></div>
         <input class="bib-row-input" id="product_weight" type="number" min="0" step="1" placeholder="250" />
+      </div>
+      <div id="product-digital-fields" style="display:none">
+        <div class="bib-field-label">Delivery</div>
+        <select class="bib-row-input" id="product_digital_delivery_type">
+          <option value="hosted_file">Upload a file</option>
+          <option value="external_link">External link</option>
+        </select>
+        <div id="product-digital-file-row" style="margin-top:8px">
+          <input type="file" id="product_digital_file" />
+          <p id="product-digital-file-msg" class="text-muted" style="font-size:12px;margin-top:4px;min-height:16px"></p>
+        </div>
+        <div id="product-digital-link-row" style="display:none;margin-top:8px">
+          <input class="bib-row-input" id="product_digital_external_url" placeholder="https://drive.google.com/..." />
+        </div>
       </div>
       <div>
         <div class="bib-field-label">Description (optional)</div>
@@ -486,6 +513,51 @@
     msgEl.textContent = "";
   }
 
+  // digital-products is a private bucket — unlike page-photos, there's no
+  // public URL to fetch afterward; only the storage path is kept, and
+  // buyers only ever get a short-lived signed URL generated at receipt time.
+  async function uploadDigitalFile(file, msgEl) {
+    msgEl.textContent = "Uploading file...";
+    const path = `${session.user.id}/${Date.now()}-${file.name}`;
+    const { error } = await sb.storage.from("digital-products").upload(path, file);
+    if (error) {
+      msgEl.textContent = "File upload failed: " + error.message;
+      return null;
+    }
+    msgEl.textContent = "Uploaded: " + file.name;
+    return { path, name: file.name };
+  }
+
+  function wireProductTypeToggle(typeSelectId, physicalFieldsId, digitalFieldsId) {
+    const select = document.getElementById(typeSelectId);
+    const physical = document.getElementById(physicalFieldsId);
+    const digital = document.getElementById(digitalFieldsId);
+    select.addEventListener("change", () => {
+      const isDigital = select.value === "digital";
+      physical.style.display = isDigital ? "none" : "block";
+      digital.style.display = isDigital ? "block" : "none";
+    });
+  }
+  wireProductTypeToggle("product_type", "product-physical-fields", "product-digital-fields");
+
+  function wireDigitalDeliveryToggle(deliverySelectId, fileRowId, linkRowId) {
+    const select = document.getElementById(deliverySelectId);
+    const fileRow = document.getElementById(fileRowId);
+    const linkRow = document.getElementById(linkRowId);
+    select.addEventListener("change", () => {
+      const isFile = select.value === "hosted_file";
+      fileRow.style.display = isFile ? "block" : "none";
+      linkRow.style.display = isFile ? "none" : "block";
+    });
+  }
+  wireDigitalDeliveryToggle("product_digital_delivery_type", "product-digital-file-row", "product-digital-link-row");
+
+  let newProductDigitalFile = null;
+  document.getElementById("product_digital_file").addEventListener("change", async (e) => {
+    if (!e.target.files.length) return;
+    newProductDigitalFile = await uploadDigitalFile(e.target.files[0], document.getElementById("product-digital-file-msg"));
+  });
+
   function photoGridHtml(urls, removeClass) {
     return urls.map((url, i) => `
       <div class="bib-gallery-tile">
@@ -528,9 +600,24 @@
     const weightInput = document.getElementById("product_weight").value;
     const weightG = weightInput ? Math.round(Number(weightInput)) : null;
     const priceCents = Math.round(Number(priceInput) * 100);
+    const productType = document.getElementById("product_type").value;
+    const comparePriceInput = document.getElementById("product_compare_price").value;
+    const compareAtPriceCents = comparePriceInput ? Math.round(Number(comparePriceInput) * 100) : null;
+    const digitalDeliveryType = document.getElementById("product_digital_delivery_type").value;
+    const digitalExternalUrl = document.getElementById("product_digital_external_url").value.trim();
     if (!name || !(priceCents > 0)) {
       msg.textContent = "Enter a product name and a price greater than $0.";
       return;
+    }
+    if (productType === "digital") {
+      if (digitalDeliveryType === "hosted_file" && !newProductDigitalFile) {
+        msg.textContent = "Upload a file for this digital product.";
+        return;
+      }
+      if (digitalDeliveryType === "external_link" && !digitalExternalUrl) {
+        msg.textContent = "Enter a download link for this digital product.";
+        return;
+      }
     }
     msg.textContent = "Adding...";
     try {
@@ -541,7 +628,13 @@
         price_cents: priceCents,
         category: category || null,
         description: description || null,
-        weight_g: weightG,
+        weight_g: productType === "digital" ? null : weightG,
+        product_type: productType,
+        compare_at_price_cents: compareAtPriceCents,
+        digital_delivery_type: productType === "digital" ? digitalDeliveryType : null,
+        digital_file_path: productType === "digital" && digitalDeliveryType === "hosted_file" ? newProductDigitalFile.path : null,
+        digital_file_name: productType === "digital" && digitalDeliveryType === "hosted_file" ? newProductDigitalFile.name : null,
+        digital_external_url: productType === "digital" && digitalDeliveryType === "external_link" ? digitalExternalUrl : null,
         image_urls: newProductPhotos,
         position: count || 0,
       });
@@ -550,6 +643,16 @@
       document.getElementById("product_category").value = "";
       document.getElementById("product_description").value = "";
       document.getElementById("product_weight").value = "";
+      document.getElementById("product_type").value = "physical";
+      document.getElementById("product_compare_price").value = "";
+      document.getElementById("product_digital_delivery_type").value = "hosted_file";
+      document.getElementById("product_digital_external_url").value = "";
+      document.getElementById("product-physical-fields").style.display = "block";
+      document.getElementById("product-digital-fields").style.display = "none";
+      document.getElementById("product-digital-file-row").style.display = "block";
+      document.getElementById("product-digital-link-row").style.display = "none";
+      document.getElementById("product-digital-file-msg").textContent = "";
+      newProductDigitalFile = null;
       newProductPhotos = [];
       renderNewProductPhotos();
       await callFunction("render-page", { page_id: page.id }, session);
@@ -564,6 +667,7 @@
   let allProducts = [];
   let editingProductId = null;
   let editingPhotos = [];
+  let editingDigitalFile = null;
 
   async function loadProducts() {
     const { data: products } = await sb
@@ -600,9 +704,37 @@
             <input class="bib-row-input bib-edit-category" value="${escapeHtml(p.category || "")}" />
           </div>
         </div>
-        <div style="margin-bottom:10px">
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div style="flex:1">
+            <div class="bib-field-label">Type</div>
+            <select class="bib-row-input bib-edit-type">
+              <option value="physical" ${p.product_type !== "digital" ? "selected" : ""}>Physical</option>
+              <option value="digital" ${p.product_type === "digital" ? "selected" : ""}>Digital</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <div class="bib-field-label">Original price (optional)</div>
+            <input class="bib-row-input bib-edit-compare-price" type="number" min="0" step="0.01" value="${p.compare_at_price_cents ? (p.compare_at_price_cents / 100).toFixed(2) : ""}" />
+          </div>
+        </div>
+        <div class="bib-edit-physical-fields" style="margin-bottom:10px;${p.product_type === "digital" ? "display:none" : ""}">
           <div class="bib-field-label">Weight in grams</div>
           <input class="bib-row-input bib-edit-weight" type="number" min="0" step="1" value="${p.weight_g || ""}" />
+        </div>
+        <div class="bib-edit-digital-fields" style="margin-bottom:10px;${p.product_type === "digital" ? "" : "display:none"}">
+          <div class="bib-field-label">Delivery</div>
+          <select class="bib-row-input bib-edit-digital-delivery-type">
+            <option value="hosted_file" ${p.digital_delivery_type !== "external_link" ? "selected" : ""}>Upload a file</option>
+            <option value="external_link" ${p.digital_delivery_type === "external_link" ? "selected" : ""}>External link</option>
+          </select>
+          <div class="bib-edit-digital-file-row" style="margin-top:8px;${p.digital_delivery_type === "external_link" ? "display:none" : ""}">
+            ${p.digital_file_name ? `<p class="text-muted" style="font-size:12px;margin-bottom:4px">Current file: ${escapeHtml(p.digital_file_name)}</p>` : ""}
+            <input type="file" class="bib-edit-digital-file" />
+            <p class="text-muted bib-edit-digital-file-msg" style="font-size:12px;margin-top:4px;min-height:16px"></p>
+          </div>
+          <div class="bib-edit-digital-link-row" style="margin-top:8px;${p.digital_delivery_type === "external_link" ? "" : "display:none"}">
+            <input class="bib-row-input bib-edit-digital-external-url" value="${escapeHtml(p.digital_external_url || "")}" placeholder="https://drive.google.com/..." />
+          </div>
         </div>
         <div style="margin-bottom:10px">
           <div class="bib-field-label">Description</div>
@@ -630,7 +762,7 @@
             : `<div style="width:44px;height:44px;border-radius:10px;background:oklch(96% 0.01 70);flex:none"></div>`}
           <div style="flex:1;min-width:0">
             <div style="font-size:14px;font-weight:600">${escapeHtml(p.name)}</div>
-            <div class="text-muted" style="font-size:12px">$${(p.price_cents / 100).toFixed(2)}${p.category ? ` · ${escapeHtml(p.category)}` : ""}${p.weight_g ? ` · ${p.weight_g}g` : ""}${photoCount > 1 ? ` · ${photoCount} photos` : ""}</div>
+            <div class="text-muted" style="font-size:12px">$${(p.price_cents / 100).toFixed(2)}${p.compare_at_price_cents ? ` (was $${(p.compare_at_price_cents / 100).toFixed(2)})` : ""}${p.product_type === "digital" ? " · Digital" : ""}${p.category ? ` · ${escapeHtml(p.category)}` : ""}${p.weight_g ? ` · ${p.weight_g}g` : ""}${photoCount > 1 ? ` · ${photoCount} photos` : ""}</div>
           </div>
           <button class="bib-btn-secondary bib-btn-sm bib-edit-product" data-id="${p.id}" style="flex:none">${isEditing ? "Close" : "Edit"}</button>
           <button class="bib-btn-secondary bib-btn-sm bib-delete-product" data-id="${p.id}" style="flex:none">Delete</button>
@@ -655,10 +787,12 @@
         if (editingProductId === id) {
           editingProductId = null;
           editingPhotos = [];
+          editingDigitalFile = null;
         } else {
           const p = allProducts.find((x) => x.id === id);
           editingProductId = id;
           editingPhotos = [...(p.image_urls || [])];
+          editingDigitalFile = null;
         }
         renderProductsList();
       });
@@ -677,6 +811,29 @@
         renderProductsList();
       });
     });
+    container.querySelectorAll(".bib-edit-type").forEach((select) => {
+      select.addEventListener("change", () => {
+        const panel = select.closest(".bib-product-edit");
+        const isDigital = select.value === "digital";
+        panel.querySelector(".bib-edit-physical-fields").style.display = isDigital ? "none" : "block";
+        panel.querySelector(".bib-edit-digital-fields").style.display = isDigital ? "block" : "none";
+      });
+    });
+    container.querySelectorAll(".bib-edit-digital-delivery-type").forEach((select) => {
+      select.addEventListener("change", () => {
+        const panel = select.closest(".bib-product-edit");
+        const isFile = select.value === "hosted_file";
+        panel.querySelector(".bib-edit-digital-file-row").style.display = isFile ? "block" : "none";
+        panel.querySelector(".bib-edit-digital-link-row").style.display = isFile ? "none" : "block";
+      });
+    });
+    container.querySelectorAll(".bib-edit-digital-file").forEach((input) => {
+      input.addEventListener("change", async (e) => {
+        if (!e.target.files.length) return;
+        const msgEl = input.closest(".bib-edit-digital-file-row").querySelector(".bib-edit-digital-file-msg");
+        editingDigitalFile = await uploadDigitalFile(e.target.files[0], msgEl);
+      });
+    });
     container.querySelectorAll(".bib-save-product").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const panel = btn.closest(".bib-product-edit");
@@ -687,25 +844,62 @@
         const description = panel.querySelector(".bib-edit-description").value.trim();
         const weightInput = panel.querySelector(".bib-edit-weight").value;
         const weightG = weightInput ? Math.round(Number(weightInput)) : null;
+        const productType = panel.querySelector(".bib-edit-type").value;
+        const comparePriceInput = panel.querySelector(".bib-edit-compare-price").value;
+        const compareAtPriceCents = comparePriceInput ? Math.round(Number(comparePriceInput) * 100) : null;
+        const digitalDeliveryType = panel.querySelector(".bib-edit-digital-delivery-type").value;
+        const digitalExternalUrl = panel.querySelector(".bib-edit-digital-external-url").value.trim();
         if (!name || !(priceCents > 0)) {
           msgEl.textContent = "Enter a product name and a price greater than $0.";
           return;
         }
+        const existing = allProducts.find((x) => x.id === btn.dataset.id);
+        if (productType === "digital") {
+          if (digitalDeliveryType === "hosted_file" && !editingDigitalFile && existing?.digital_delivery_type !== "hosted_file") {
+            msgEl.textContent = "Upload a file for this digital product.";
+            return;
+          }
+          if (digitalDeliveryType === "external_link" && !digitalExternalUrl) {
+            msgEl.textContent = "Enter a download link for this digital product.";
+            return;
+          }
+        }
         btn.disabled = true;
         msgEl.textContent = "Saving...";
         try {
-          const { error } = await sb.from("products").update({
+          const update = {
             name,
             price_cents: priceCents,
             category: category || null,
             description: description || null,
-            weight_g: weightG,
+            weight_g: productType === "digital" ? null : weightG,
+            product_type: productType,
+            compare_at_price_cents: compareAtPriceCents,
             image_urls: editingPhotos,
-          }).eq("id", btn.dataset.id);
+          };
+          if (productType === "digital") {
+            update.digital_delivery_type = digitalDeliveryType;
+            if (digitalDeliveryType === "hosted_file") {
+              update.digital_file_path = editingDigitalFile ? editingDigitalFile.path : existing?.digital_file_path ?? null;
+              update.digital_file_name = editingDigitalFile ? editingDigitalFile.name : existing?.digital_file_name ?? null;
+              update.digital_external_url = null;
+            } else {
+              update.digital_external_url = digitalExternalUrl;
+              update.digital_file_path = null;
+              update.digital_file_name = null;
+            }
+          } else {
+            update.digital_delivery_type = null;
+            update.digital_file_path = null;
+            update.digital_file_name = null;
+            update.digital_external_url = null;
+          }
+          const { error } = await sb.from("products").update(update).eq("id", btn.dataset.id);
           if (error) throw error;
           await callFunction("render-page", { page_id: page.id }, session);
           editingProductId = null;
           editingPhotos = [];
+          editingDigitalFile = null;
           await loadProducts();
         } catch (err) {
           msgEl.textContent = err.message || "Something went wrong.";
