@@ -108,11 +108,60 @@
         </div>
       </div>
       <div>
+        <div class="bib-field-label">Weight in grams <span id="product-weight-required-note" class="text-muted" style="display:none">(required for shipping)</span></div>
+        <input class="bib-row-input" id="product_weight" type="number" min="0" step="1" placeholder="250" />
+      </div>
+      <div>
         <div class="bib-field-label">Description (optional)</div>
         <textarea class="bib-textarea" id="product_description" style="min-height:60px" placeholder="Fabric, sizing, what makes it worth buying..."></textarea>
       </div>
       <button id="add-product" class="bib-btn-primary bib-btn-block">Add product</button>
       <p id="product-msg" class="text-muted" style="text-align:center;font-size:13px;min-height:18px"></p>
+    </div>
+  </section>
+
+  <section class="bib-card" id="shipping-section" style="display:none">
+    <div class="bib-card-head">
+      <div class="bib-card-icon" style="background:oklch(90% 0.05 210);color:oklch(48% 0.15 210)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>
+      </div>
+      <h2>Shipping</h2>
+    </div>
+    <p class="text-muted" style="font-size:13px">Connect your own Chit Chats account to show real shipping rates at checkout and buy labels for paid orders.</p>
+
+    <div id="shipping-not-connected" style="margin-top:12px">
+      <div>
+        <div class="bib-field-label">Chit Chats API token</div>
+        <input class="bib-row-input" id="chitchats_api_token" type="password" placeholder="Settings → Account on chitchats.com" />
+      </div>
+      <div style="margin-top:8px">
+        <div class="bib-field-label">Chit Chats client ID</div>
+        <input class="bib-row-input" id="chitchats_client_id" placeholder="e.g. 999999" />
+      </div>
+      <button id="connect-chitchats" class="bib-btn-secondary bib-btn-block" style="margin-top:10px">Connect Chit Chats</button>
+      <p id="chitchats-connect-msg" class="text-muted" style="text-align:center;font-size:13px;margin-top:6px;min-height:18px"></p>
+    </div>
+
+    <div id="shipping-connected" style="display:none;margin-top:12px">
+      <p class="text-muted" style="font-size:13px">Connected.</p>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <div style="flex:1">
+          <div class="bib-field-label">Box length (cm)</div>
+          <input class="bib-row-input" id="box_length" type="number" min="1" step="0.5" />
+        </div>
+        <div style="flex:1">
+          <div class="bib-field-label">Box width (cm)</div>
+          <input class="bib-row-input" id="box_width" type="number" min="1" step="0.5" />
+        </div>
+        <div style="flex:1">
+          <div class="bib-field-label">Box height (cm)</div>
+          <input class="bib-row-input" id="box_height" type="number" min="1" step="0.5" />
+        </div>
+      </div>
+      <p class="text-muted" style="font-size:12px;margin-top:4px">Your typical shipping box size — used to estimate rates. Doesn't need to be exact.</p>
+      <button id="save-box-size" class="bib-btn-secondary bib-btn-block" style="margin-top:10px">Save box size</button>
+      <button id="disconnect-chitchats" class="bib-btn-text" style="margin-top:8px;width:100%">Disconnect Chit Chats</button>
+      <p id="chitchats-box-msg" class="text-muted" style="text-align:center;font-size:13px;margin-top:6px;min-height:18px"></p>
     </div>
   </section>
 
@@ -281,6 +330,72 @@
   document.getElementById("disconnect-stripe").addEventListener("click", disconnectStripe);
   document.getElementById("disconnect-stripe-shop").addEventListener("click", disconnectStripe);
 
+  async function loadShippingConnection() {
+    const { data: connection } = await sb
+      .from("shipping_connections")
+      .select("default_length_cm, default_width_cm, default_height_cm")
+      .eq("page_id", page.id)
+      .maybeSingle();
+    document.getElementById("shipping-not-connected").style.display = connection ? "none" : "block";
+    document.getElementById("shipping-connected").style.display = connection ? "block" : "none";
+    if (connection) {
+      document.getElementById("box_length").value = connection.default_length_cm;
+      document.getElementById("box_width").value = connection.default_width_cm;
+      document.getElementById("box_height").value = connection.default_height_cm;
+    }
+  }
+
+  document.getElementById("connect-chitchats").addEventListener("click", async () => {
+    const msg = document.getElementById("chitchats-connect-msg");
+    const apiToken = document.getElementById("chitchats_api_token").value.trim();
+    const clientId = document.getElementById("chitchats_client_id").value.trim();
+    if (!apiToken || !clientId) {
+      msg.textContent = "Enter both your API token and client ID.";
+      return;
+    }
+    msg.textContent = "Connecting...";
+    try {
+      await callFunction("connect-chitchats-account", { apiToken, clientId }, session);
+      document.getElementById("chitchats_api_token").value = "";
+      document.getElementById("chitchats_client_id").value = "";
+      await loadShippingConnection();
+    } catch (err) {
+      msg.textContent = err.message || "Something went wrong.";
+    }
+  });
+
+  document.getElementById("save-box-size").addEventListener("click", async () => {
+    const msg = document.getElementById("chitchats-box-msg");
+    const length = Number(document.getElementById("box_length").value);
+    const width = Number(document.getElementById("box_width").value);
+    const height = Number(document.getElementById("box_height").value);
+    if (!(length > 0) || !(width > 0) || !(height > 0)) {
+      msg.textContent = "Enter a length, width, and height greater than 0.";
+      return;
+    }
+    msg.textContent = "Saving...";
+    try {
+      const { error } = await sb
+        .from("shipping_connections")
+        .update({ default_length_cm: length, default_width_cm: width, default_height_cm: height })
+        .eq("page_id", page.id);
+      if (error) throw error;
+      msg.textContent = "Saved.";
+    } catch (err) {
+      msg.textContent = err.message || "Something went wrong.";
+    }
+  });
+
+  document.getElementById("disconnect-chitchats").addEventListener("click", async () => {
+    if (!confirm("Disconnect Chit Chats? Shipping rates and label purchasing will stop working until you reconnect.")) return;
+    try {
+      await callFunction("disconnect-chitchats-account", {}, session);
+      await loadShippingConnection();
+    } catch (err) {
+      alert(err.message || "Something went wrong.");
+    }
+  });
+
   document.getElementById("upgrade-all-access").addEventListener("click", () => subscribe("website_shop"));
   document.getElementById("upgrade-domain").addEventListener("click", () => subscribe("custom_domain"));
 
@@ -333,7 +448,10 @@
     }
     if (tier === "website_shop" || tier === "custom_domain") {
       document.getElementById("shop-section").style.display = "block";
+      document.getElementById("shipping-section").style.display = "block";
       document.getElementById("orders-section").style.display = "block";
+      document.getElementById("product-weight-required-note").style.display = "inline";
+      await loadShippingConnection();
       // Shop rendering is gated on a "product_shop" element existing (same
       // pattern as every other opt-in element type) — make sure one exists
       // as soon as someone's on this tier, rather than waiting for a UI
@@ -407,6 +525,8 @@
     const priceInput = document.getElementById("product_price").value;
     const category = document.getElementById("product_category").value.trim();
     const description = document.getElementById("product_description").value.trim();
+    const weightInput = document.getElementById("product_weight").value;
+    const weightG = weightInput ? Math.round(Number(weightInput)) : null;
     const priceCents = Math.round(Number(priceInput) * 100);
     if (!name || !(priceCents > 0)) {
       msg.textContent = "Enter a product name and a price greater than $0.";
@@ -421,6 +541,7 @@
         price_cents: priceCents,
         category: category || null,
         description: description || null,
+        weight_g: weightG,
         image_urls: newProductPhotos,
         position: count || 0,
       });
@@ -428,6 +549,7 @@
       document.getElementById("product_price").value = "";
       document.getElementById("product_category").value = "";
       document.getElementById("product_description").value = "";
+      document.getElementById("product_weight").value = "";
       newProductPhotos = [];
       renderNewProductPhotos();
       await callFunction("render-page", { page_id: page.id }, session);
@@ -479,6 +601,10 @@
           </div>
         </div>
         <div style="margin-bottom:10px">
+          <div class="bib-field-label">Weight in grams</div>
+          <input class="bib-row-input bib-edit-weight" type="number" min="0" step="1" value="${p.weight_g || ""}" />
+        </div>
+        <div style="margin-bottom:10px">
           <div class="bib-field-label">Description</div>
           <textarea class="bib-textarea bib-edit-description" style="min-height:60px">${escapeHtml(p.description || "")}</textarea>
         </div>
@@ -504,7 +630,7 @@
             : `<div style="width:44px;height:44px;border-radius:10px;background:oklch(96% 0.01 70);flex:none"></div>`}
           <div style="flex:1;min-width:0">
             <div style="font-size:14px;font-weight:600">${escapeHtml(p.name)}</div>
-            <div class="text-muted" style="font-size:12px">$${(p.price_cents / 100).toFixed(2)}${p.category ? ` · ${escapeHtml(p.category)}` : ""}${photoCount > 1 ? ` · ${photoCount} photos` : ""}</div>
+            <div class="text-muted" style="font-size:12px">$${(p.price_cents / 100).toFixed(2)}${p.category ? ` · ${escapeHtml(p.category)}` : ""}${p.weight_g ? ` · ${p.weight_g}g` : ""}${photoCount > 1 ? ` · ${photoCount} photos` : ""}</div>
           </div>
           <button class="bib-btn-secondary bib-btn-sm bib-edit-product" data-id="${p.id}" style="flex:none">${isEditing ? "Close" : "Edit"}</button>
           <button class="bib-btn-secondary bib-btn-sm bib-delete-product" data-id="${p.id}" style="flex:none">Delete</button>
@@ -559,6 +685,8 @@
         const priceCents = Math.round(Number(panel.querySelector(".bib-edit-price").value) * 100);
         const category = panel.querySelector(".bib-edit-category").value.trim();
         const description = panel.querySelector(".bib-edit-description").value.trim();
+        const weightInput = panel.querySelector(".bib-edit-weight").value;
+        const weightG = weightInput ? Math.round(Number(weightInput)) : null;
         if (!name || !(priceCents > 0)) {
           msgEl.textContent = "Enter a product name and a price greater than $0.";
           return;
@@ -571,6 +699,7 @@
             price_cents: priceCents,
             category: category || null,
             description: description || null,
+            weight_g: weightG,
             image_urls: editingPhotos,
           }).eq("id", btn.dataset.id);
           if (error) throw error;
@@ -593,11 +722,27 @@
   async function loadOrders() {
     const { data: orders } = await sb
       .from("orders")
-      .select("id, buyer_name, buyer_email, total_cents, status, created_at")
+      .select("id, buyer_name, buyer_email, total_cents, status, created_at, shipping_cents, shipping_postage_type, shipping_status, shipping_tracking_url, shipping_label_url")
       .eq("page_id", page.id)
       .order("created_at", { ascending: false });
     allOrders = orders || [];
     renderOrdersList();
+  }
+
+  function shippingSectionHtml(o) {
+    if (!o.shipping_postage_type) return "";
+    const costLine = `<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0"><span class="text-muted">Shipping</span><span class="text-muted">$${((o.shipping_cents || 0) / 100).toFixed(2)}</span></div>`;
+    if (o.shipping_status === "purchased") {
+      return costLine + `<div style="display:flex;gap:10px;margin-top:6px;font-size:13px">
+        ${o.shipping_tracking_url ? `<a href="${escapeHtml(o.shipping_tracking_url)}" target="_blank" rel="noopener">Track shipment</a>` : ""}
+        ${o.shipping_label_url ? `<a href="${escapeHtml(o.shipping_label_url)}" target="_blank" rel="noopener">Print label</a>` : ""}
+      </div>`;
+    }
+    if (o.status !== "paid") return costLine;
+    const failedNote = o.shipping_status === "failed"
+      ? `<p class="text-muted" style="font-size:12px;color:#d6336c;margin:4px 0 0">Label purchase failed — try again.</p>`
+      : "";
+    return costLine + failedNote + `<button type="button" class="bib-btn-secondary bib-btn-sm bib-buy-label" data-id="${o.id}" style="margin-top:6px">Buy shipping label</button>`;
   }
 
   function renderOrdersList() {
@@ -628,6 +773,7 @@
           ${isExpanded ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--bib-border)">
             ${o.buyer_email ? `<div class="text-muted" style="font-size:12px;margin-bottom:4px">${escapeHtml(o.buyer_email)}</div>` : ""}
             ${itemsHtml}
+            ${shippingSectionHtml(o)}
           </div>` : ""}
         </div>`;
     }).join("");
@@ -644,6 +790,21 @@
           orderItemsByOrderId[id] = items || [];
         }
         renderOrdersList();
+      });
+    });
+    container.querySelectorAll(".bib-buy-label").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        btn.disabled = true;
+        btn.textContent = "Buying label...";
+        try {
+          await callFunction("buy-shipping-label", { orderId: btn.dataset.id }, session);
+          await loadOrders();
+        } catch (err) {
+          alert(err.message || "Something went wrong.");
+          btn.disabled = false;
+          btn.textContent = "Buy shipping label";
+        }
       });
     });
   }
