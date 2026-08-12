@@ -68,6 +68,7 @@
     </div>
     <p id="connect-status" class="text-muted" style="font-size:13px">Not connected yet.</p>
     <button id="connect-stripe" class="bib-btn-secondary bib-btn-block" style="margin-top:10px">Connect Stripe to accept deposits</button>
+    <button id="disconnect-stripe" class="bib-btn-text" style="margin-top:8px;width:100%;display:none">Disconnect Stripe</button>
   </section>
 
   <section class="bib-card" id="shop-section" style="display:none">
@@ -78,7 +79,8 @@
       <h2>Shop</h2>
     </div>
     <p id="shop-connect-status" class="text-muted" style="font-size:13px">Not connected yet.</p>
-    <button id="connect-stripe-shop" class="bib-btn-secondary bib-btn-block" style="margin-top:10px;margin-bottom:16px">Connect Stripe to sell products</button>
+    <button id="connect-stripe-shop" class="bib-btn-secondary bib-btn-block" style="margin-top:10px">Connect Stripe to sell products</button>
+    <button id="disconnect-stripe-shop" class="bib-btn-text" style="margin-top:8px;width:100%;display:none;margin-bottom:16px">Disconnect Stripe</button>
 
     <div id="shop-products" style="display:flex;flex-direction:column"></div>
 
@@ -254,6 +256,30 @@
   }
   document.getElementById("connect-stripe").addEventListener("click", () => connectStripe());
   document.getElementById("connect-stripe-shop").addEventListener("click", () => connectStripe());
+
+  function renderStripeConnectState() {
+    const connected = !!page.stripe_connect_onboarding_complete;
+    document.getElementById("connect-status").textContent = connected ? "Connected — deposits are enabled." : "Not connected yet.";
+    document.getElementById("shop-connect-status").textContent = connected ? "Connected — checkout is enabled." : "Not connected yet.";
+    document.getElementById("connect-stripe").style.display = connected ? "none" : "block";
+    document.getElementById("connect-stripe-shop").style.display = connected ? "none" : "block";
+    document.getElementById("disconnect-stripe").style.display = connected ? "block" : "none";
+    document.getElementById("disconnect-stripe-shop").style.display = connected ? "block" : "none";
+  }
+
+  async function disconnectStripe() {
+    if (!confirm("Disconnect Stripe? Deposits and shop checkout will stop working until you reconnect.")) return;
+    try {
+      await callFunction("disconnect-connect-account", {}, session);
+      page.stripe_connect_account_id = null;
+      page.stripe_connect_onboarding_complete = false;
+      renderStripeConnectState();
+    } catch (err) {
+      alert(err.message || "Something went wrong.");
+    }
+  }
+  document.getElementById("disconnect-stripe").addEventListener("click", disconnectStripe);
+  document.getElementById("disconnect-stripe-shop").addEventListener("click", disconnectStripe);
 
   document.getElementById("upgrade-all-access").addEventListener("click", () => subscribe("website_shop"));
   document.getElementById("upgrade-domain").addEventListener("click", () => subscribe("custom_domain"));
@@ -731,10 +757,7 @@
     document.getElementById("status-badge").textContent = page.published ? "Live" : "Not published";
     document.getElementById("dash-slug-input").value = page.slug;
 
-    if (page.stripe_connect_onboarding_complete) {
-      document.getElementById("connect-status").textContent = "Connected — deposits are enabled.";
-      document.getElementById("shop-connect-status").textContent = "Connected — checkout is enabled.";
-    }
+    renderStripeConnectState();
 
     const { data: elements } = await sb.from("elements").select("*").eq("page_id", page.id);
     (elements || []).forEach((el) => { elementsByType[el.type] = el; });
