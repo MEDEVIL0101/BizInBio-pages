@@ -42,6 +42,8 @@
     </div>
     <p class="text-muted" style="font-size:12px;margin-top:4px;min-height:16px" id="dash-slug-status"></p>
     <button id="dash-slug-save" class="bib-btn-secondary bib-btn-block" style="margin-top:8px" disabled>Update URL</button>
+    <button id="republish-now" class="bib-btn-secondary bib-btn-block" style="margin-top:8px">Republish now</button>
+    <p id="republish-msg" class="text-muted" style="text-align:center;font-size:12px;margin-top:4px;min-height:16px"></p>
   </section>
 
   <section class="bib-card">
@@ -102,6 +104,10 @@
           <div class="bib-field-label">Category (optional)</div>
           <input class="bib-row-input" id="product_category" placeholder="e.g. Tees, Hoodies" />
         </div>
+      </div>
+      <div>
+        <div class="bib-field-label">Description (optional)</div>
+        <textarea class="bib-textarea" id="product_description" style="min-height:60px" placeholder="Fabric, sizing, what makes it worth buying..."></textarea>
       </div>
       <button id="add-product" class="bib-btn-primary bib-btn-block">Add product</button>
       <p id="product-msg" class="text-muted" style="text-align:center;font-size:13px;min-height:18px"></p>
@@ -220,6 +226,21 @@
     } catch (err) {
       dashSlugStatus.textContent = err.message || "Something went wrong.";
       dashSlugSave.disabled = false;
+    }
+  });
+
+  document.getElementById("republish-now").addEventListener("click", async () => {
+    const btn = document.getElementById("republish-now");
+    const msg = document.getElementById("republish-msg");
+    btn.disabled = true;
+    msg.textContent = "Republishing...";
+    try {
+      await callFunction("render-page", { page_id: page.id }, session);
+      msg.textContent = "Published just now.";
+    } catch (err) {
+      msg.textContent = err.message || "Something went wrong.";
+    } finally {
+      btn.disabled = false;
     }
   });
 
@@ -359,6 +380,7 @@
     const name = document.getElementById("product_name").value.trim();
     const priceInput = document.getElementById("product_price").value;
     const category = document.getElementById("product_category").value.trim();
+    const description = document.getElementById("product_description").value.trim();
     const priceCents = Math.round(Number(priceInput) * 100);
     if (!name || !(priceCents > 0)) {
       msg.textContent = "Enter a product name and a price greater than $0.";
@@ -372,12 +394,14 @@
         name,
         price_cents: priceCents,
         category: category || null,
+        description: description || null,
         image_urls: newProductPhotos,
         position: count || 0,
       });
       document.getElementById("product_name").value = "";
       document.getElementById("product_price").value = "";
       document.getElementById("product_category").value = "";
+      document.getElementById("product_description").value = "";
       newProductPhotos = [];
       renderNewProductPhotos();
       await callFunction("render-page", { page_id: page.id }, session);
@@ -427,6 +451,10 @@
             <div class="bib-field-label">Category</div>
             <input class="bib-row-input bib-edit-category" value="${escapeHtml(p.category || "")}" />
           </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div class="bib-field-label">Description</div>
+          <textarea class="bib-textarea bib-edit-description" style="min-height:60px">${escapeHtml(p.description || "")}</textarea>
         </div>
         <button type="button" class="bib-btn-primary bib-btn-block bib-save-product" data-id="${p.id}">Save changes</button>
         <p class="text-muted bib-edit-msg" style="font-size:12px;text-align:center;margin-top:6px;min-height:16px"></p>
@@ -504,6 +532,7 @@
         const name = panel.querySelector(".bib-edit-name").value.trim();
         const priceCents = Math.round(Number(panel.querySelector(".bib-edit-price").value) * 100);
         const category = panel.querySelector(".bib-edit-category").value.trim();
+        const description = panel.querySelector(".bib-edit-description").value.trim();
         if (!name || !(priceCents > 0)) {
           msgEl.textContent = "Enter a product name and a price greater than $0.";
           return;
@@ -515,6 +544,7 @@
             name,
             price_cents: priceCents,
             category: category || null,
+            description: description || null,
             image_urls: editingPhotos,
           }).eq("id", btn.dataset.id);
           if (error) throw error;
@@ -530,22 +560,66 @@
     });
   }
 
+  let allOrders = [];
+  let orderItemsByOrderId = {};
+  let expandedOrderId = null;
+
   async function loadOrders() {
     const { data: orders } = await sb
       .from("orders")
       .select("id, buyer_name, buyer_email, total_cents, status, created_at")
       .eq("page_id", page.id)
       .order("created_at", { ascending: false });
-    if (!orders || !orders.length) return;
-    document.getElementById("orders-list").innerHTML = orders.map((o) => `
-      <div class="bib-list-row" style="flex-direction:column;align-items:stretch;gap:2px">
-        <div style="display:flex;justify-content:space-between;align-items:baseline">
-          <span style="font-family:'Fredoka',sans-serif;font-weight:600">$${(o.total_cents / 100).toFixed(2)}</span>
-          <span class="bib-tag${o.status === "paid" ? " live" : ""}">${o.status}</span>
-        </div>
-        <div class="text-muted" style="font-size:13px">${o.buyer_name || o.buyer_email || "Guest"} · ${new Date(o.created_at).toLocaleDateString()}</div>
-      </div>
-    `).join("");
+    allOrders = orders || [];
+    renderOrdersList();
+  }
+
+  function renderOrdersList() {
+    const container = document.getElementById("orders-list");
+    if (!allOrders.length) {
+      container.innerHTML = `<p class="text-muted" style="font-size:13px">No orders yet — they'll show up here once your shop is live and someone checks out.</p>`;
+      return;
+    }
+    container.innerHTML = allOrders.map((o) => {
+      const isExpanded = expandedOrderId === o.id;
+      const items = orderItemsByOrderId[o.id];
+      const itemsHtml = !items
+        ? `<p class="text-muted" style="font-size:12px;margin:8px 0 0">Loading...</p>`
+        : items.length
+        ? items.map((it) => `
+            <div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0">
+              <span>${it.quantity} × ${escapeHtml(it.product_name)}</span>
+              <span class="text-muted">$${((it.unit_price_cents * it.quantity) / 100).toFixed(2)}</span>
+            </div>`).join("")
+        : `<p class="text-muted" style="font-size:12px;margin:8px 0 0">No line items on this order.</p>`;
+      return `
+        <div class="bib-list-row bib-order-row" data-id="${o.id}" style="flex-direction:column;align-items:stretch;gap:2px;cursor:pointer">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <span style="font-family:'Fredoka',sans-serif;font-weight:600">$${(o.total_cents / 100).toFixed(2)}</span>
+            <span class="bib-tag${o.status === "paid" ? " live" : ""}">${escapeHtml(o.status)}</span>
+          </div>
+          <div class="text-muted" style="font-size:13px">${escapeHtml(o.buyer_name || o.buyer_email || "Guest")} · ${new Date(o.created_at).toLocaleDateString()}</div>
+          ${isExpanded ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--bib-border)">
+            ${o.buyer_email ? `<div class="text-muted" style="font-size:12px;margin-bottom:4px">${escapeHtml(o.buyer_email)}</div>` : ""}
+            ${itemsHtml}
+          </div>` : ""}
+        </div>`;
+    }).join("");
+    container.querySelectorAll(".bib-order-row").forEach((row) => {
+      row.addEventListener("click", async () => {
+        const id = row.dataset.id;
+        expandedOrderId = expandedOrderId === id ? null : id;
+        if (expandedOrderId && !orderItemsByOrderId[id]) {
+          renderOrdersList();
+          const { data: items } = await sb
+            .from("order_items")
+            .select("product_name, unit_price_cents, quantity")
+            .eq("order_id", id);
+          orderItemsByOrderId[id] = items || [];
+        }
+        renderOrdersList();
+      });
+    });
   }
 
   function renderDomainState(dcvMethod) {
