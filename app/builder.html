@@ -143,7 +143,7 @@
     </div>
     <div style="display:flex;align-items:center;gap:12px">
       <a id="page-url" class="bib-url-pill" href="#" target="_blank" rel="noopener"></a>
-      <span id="status-badge" class="bib-live-pill"><span class="bib-live-dot"></span><span id="status-badge-text">Live</span></span>
+      <a id="status-badge" class="bib-live-pill" href="#" target="_blank" rel="noopener" style="cursor:pointer"><span class="bib-live-dot"></span><span id="status-badge-text">Live</span></a>
       <button id="save-republish-btn" class="bib-save-btn" type="button">Save &amp; publish</button>
     </div>
   </div>
@@ -670,10 +670,10 @@
             return `
             <div style="border:1px solid var(--bib-border);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px">
               <div style="display:flex;gap:8px;align-items:center">
-                <input class="bib-row-input bib-link-label" data-id="${el.id}" data-index="${i}" value="${escapeHtml(l.label || "")}" placeholder="Platform" maxlength="28" style="width:90px;flex-shrink:0" />
-                <input class="bib-row-input bib-link-url" data-id="${el.id}" data-index="${i}" value="${escapeHtml(l.url || "")}" placeholder="Link or handle" style="flex:1;min-width:0" />
+                <input class="bib-row-input bib-link-label" data-id="${el.id}" data-index="${i}" value="${escapeHtml(l.label || "")}" placeholder="Link text (e.g. Shop my favorites)" maxlength="40" style="flex:1;min-width:0" />
                 <button type="button" class="bib-icon-btn bib-remove-link" data-id="${el.id}" data-index="${i}">${CLOSE_ICON}</button>
               </div>
+              <input class="bib-row-input bib-link-url" data-id="${el.id}" data-index="${i}" value="${escapeHtml(l.url || "")}" placeholder="Link or handle" style="width:100%" />
               ${i === 0 ? `
                 <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--bib-muted);cursor:pointer">
                   <input type="checkbox" class="bib-link-shake-toggle" data-id="${el.id}" ${c.shake_top_link ? "checked" : ""} />
@@ -1341,6 +1341,18 @@
         headerElId = data.id;
       }
 
+      // Deletes run before inserts/updates — a singleton-type section (see
+      // elements_singleton_type_idx) that got deleted and re-added within
+      // the same unsaved session would otherwise still have its old DB row
+      // around when the new temp element's insert runs right after it,
+      // colliding on (page_id, type) even though the old row is already
+      // marked for removal.
+      if (deletedIds.size) {
+        const { error } = await sb.from("elements").delete().in("id", [...deletedIds]);
+        if (error) throw error;
+        deletedIds.clear();
+      }
+
       for (let i = 0; i < elements.length; i++) {
         const el = elements[i];
         if (isTemp(el.id)) {
@@ -1351,12 +1363,6 @@
           const { error } = await sb.from("elements").update({ content: el.content, position: i + 1 }).eq("id", el.id);
           if (error) throw error;
         }
-      }
-
-      if (deletedIds.size) {
-        const { error } = await sb.from("elements").delete().in("id", [...deletedIds]);
-        if (error) throw error;
-        deletedIds.clear();
       }
 
       const { error: pageErr } = await sb.from("pages").update({
@@ -1424,6 +1430,7 @@
 
     document.getElementById("page-url").href = `https://bizinbio.net/${page.slug}/`;
     document.getElementById("page-url").textContent = `bizinbio.net/${page.slug}/`;
+    document.getElementById("status-badge").href = `https://bizinbio.net/${page.slug}/`;
     document.getElementById("status-badge-text").textContent = page.published ? "Live" : "Not published yet";
 
     const { data: elData } = await sb.from("elements").select("*").eq("page_id", page.id).order("position", { ascending: true });
