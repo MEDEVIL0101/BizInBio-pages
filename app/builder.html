@@ -151,6 +151,34 @@
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
+  // Mirrors contrastTextColor in render-page/index.ts — used here only to
+  // preview what the auto-picked text color will be against a chosen
+  // Custom background, not as the source of truth (the real page always
+  // computes this server-side at publish time).
+  function relativeLuminance(hex) {
+    const clean = String(hex || "").replace("#", "").trim();
+    const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
+    const r = parseInt(full.substring(0, 2), 16) / 255;
+    const g = parseInt(full.substring(2, 4), 16) / 255;
+    const b = parseInt(full.substring(4, 6), 16) / 255;
+    const lin = (v) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  }
+  function contrastRatio(l1, l2) {
+    const lighter = Math.max(l1, l2), darker = Math.min(l1, l2);
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+  function contrastTextColor(hex, darkColor) {
+    try {
+      const bgLum = relativeLuminance(hex);
+      const whiteContrast = contrastRatio(bgLum, 1);
+      const blackContrast = contrastRatio(bgLum, relativeLuminance(darkColor));
+      return whiteContrast >= blackContrast ? "#FFFFFF" : darkColor;
+    } catch {
+      return "#FFFFFF";
+    }
+  }
+
   // Users routinely type "instagram.com/handle" instead of a full URL —
   // without a scheme that renders as a link relative to the page itself,
   // a 404. Default to https:// whenever no scheme is present.
@@ -243,7 +271,7 @@
   let headerContent = { business_name: "", location: "", logo_url: "", cover_image_url: "" };
   let elements = []; // all non-header elements, in position order
   let products = []; // for the Shop section's preview only — real management lives on the dashboard
-  let theme = { paletteId: "coral", customAccent: PALETTES[0].primary, customBg: PALETTES[0].bg, fontPairId: "playful", buttonColor: null };
+  let theme = { paletteId: "coral", customAccent: PALETTES[0].primary, customBg: PALETTES[0].bg, fontPairId: "playful", buttonColor: null, customText: null };
   let expandedId = null;
   let selectedGalleryIndex = null; // index of the selected photo within the currently-open gallery panel, for editing its link
   let addMenuOpen = false;
@@ -374,7 +402,7 @@
           <button type="button" class="bib-swatch bib-custom-swatch bib-select-custom-btn ${isCustom ? "sel" : ""}" style="--swatch-ring:oklch(40% 0.02 50)" title="Custom"></button>
         </div>
         ${isCustom ? `
-          <div style="display:flex;gap:14px;margin-bottom:18px;padding:14px;background:oklch(97% 0.01 70);border-radius:14px">
+          <div style="display:flex;gap:14px;margin-bottom:10px;padding:14px;background:oklch(97% 0.01 70);border-radius:14px">
             <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--bib-muted)">
               Accent
               <input type="color" id="custom-accent-input" value="${theme.customAccent}" style="width:46px;height:32px;border:none;border-radius:8px;padding:0;cursor:pointer" />
@@ -383,6 +411,14 @@
               Background
               <input type="color" id="custom-bg-input" value="${theme.customBg}" style="width:46px;height:32px;border:none;border-radius:8px;padding:0;cursor:pointer" />
             </label>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--bib-muted)">
+              Text
+              <input type="color" id="custom-text-input" value="${theme.customText || contrastTextColor(theme.customBg, CUSTOM_TEXT)}" style="width:46px;height:32px;border:none;border-radius:8px;padding:0;cursor:pointer" />
+            </label>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;padding:0 2px">
+            <span class="text-muted" style="font-size:12px;flex:1">${theme.customText ? "Custom text color set" : "Text auto-picks black or white for contrast against your background"}</span>
+            ${theme.customText ? `<button type="button" class="bib-btn-text bib-reset-text-color" style="font-size:12px;padding:0;width:auto">Reset</button>` : ""}
           </div>` : ""}
         <div class="bib-field-label">Button color</div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
@@ -596,7 +632,7 @@
     const screen = document.getElementById("preview-screen");
     const isCustom = theme.paletteId === "custom";
     const palette = isCustom
-      ? { primary: theme.customAccent, bg: theme.customBg, text: CUSTOM_TEXT }
+      ? { primary: theme.customAccent, bg: theme.customBg, text: theme.customText || contrastTextColor(theme.customBg, CUSTOM_TEXT) }
       : PALETTES.find((p) => p.id === theme.paletteId) || PALETTES[0];
     const fonts = FONT_PAIRS.find((f) => f.id === theme.fontPairId) || FONT_PAIRS[0];
 
@@ -753,7 +789,11 @@
     const accentInput = document.getElementById("custom-accent-input");
     if (accentInput) accentInput.addEventListener("input", (e) => { theme.customAccent = e.target.value; theme.paletteId = "custom"; markDirty(); renderPreview(); });
     const bgInput = document.getElementById("custom-bg-input");
-    if (bgInput) bgInput.addEventListener("input", (e) => { theme.customBg = e.target.value; theme.paletteId = "custom"; markDirty(); renderPreview(); });
+    if (bgInput) bgInput.addEventListener("input", (e) => { theme.customBg = e.target.value; theme.paletteId = "custom"; markDirty(); renderEditor(); renderPreview(); });
+    const textInput = document.getElementById("custom-text-input");
+    if (textInput) textInput.addEventListener("input", (e) => { theme.customText = e.target.value; markDirty(); renderEditor(); renderPreview(); });
+    const resetTextColorBtn = panel.querySelector(".bib-reset-text-color");
+    if (resetTextColorBtn) resetTextColorBtn.addEventListener("click", () => { theme.customText = null; markDirty(); renderEditor(); renderPreview(); });
     const buttonColorInput = document.getElementById("custom-button-color-input");
     if (buttonColorInput) buttonColorInput.addEventListener("input", (e) => { theme.buttonColor = e.target.value; markDirty(); renderEditor(); renderPreview(); });
     const resetButtonColorBtn = panel.querySelector(".bib-reset-button-color");
@@ -1115,6 +1155,7 @@
         custom_bg_color: theme.customBg || null,
         font_pair: theme.fontPairId,
         button_color: theme.buttonColor || null,
+        custom_text_color: theme.customText || null,
       }).eq("id", page.id);
       if (pageErr) throw pageErr;
       page.business_name = headerContent.business_name;
@@ -1146,6 +1187,7 @@
       paletteId: page.theme || "coral",
       customAccent: page.custom_accent_color || PALETTES[0].primary,
       customBg: page.custom_bg_color || PALETTES[0].bg,
+      customText: page.custom_text_color || null,
       fontPairId: page.font_pair || "playful",
       buttonColor: page.button_color || null,
     };
