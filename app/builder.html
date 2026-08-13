@@ -111,11 +111,16 @@
   // one consistent oklch formula (see hueBg/hueFg/hueBannerBg/hueBannerFg
   // below) rather than hand-tuning each — visually equivalent to the design
   // handoff's per-type values, far less code to keep in sync.
+  // Ordered to match a logical build-up of the site: say who you are and
+  // how to reach you, then show proof of work, then describe what you
+  // offer, then take payment — not alphabetical or arbitrary. Drives both
+  // the "+ Add section" grid order and (via ALL_SECTION_TYPES) anywhere
+  // else that lists every section type in a fixed order.
   const SECTION_META = {
-    contact: { title: "Contact", hue: 30, paywalled: false,
-      icon: `<path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.9 21 3 13.1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.4 0 .8-.3 1l-2.2 2.2z" stroke-linejoin="round"/>` },
     about: { title: "About", hue: 250, paywalled: false,
       icon: `<path d="M4 6h16M4 12h16M4 18h10" stroke-linecap="round"/>` },
+    contact: { title: "Contact", hue: 30, paywalled: false,
+      icon: `<path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.9 21 3 13.1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.4 0 .8-.3 1l-2.2 2.2z" stroke-linejoin="round"/>` },
     social_link: { title: "Social & links", hue: 190, paywalled: false,
       icon: `<path d="M10 13a5 5 0 007.07 0l2-2a5 5 0 00-7.07-7.07l-1 1M14 11a5 5 0 00-7.07 0l-2 2a5 5 0 007.07 7.07l1-1" stroke-linecap="round"/>` },
     portfolio_gallery: { title: "Gallery", hue: 320, paywalled: true,
@@ -124,10 +129,10 @@
       icon: `<circle cx="12" cy="12" r="9"/><path d="M10 9l5 3-5 3V9z" fill="currentColor" stroke="none"/>` },
     services_list: { title: "Services", hue: 90, paywalled: true,
       icon: `<path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/><circle cx="4" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.4" fill="currentColor" stroke="none"/>` },
-    quote_request_form: { title: "Quote request form", hue: 350, paywalled: true,
-      icon: `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke-linecap="round"/>` },
     service_area: { title: "Service area", hue: 150, paywalled: true,
       icon: `<path d="M12 21s-7-6.5-7-11a7 7 0 0114 0c0 4.5-7 11-7 11z" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.3"/>` },
+    quote_request_form: { title: "Quote request form", hue: 350, paywalled: true,
+      icon: `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke-linecap="round"/>` },
     booking_deposit: { title: "Booking deposit", hue: 270, paywalled: true,
       icon: `<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v4M16 3v4" stroke-linecap="round"/>` },
     product_shop: { title: "Shop", hue: 55, paywalled: true,
@@ -426,6 +431,13 @@
           <span class="text-muted" style="font-size:12px;flex:1">${theme.buttonColor ? "Custom button color set" : "Using your theme's accent color"}</span>
           ${theme.buttonColor ? `<button type="button" class="bib-btn-text bib-reset-button-color" style="font-size:12px;padding:0;width:auto">Reset</button>` : ""}
         </div>
+        ${products.length ? `
+        <div class="bib-field-label">Shop card color</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+          <input type="color" id="custom-card-color-input" value="${theme.productCardColor || "#ffffff"}" style="width:46px;height:32px;border:1.5px solid var(--bib-border);border-radius:8px;padding:0;cursor:pointer" />
+          <span class="text-muted" style="font-size:12px;flex:1">${theme.productCardColor ? "Custom card color set" : "Using the default frosted-glass look"}</span>
+          ${theme.productCardColor ? `<button type="button" class="bib-btn-text bib-reset-card-color" style="font-size:12px;padding:0;width:auto">Reset</button>` : ""}
+        </div>` : ""}
         <div class="bib-field-label">Font pairing</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           ${FONT_PAIRS.map((f) => `
@@ -704,6 +716,7 @@
             custom_text_color: theme.customText || null,
             font_pair: theme.fontPairId,
             button_color: theme.buttonColor || null,
+            product_card_color: theme.productCardColor || null,
           },
         }),
       });
@@ -762,6 +775,10 @@
     if (buttonColorInput) buttonColorInput.addEventListener("input", (e) => { theme.buttonColor = e.target.value; markDirty(); renderEditor(); renderPreview(); });
     const resetButtonColorBtn = panel.querySelector(".bib-reset-button-color");
     if (resetButtonColorBtn) resetButtonColorBtn.addEventListener("click", () => { theme.buttonColor = null; markDirty(); renderEditor(); renderPreview(); });
+    const cardColorInput = document.getElementById("custom-card-color-input");
+    if (cardColorInput) cardColorInput.addEventListener("input", (e) => { theme.productCardColor = e.target.value; markDirty(); renderEditor(); renderPreview(); });
+    const resetCardColorBtn = panel.querySelector(".bib-reset-card-color");
+    if (resetCardColorBtn) resetCardColorBtn.addEventListener("click", () => { theme.productCardColor = null; markDirty(); renderEditor(); renderPreview(); });
     panel.querySelectorAll(".bib-fontpair-item").forEach((btn) => {
       btn.addEventListener("click", () => { theme.fontPairId = btn.dataset.id; markDirty(); renderEditor(); renderPreview(); });
     });
@@ -1156,6 +1173,7 @@
         font_pair: theme.fontPairId,
         button_color: theme.buttonColor || null,
         custom_text_color: theme.customText || null,
+        product_card_color: theme.productCardColor || null,
       }).eq("id", page.id);
       if (pageErr) throw pageErr;
       page.business_name = headerContent.business_name;
@@ -1190,6 +1208,7 @@
       customText: page.custom_text_color || null,
       fontPairId: page.font_pair || "playful",
       buttonColor: page.button_color || null,
+      productCardColor: page.product_card_color || null,
     };
 
     const { data: sub } = await sb.from("subscriptions").select("tier, status").eq("user_id", session.user.id).maybeSingle();

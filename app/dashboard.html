@@ -59,6 +59,41 @@
     <button id="upgrade-domain" class="bib-btn-secondary bib-btn-block" style="margin-top:8px">Upgrade to Custom Domain — $19.99/mo</button>
   </section>
 
+  <section class="bib-card">
+    <div class="bib-card-head">
+      <div class="bib-card-icon" style="background:oklch(90% 0.05 30);color:oklch(49% 0.16 30)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M3 17l5-4 4 3 4-5 5 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h2>Page content</h2>
+    </div>
+    <p class="text-muted" style="font-size:13px;margin-bottom:12px">Add, edit, and reorder everything on your page — header, about, services, gallery, social links, colors, and fonts.</p>
+    <a href="/app/builder.html" class="bib-btn-primary bib-btn-block">Edit page content</a>
+  </section>
+
+  <section class="bib-card" id="domain-section" style="display:none">
+    <div class="bib-card-head">
+      <div class="bib-card-icon" style="background:oklch(90% 0.05 230);color:oklch(48% 0.14 230)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 4 5.7 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.7-4-9s1.5-6.5 4-9z"/></svg>
+      </div>
+      <h2>Custom domain</h2>
+    </div>
+    <p class="text-muted" style="font-size:13px">Use your own domain instead of a bizinbio.net link.</p>
+    <div id="domain-none">
+      <div style="margin-top:12px">
+        <div class="bib-field-label">Your domain</div>
+        <input class="bib-row-input" id="domain-input" placeholder="www.yourbusiness.com" />
+      </div>
+      <button id="connect-domain" class="bib-btn-secondary bib-btn-block" style="margin-top:10px">Connect domain</button>
+    </div>
+    <div id="domain-set" style="display:none;margin-top:12px">
+      <p style="font-size:14px"><strong id="domain-name"></strong> <span class="bib-tag" id="domain-status-tag" style="margin-left:6px"></span></p>
+      <p id="domain-instructions" class="text-muted" style="font-size:12px;margin-top:8px"></p>
+      <button id="recheck-domain" class="bib-btn-secondary bib-btn-block" style="margin-top:10px">Check status</button>
+      <button id="remove-domain" class="bib-btn-text" style="margin-top:6px;width:100%">Remove domain</button>
+    </div>
+    <p id="domain-msg" class="text-muted" style="text-align:center;font-size:13px;margin-top:8px;min-height:18px"></p>
+  </section>
+
   <section class="bib-card" id="booking-section" style="display:none">
     <div class="bib-card-head">
       <div class="bib-card-icon" style="background:oklch(90% 0.05 270);color:oklch(50% 0.16 270)">
@@ -96,14 +131,6 @@
       </div>
       <button id="save-button-text" class="bib-btn-secondary bib-btn-block" style="margin-top:2px">Save</button>
       <p id="button-text-msg" class="text-muted" style="text-align:center;font-size:12px;margin:0;min-height:16px"></p>
-      <div style="display:flex;align-items:center;gap:10px;padding-top:6px;border-top:1px solid var(--bib-border)">
-        <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:600;color:var(--bib-muted)">
-          Card color
-          <input type="color" id="product_card_color" value="#ffffff" data-active="false" style="width:38px;height:28px;border:1.5px solid var(--bib-border);border-radius:6px;padding:0;cursor:pointer" />
-        </label>
-        <span class="text-muted" style="font-size:11px;flex:1" id="product-card-color-status">Using the default frosted-glass look</span>
-        <button type="button" class="bib-btn-text" id="reset-product-card-color" style="font-size:11px;padding:0;width:auto;display:none">Reset</button>
-      </div>
     </div>
 
     <div id="shop-products" style="display:flex;flex-direction:column"></div>
@@ -224,41 +251,6 @@
       <h2>Orders</h2>
     </div>
     <div id="orders-list"><p class="text-muted" style="font-size:13px">No orders yet — they'll show up here once your shop is live and someone checks out.</p></div>
-  </section>
-
-  <section class="bib-card" id="domain-section" style="display:none">
-    <div class="bib-card-head">
-      <div class="bib-card-icon" style="background:oklch(90% 0.05 230);color:oklch(48% 0.14 230)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 4 5.7 4 9s-1.5 6.5-4 9c-2.5-2.5-4-5.7-4-9s1.5-6.5 4-9z"/></svg>
-      </div>
-      <h2>Custom domain</h2>
-    </div>
-    <p class="text-muted" style="font-size:13px">Use your own domain instead of a bizinbio.net link.</p>
-    <div id="domain-none">
-      <div style="margin-top:12px">
-        <div class="bib-field-label">Your domain</div>
-        <input class="bib-row-input" id="domain-input" placeholder="www.yourbusiness.com" />
-      </div>
-      <button id="connect-domain" class="bib-btn-secondary bib-btn-block" style="margin-top:10px">Connect domain</button>
-    </div>
-    <div id="domain-set" style="display:none;margin-top:12px">
-      <p style="font-size:14px"><strong id="domain-name"></strong> <span class="bib-tag" id="domain-status-tag" style="margin-left:6px"></span></p>
-      <p id="domain-instructions" class="text-muted" style="font-size:12px;margin-top:8px"></p>
-      <button id="recheck-domain" class="bib-btn-secondary bib-btn-block" style="margin-top:10px">Check status</button>
-      <button id="remove-domain" class="bib-btn-text" style="margin-top:6px;width:100%">Remove domain</button>
-    </div>
-    <p id="domain-msg" class="text-muted" style="text-align:center;font-size:13px;margin-top:8px;min-height:18px"></p>
-  </section>
-
-  <section class="bib-card">
-    <div class="bib-card-head">
-      <div class="bib-card-icon" style="background:oklch(90% 0.05 30);color:oklch(49% 0.16 30)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M3 17l5-4 4 3 4-5 5 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-      <h2>Page content</h2>
-    </div>
-    <p class="text-muted" style="font-size:13px;margin-bottom:12px">Add, edit, and reorder everything on your page — header, about, services, gallery, social links, colors, and fonts.</p>
-    <a href="/app/builder.html" class="bib-btn-primary bib-btn-block">Edit page content</a>
   </section>
 
   <section class="bib-card">
@@ -415,32 +407,10 @@
     }
   });
 
-  function updateProductCardColorStatus() {
-    const active = document.getElementById("product_card_color").dataset.active === "true";
-    document.getElementById("product-card-color-status").textContent = active
-      ? "Custom color set"
-      : "Using the default frosted-glass look";
-    document.getElementById("reset-product-card-color").style.display = active ? "inline" : "none";
-  }
-
-  document.getElementById("product_card_color").addEventListener("input", (e) => {
-    e.target.dataset.active = "true";
-    updateProductCardColorStatus();
-  });
-
-  document.getElementById("reset-product-card-color").addEventListener("click", () => {
-    const input = document.getElementById("product_card_color");
-    input.value = "#ffffff";
-    input.dataset.active = "false";
-    updateProductCardColorStatus();
-  });
-
   document.getElementById("save-button-text").addEventListener("click", async () => {
     const msg = document.getElementById("button-text-msg");
     const addToCartText = document.getElementById("add_to_cart_text").value.trim();
     const checkoutText = document.getElementById("checkout_text").value.trim();
-    const cardColorInput = document.getElementById("product_card_color");
-    const cardColor = cardColorInput.dataset.active === "true" ? cardColorInput.value : null;
     msg.textContent = "Saving...";
     try {
       const { error } = await sb
@@ -448,13 +418,11 @@
         .update({
           add_to_cart_button_text: addToCartText || null,
           checkout_button_text: checkoutText || null,
-          product_card_color: cardColor,
         })
         .eq("id", page.id);
       if (error) throw error;
       page.add_to_cart_button_text = addToCartText || null;
       page.checkout_button_text = checkoutText || null;
-      page.product_card_color = cardColor;
       await callFunction("render-page", { page_id: page.id }, session);
       msg.textContent = "Saved and republished.";
     } catch (err) {
@@ -551,10 +519,6 @@
       document.getElementById("product-weight-required-note").style.display = "inline";
       document.getElementById("add_to_cart_text").value = page.add_to_cart_button_text || "";
       document.getElementById("checkout_text").value = page.checkout_button_text || "";
-      const cardColorInput = document.getElementById("product_card_color");
-      cardColorInput.value = page.product_card_color || "#ffffff";
-      cardColorInput.dataset.active = page.product_card_color ? "true" : "false";
-      updateProductCardColorStatus();
       await loadShippingConnection();
       // Shop rendering is gated on a "product_shop" element existing (same
       // pattern as every other opt-in element type) — make sure one exists
