@@ -48,6 +48,26 @@ const PALETTES = [
 const CUSTOM_TEXT = "#2b2320";
 const SHAPE = { radius: "14px", cardBlur: "0px", borderWidth: "1px", avatarRadius: "50%" };
 
+// Curated swatch grid for every custom color field in the builder (Accent/
+// Background/Text plus per-element Button/Shop card/link-card colors) —
+// replaces a raw <input type="color"> rainbow picker with a bounded,
+// on-brand set grouped into families so non-designers land on colors that
+// actually look good together, matching PALETTES' own tone (muted, warm-
+// neutral leaning rather than saturated web-safe primaries). "Theme" pulls
+// each preset palette's accent for quick reuse; a free-pick native color
+// input still lives at the bottom of the picker for anyone who wants an
+// exact hex outside this set.
+const COLOR_FAMILIES = [
+  { label: "Theme", colors: PALETTES.map((p) => p.primary) },
+  { label: "Neutrals", colors: ["#ffffff", "#f7f3ee", "#e5ddd2", "#b7ac9e", "#7a7167", "#3d3630", "#000000"] },
+  { label: "Reds & corals", colors: ["#fbeae6", "#f3a08c", "#e8603c", "#c8462a", "#8f2e1a"] },
+  { label: "Oranges & yellows", colors: ["#fdf1de", "#f4c26a", "#dba53a", "#b8801f", "#7a5314"] },
+  { label: "Greens", colors: ["#eaf4ed", "#8fc9a3", "#4b8060", "#326b47", "#1f4530"] },
+  { label: "Blues & teals", colors: ["#e6f0f7", "#85b8d9", "#3f7cb0", "#2a5d87", "#173a56"] },
+  { label: "Purples & berries", colors: ["#f6e9f0", "#cf8bb0", "#a13d6b", "#7a2a4e", "#4d1a32"] },
+  { label: "Browns", colors: ["#f5ece2", "#d8b48c", "#a9754a", "#7a5230", "#4a2f18"] },
+];
+
 const FONT_PAIRS = [
   { id: "playful", label: "Playful", display: '"Fredoka",system-ui,sans-serif', body: '"Plus Jakarta Sans",system-ui,sans-serif' },
   { id: "editorial", label: "Editorial", display: '"Playfair Display","Georgia",serif', body: '"Source Sans 3",system-ui,sans-serif' },

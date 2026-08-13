@@ -23,6 +23,27 @@
   .bib-swatch.sel::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2.5px solid var(--swatch-ring, currentColor)}
   .bib-custom-swatch{background:conic-gradient(from 0deg,#ff6b4a,#ffd166,#4dd6a8,#4a9bff,#b46bff,#ff6b4a)}
 
+  /* Color field rows — Accent/Background/Text/Button/Shop card all share this
+     one row shape (label above, swatch button + status text + reset), and
+     the swatch button opens the same curated-palette popover rather than a
+     native OS color picker. */
+  .bib-color-field{position:relative;display:flex;align-items:center;gap:10px;margin-bottom:18px}
+  .bib-color-field:last-of-type{margin-bottom:0}
+  .bib-color-swatch-btn{width:38px;height:38px;border-radius:10px;border:1.5px solid var(--bib-border);cursor:pointer;padding:0;flex:none;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+  .bib-color-swatch-btn:hover{border-color:var(--bib-accent)}
+  .bib-color-popover{position:absolute;top:calc(100% + 8px);left:0;z-index:40;width:270px;background:#fff;border:1px solid var(--bib-border);border-radius:16px;box-shadow:0 12px 28px rgba(0,0,0,.14);padding:14px;animation:cardIn .15s ease both}
+  .bib-color-family{margin-bottom:10px}
+  .bib-color-family:last-child{margin-bottom:0}
+  .bib-color-family-label{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--bib-muted);margin-bottom:6px}
+  .bib-color-grid{display:flex;flex-wrap:wrap;gap:7px}
+  .bib-color-cell{width:28px;height:28px;border-radius:8px;border:1.5px solid rgba(0,0,0,.06);cursor:pointer;padding:0;position:relative;flex:none}
+  .bib-color-cell:hover{transform:scale(1.08)}
+  .bib-color-cell.sel::after{content:"";position:absolute;inset:-4px;border-radius:10px;border:2px solid var(--bib-accent)}
+  .bib-color-popover-footer{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bib-border)}
+  .bib-color-hex-input{flex:1;min-width:0;padding:8px 10px;border-radius:8px;background:oklch(97% 0.01 70);border:1.5px solid var(--bib-border);font-size:12.5px;font-family:var(--bib-mono,monospace);outline:none;color:var(--bib-text)}
+  .bib-color-hex-input:focus-visible{border-color:var(--bib-accent)}
+  .bib-color-native-input{width:32px;height:32px;border:1.5px solid var(--bib-border);border-radius:8px;padding:0;cursor:pointer;flex:none}
+
   .bib-fontpair-btn{text-align:left;padding:12px;border-radius:14px;background:oklch(97% 0.01 70);border:1.5px solid transparent;cursor:pointer}
   .bib-fontpair-btn:hover{background:oklch(95% 0.015 70)}
   .bib-fontpair-btn.sel{border-color:var(--bib-accent);background:oklch(96% 0.05 30)}
@@ -69,6 +90,26 @@
      120px avatar) end up looking oversized relative to a shrunken frame
      even though their real, on-device size is correct. */
   .bib-phone-screen{width:390px;height:844px;overflow-y:auto;background:#fff;border:0;display:block;transform-origin:top left}
+
+  /* Mobile Edit/Preview switch — .bib-body is a side-by-side flex on
+     desktop (editor panel + phone preview both visible at once), which on
+     a phone-width viewport left the 460px-wide editor alone wider than the
+     screen, pushing the preview off to the side entirely (only reachable
+     by rotating to landscape, where it then rendered squashed into
+     whatever sliver of width was left). Below the breakpoint this switches
+     to showing exactly one full-width pane at a time, chosen by the tab
+     bar — the phone mockup then gets its full intended width/aspect-ratio
+     instead of being squeezed. Desktop layout (the flex row) is untouched. */
+  .bib-mobile-tabs{display:none}
+  @media (max-width: 860px){
+    .bib-mobile-tabs{display:flex;gap:8px;padding:10px 16px;background:var(--bib-panel-bg);border-bottom:1px solid var(--bib-border);position:sticky;top:72px;z-index:29}
+    .bib-mobile-tab{flex:1;text-align:center;padding:9px 0;border-radius:10px;border:1.5px solid var(--bib-border);background:#fff;font-weight:700;font-size:13.5px;color:var(--bib-muted);cursor:pointer}
+    .bib-mobile-tab.active{background:var(--bib-accent);border-color:var(--bib-accent);color:#fff}
+    .bib-editor{width:100%}
+    .bib-preview-wrap{padding:20px}
+    .bib-body.bib-mobile-preview .bib-editor{display:none}
+    .bib-body:not(.bib-mobile-preview) .bib-preview-wrap{display:none}
+  }
 </style>
 </head>
 <body>
@@ -94,7 +135,12 @@
     </div>
   </div>
 
-  <div class="bib-body">
+  <div class="bib-mobile-tabs" id="mobile-view-tabs">
+    <button type="button" class="bib-mobile-tab active" data-view="edit">Edit</button>
+    <button type="button" class="bib-mobile-tab" data-view="preview">Preview</button>
+  </div>
+
+  <div class="bib-body" id="bib-body">
     <div class="bib-editor" id="editor-panel"></div>
     <div class="bib-preview-wrap">
       <div class="bib-preview-label">
@@ -290,6 +336,7 @@
   let selectedGalleryIndex = null; // index of the selected photo within the currently-open gallery panel, for editing its link
   let addMenuOpen = false;
   let editingField = null; // 'businessName' | 'location' | null
+  let colorPickerOpen = null; // key of the open curated-color popover, or null (see COLOR_FIELDS)
   let dirty = false;
   let nextTempId = 1;
   const deletedIds = new Set();
@@ -297,6 +344,24 @@
   function tempId() { return "temp-" + (nextTempId++) + "-" + Date.now(); }
   function isTemp(id) { return String(id).startsWith("temp-"); }
   function isGated(type) { return !isPaid && SECTION_META[type] && SECTION_META[type].paywalled; }
+
+  // Maps a colorFieldRowHtml key ('accent'|'bg'|'text'|'button'|'card') to
+  // the theme.* property it actually drives — one place to change if a
+  // field's mutation logic (e.g. accent/bg forcing paletteId to "custom")
+  // needs to change, instead of duplicating it across every input type
+  // (swatch grid / hex box / native fallback) that can set a color.
+  function setColorFieldValue(key, value) {
+    if (key === "accent") { theme.customAccent = value; theme.paletteId = "custom"; }
+    else if (key === "bg") { theme.customBg = value; theme.paletteId = "custom"; }
+    else if (key === "text") { theme.customText = value; }
+    else if (key === "button") { theme.buttonColor = value; }
+    else if (key === "card") { theme.productCardColor = value; }
+  }
+  function resetColorFieldValue(key) {
+    if (key === "text") theme.customText = null;
+    else if (key === "button") theme.buttonColor = null;
+    else if (key === "card") theme.productCardColor = null;
+  }
   function elById(id) { return elements.find((e) => e.id === id); }
   function markDirty() { dirty = true; }
 
@@ -349,6 +414,10 @@
       `<button type="button" id="add-section-toggle" class="bib-add-section-btn">+ Add section</button>` +
       (addMenuOpen ? `<div class="bib-add-grid" id="add-section-grid">${ALL_SECTION_TYPES.map(addCardHtml).join("")}</div>` : "");
     wireEditorEvents(panel);
+    if (colorPickerOpen) {
+      const openPopover = panel.querySelector(".bib-color-popover");
+      if (openPopover) openPopover.scrollIntoView({ block: "nearest" });
+    }
     const list = document.getElementById("element-list");
     initDragList(list, "bib-el-card", (orderedEls) => {
       const byId = new Map(elements.map((e) => [e.id, e]));
@@ -357,6 +426,18 @@
       renderPreview();
     });
   }
+
+  // Registered once (not per-render, unlike everything wired in
+  // wireEditorEvents) since it needs to catch clicks anywhere in the
+  // document, including outside #editor-panel entirely — closes whichever
+  // curated-color popover is open when the click didn't land on its swatch
+  // button or inside the popover itself.
+  document.addEventListener("click", (e) => {
+    if (!colorPickerOpen) return;
+    if (e.target.closest(".bib-color-popover") || e.target.closest(".bib-color-open-btn")) return;
+    colorPickerOpen = null;
+    renderEditor();
+  });
 
   function headerCardHtml() {
     return `
@@ -397,8 +478,50 @@
       </div>`;
   }
 
+  // Every custom-color field (Accent/Background/Text plus Button/Shop card)
+  // renders through this one row shape — field label above, a swatch button
+  // that opens the shared curated-palette popover (colorPopoverHtml), status
+  // text, and an optional Reset. Keeping Accent/Background/Text on the same
+  // row pattern as Button/Shop card (rather than the old compact 3-up strip)
+  // is deliberate: one visual language for "pick a color" across this panel.
+  function colorFieldRowHtml(opts) {
+    const { key, label, value, statusText, resettable } = opts;
+    return `
+      <div class="bib-field-label">${label}</div>
+      <div class="bib-color-field">
+        <button type="button" class="bib-color-swatch-btn bib-color-open-btn" data-key="${key}" style="background:${value}" title="${value}"></button>
+        <span class="text-muted" style="font-size:12px;flex:1">${statusText}</span>
+        ${resettable ? `<button type="button" class="bib-btn-text bib-color-reset-btn" data-key="${key}" style="font-size:12px;padding:0;width:auto">Reset</button>` : ""}
+        ${colorPickerOpen === key ? colorPopoverHtml(key, value) : ""}
+      </div>`;
+  }
+
+  // Grouped swatch grid (COLOR_FAMILIES, defined in app.js) plus a fallback
+  // hex/native picker for anyone who wants an exact color the curated set
+  // doesn't cover — swapped in place of a bare <input type="color"> so
+  // picking a color is "choose from something that already looks good" by
+  // default, not "find your way around a rainbow square."
+  function colorPopoverHtml(key, value) {
+    const norm = String(value || "").toLowerCase();
+    return `
+      <div class="bib-color-popover" data-key="${key}" onclick="event.stopPropagation()">
+        ${COLOR_FAMILIES.map((fam) => `
+          <div class="bib-color-family">
+            <div class="bib-color-family-label">${escapeHtml(fam.label)}</div>
+            <div class="bib-color-grid">
+              ${fam.colors.map((c) => `<button type="button" class="bib-color-cell bib-color-pick-btn ${c.toLowerCase() === norm ? "sel" : ""}" data-key="${key}" data-color="${c}" style="background:${c}" title="${c}"></button>`).join("")}
+            </div>
+          </div>`).join("")}
+        <div class="bib-color-popover-footer">
+          <input type="color" class="bib-color-native-input bib-color-native-input-el" data-key="${key}" value="${/^#[0-9a-f]{6}$/i.test(norm) ? norm : "#000000"}" title="Pick any color" />
+          <input type="text" class="bib-color-hex-input bib-color-hex-input-el" data-key="${key}" value="${escapeHtml(value)}" maxlength="9" spellcheck="false" placeholder="#hex" />
+        </div>
+      </div>`;
+  }
+
   function themeCardHtml() {
     const isCustom = theme.paletteId === "custom";
+    const buttonColorValue = theme.buttonColor || (isCustom ? theme.customAccent : (PALETTES.find((p) => p.id === theme.paletteId) || PALETTES[0]).primary);
     return `
       <div class="bib-card">
         <div class="bib-card-head" style="margin-bottom:16px">
@@ -411,42 +534,17 @@
           </div>
         </div>
         <div class="bib-field-label">Color palette</div>
-        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:${isCustom ? "14px" : "18px"}">
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:${isCustom ? "18px" : "18px"}">
           ${PALETTES.map((p) => `<button type="button" class="bib-swatch bib-palette-btn ${theme.paletteId === p.id ? "sel" : ""}" data-id="${p.id}" style="background:${p.primary};--swatch-ring:${p.primary}" title="${escapeHtml(p.label)}"></button>`).join("")}
           <button type="button" class="bib-swatch bib-custom-swatch bib-select-custom-btn ${isCustom ? "sel" : ""}" style="--swatch-ring:oklch(40% 0.02 50)" title="Custom"></button>
         </div>
         ${isCustom ? `
-          <div style="display:flex;gap:14px;margin-bottom:10px;padding:14px;background:oklch(97% 0.01 70);border-radius:14px">
-            <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--bib-muted)">
-              Accent
-              <input type="color" id="custom-accent-input" value="${theme.customAccent}" style="width:46px;height:32px;border:1.5px solid var(--bib-border);border-radius:8px;padding:0;cursor:pointer" />
-            </label>
-            <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--bib-muted)">
-              Background
-              <input type="color" id="custom-bg-input" value="${theme.customBg}" style="width:46px;height:32px;border:1.5px solid var(--bib-border);border-radius:8px;padding:0;cursor:pointer" />
-            </label>
-            <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--bib-muted)">
-              Text
-              <input type="color" id="custom-text-input" value="${theme.customText || contrastTextColor(theme.customBg, CUSTOM_TEXT)}" style="width:46px;height:32px;border:1.5px solid var(--bib-border);border-radius:8px;padding:0;cursor:pointer" />
-            </label>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;padding:0 2px">
-            <span class="text-muted" style="font-size:12px;flex:1">${theme.customText ? "Custom text color set" : "Text auto-picks black or white for contrast against your background"}</span>
-            ${theme.customText ? `<button type="button" class="bib-btn-text bib-reset-text-color" style="font-size:12px;padding:0;width:auto">Reset</button>` : ""}
-          </div>` : ""}
-        <div class="bib-field-label">Button color</div>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
-          <input type="color" id="custom-button-color-input" value="${theme.buttonColor || (isCustom ? theme.customAccent : (PALETTES.find((p) => p.id === theme.paletteId) || PALETTES[0]).primary)}" style="width:46px;height:32px;border:1.5px solid var(--bib-border);border-radius:8px;padding:0;cursor:pointer" />
-          <span class="text-muted" style="font-size:12px;flex:1">${theme.buttonColor ? "Custom button color set" : "Using your theme's accent color"}</span>
-          ${theme.buttonColor ? `<button type="button" class="bib-btn-text bib-reset-button-color" style="font-size:12px;padding:0;width:auto">Reset</button>` : ""}
-        </div>
-        ${products.length ? `
-        <div class="bib-field-label">Shop card color</div>
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
-          <input type="color" id="custom-card-color-input" value="${theme.productCardColor || "#ffffff"}" style="width:46px;height:32px;border:1.5px solid var(--bib-border);border-radius:8px;padding:0;cursor:pointer" />
-          <span class="text-muted" style="font-size:12px;flex:1">${theme.productCardColor ? "Custom card color set" : "Using the default frosted-glass look"}</span>
-          ${theme.productCardColor ? `<button type="button" class="bib-btn-text bib-reset-card-color" style="font-size:12px;padding:0;width:auto">Reset</button>` : ""}
-        </div>` : ""}
+          ${colorFieldRowHtml({ key: "accent", label: "Accent", value: theme.customAccent, statusText: "Your page's accent color", resettable: false })}
+          ${colorFieldRowHtml({ key: "bg", label: "Background", value: theme.customBg, statusText: "Your page's background color", resettable: false })}
+          ${colorFieldRowHtml({ key: "text", label: "Text", value: theme.customText || contrastTextColor(theme.customBg, CUSTOM_TEXT), statusText: theme.customText ? "Custom text color set" : "Auto-picks black or white for contrast", resettable: !!theme.customText })}
+        ` : ""}
+        ${colorFieldRowHtml({ key: "button", label: "Button color", value: buttonColorValue, statusText: theme.buttonColor ? "Custom button color set" : "Using your theme's accent color", resettable: !!theme.buttonColor })}
+        ${products.length ? colorFieldRowHtml({ key: "card", label: "Shop card color", value: theme.productCardColor || "#ffffff", statusText: theme.productCardColor ? "Custom card color set" : "Using the default frosted-glass look", resettable: !!theme.productCardColor }) : ""}
         <div class="bib-field-label">Font pairing</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           ${FONT_PAIRS.map((f) => `
@@ -786,26 +884,43 @@
 
     // Theme
     panel.querySelectorAll(".bib-palette-btn").forEach((btn) => {
-      btn.addEventListener("click", () => { theme.paletteId = btn.dataset.id; markDirty(); renderEditor(); renderPreview(); });
+      btn.addEventListener("click", () => { theme.paletteId = btn.dataset.id; colorPickerOpen = null; markDirty(); renderEditor(); renderPreview(); });
     });
     const customBtn = panel.querySelector(".bib-select-custom-btn");
-    if (customBtn) customBtn.addEventListener("click", () => { theme.paletteId = "custom"; markDirty(); renderEditor(); renderPreview(); });
-    const accentInput = document.getElementById("custom-accent-input");
-    if (accentInput) accentInput.addEventListener("input", (e) => { theme.customAccent = e.target.value; theme.paletteId = "custom"; markDirty(); renderPreview(); });
-    const bgInput = document.getElementById("custom-bg-input");
-    if (bgInput) bgInput.addEventListener("input", (e) => { theme.customBg = e.target.value; theme.paletteId = "custom"; markDirty(); renderEditor(); renderPreview(); });
-    const textInput = document.getElementById("custom-text-input");
-    if (textInput) textInput.addEventListener("input", (e) => { theme.customText = e.target.value; markDirty(); renderEditor(); renderPreview(); });
-    const resetTextColorBtn = panel.querySelector(".bib-reset-text-color");
-    if (resetTextColorBtn) resetTextColorBtn.addEventListener("click", () => { theme.customText = null; markDirty(); renderEditor(); renderPreview(); });
-    const buttonColorInput = document.getElementById("custom-button-color-input");
-    if (buttonColorInput) buttonColorInput.addEventListener("input", (e) => { theme.buttonColor = e.target.value; markDirty(); renderEditor(); renderPreview(); });
-    const resetButtonColorBtn = panel.querySelector(".bib-reset-button-color");
-    if (resetButtonColorBtn) resetButtonColorBtn.addEventListener("click", () => { theme.buttonColor = null; markDirty(); renderEditor(); renderPreview(); });
-    const cardColorInput = document.getElementById("custom-card-color-input");
-    if (cardColorInput) cardColorInput.addEventListener("input", (e) => { theme.productCardColor = e.target.value; markDirty(); renderEditor(); renderPreview(); });
-    const resetCardColorBtn = panel.querySelector(".bib-reset-card-color");
-    if (resetCardColorBtn) resetCardColorBtn.addEventListener("click", () => { theme.productCardColor = null; markDirty(); renderEditor(); renderPreview(); });
+    if (customBtn) customBtn.addEventListener("click", () => { theme.paletteId = "custom"; colorPickerOpen = null; markDirty(); renderEditor(); renderPreview(); });
+
+    // Curated color-field popovers — Accent/Background/Text/Button/Shop card
+    // all funnel through setColorFieldValue/resetColorFieldValue so the
+    // family-swatch grid, the hex box, and the native fallback picker all
+    // update the same theme.* property regardless of which one was used.
+    panel.querySelectorAll(".bib-color-open-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        colorPickerOpen = colorPickerOpen === btn.dataset.key ? null : btn.dataset.key;
+        renderEditor();
+      });
+    });
+    panel.querySelectorAll(".bib-color-pick-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        setColorFieldValue(btn.dataset.key, btn.dataset.color);
+        colorPickerOpen = null;
+        markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-color-native-input-el").forEach((input) => {
+      input.addEventListener("input", (e) => { setColorFieldValue(e.target.dataset.key, e.target.value); markDirty(); renderPreview(); });
+      input.addEventListener("change", () => { renderEditor(); });
+    });
+    panel.querySelectorAll(".bib-color-hex-input-el").forEach((input) => {
+      input.addEventListener("change", (e) => {
+        const v = e.target.value.trim();
+        if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)) { setColorFieldValue(e.target.dataset.key, v); markDirty(); renderPreview(); }
+        renderEditor();
+      });
+    });
+    panel.querySelectorAll(".bib-color-reset-btn").forEach((btn) => {
+      btn.addEventListener("click", () => { resetColorFieldValue(btn.dataset.key); colorPickerOpen = null; markDirty(); renderEditor(); renderPreview(); });
+    });
     panel.querySelectorAll(".bib-fontpair-item").forEach((btn) => {
       btn.addEventListener("click", () => { theme.fontPairId = btn.dataset.id; markDirty(); renderEditor(); renderPreview(); });
     });
@@ -1218,6 +1333,16 @@
     }
   }
   document.getElementById("save-republish-btn").addEventListener("click", saveAndRepublish);
+
+  // Mobile Edit/Preview tabs — no-op above the 860px breakpoint (the tab
+  // bar is display:none there and .bib-body's side-by-side layout already
+  // shows both panes), so this is safe to wire unconditionally.
+  document.querySelectorAll(".bib-mobile-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".bib-mobile-tab").forEach((b) => b.classList.toggle("active", b === btn));
+      document.getElementById("bib-body").classList.toggle("bib-mobile-preview", btn.dataset.view === "preview");
+    });
+  });
 
   // ---------------------------------------------------------------------
   (async () => {

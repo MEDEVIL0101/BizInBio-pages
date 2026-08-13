@@ -147,14 +147,14 @@ button{font-family:inherit}
 .photo-gallery .photo-tile{display:block;position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden}
 .photo-gallery .photo-tile img{width:100%;height:100%;object-fit:cover;display:block}
 
-/* Wrapped, tinted pills — icon-optional label chips in the accent color at
+/* Wrapped, tinted bars — icon-optional label chips in the accent color at
    low opacity, matching the builder's live-preview panel exactly. */
-/* Full-width, fixed-height stacked pills — every link the same size
+/* Full-width, fixed-height stacked bars — every link the same size
    regardless of label length (a long label truncates, it doesn't grow
-   the pill). Matches the reference Linktree-style layout: uniform bars,
-   not auto-width chips. */
-.social-row{display:flex;flex-direction:column;gap:10px}
-.social-row a{display:flex;align-items:center;gap:10px;width:100%;height:52px;padding:0 20px;border-radius:999px;background:color-mix(in srgb,var(--color-accent) 14%,transparent);color:var(--color-accent);font-weight:700;font-size:13px;border:none;overflow:hidden}
+   the bar). Shares .blueprint's --radius-md corner so plain links and
+   rich (style:"card") links read as the same family, just two densities. */
+.social-row{display:flex;flex-direction:column;gap:18px}
+.social-row a{display:flex;align-items:center;gap:10px;width:100%;height:52px;padding:0 20px;border-radius:var(--radius-md);background:color-mix(in srgb,var(--color-accent) 14%,transparent);color:var(--color-accent);font-weight:700;font-size:16px;border:none;overflow:hidden}
 .social-row a span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 
 /* Form fields (quote request, onboarding, dashboard edit) */
