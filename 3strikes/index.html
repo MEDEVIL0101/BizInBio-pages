@@ -16,7 +16,7 @@
 <link rel="apple-touch-icon" href="//bizinbio.net/assets/apple-touch-icon.png?v=1" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="//bizinbio.net/assets/site.css?v=19" />
+<link rel="stylesheet" href="//bizinbio.net/assets/site.css?v=21" />
 <style>:root{
     --color-bg:#929292;
     --body-bg:#929292;
@@ -170,8 +170,10 @@
       <div id="bib-modal-backdrop" style="position:absolute;inset:0;background:rgba(0,0,0,.55)"></div>
       <div style="position:relative;width:92%;max-width:480px;margin:5vh auto 0;max-height:88vh;overflow-y:auto;background:var(--color-card-bg);border-radius:var(--radius-md);box-shadow:var(--shadow-md)">
         <button type="button" id="bib-modal-close" aria-label="Close" style="position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:50%;border:none;background:rgba(0,0,0,.45);color:#fff;font-size:18px;line-height:1;cursor:pointer;z-index:1">&times;</button>
-        <div style="aspect-ratio:1;background:var(--color-surface);overflow:hidden">
+        <div id="bib-modal-img-wrap" style="position:relative;aspect-ratio:1;background:var(--color-surface);overflow:hidden;touch-action:pan-y">
           <img id="bib-modal-img" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:block" />
+          <button type="button" id="bib-modal-prev" aria-label="Previous photo" style="display:none;position:absolute;top:50%;left:8px;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;border:none;background:rgba(0,0,0,.45);color:#fff;font-size:16px;line-height:1;cursor:pointer;align-items:center;justify-content:center">&larr;</button>
+          <button type="button" id="bib-modal-next" aria-label="Next photo" style="display:none;position:absolute;top:50%;right:8px;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;border:none;background:rgba(0,0,0,.45);color:#fff;font-size:16px;line-height:1;cursor:pointer;align-items:center;justify-content:center">&rarr;</button>
         </div>
         <div id="bib-modal-thumbs" style="display:flex;gap:6px;padding:var(--space-2) var(--space-4) 0;overflow-x:auto"></div>
         <div style="padding:var(--space-4)">
@@ -444,6 +446,9 @@
         // --- Product detail modal ---
         var modal = document.getElementById('bib-product-modal');
         var modalImg = document.getElementById('bib-modal-img');
+        var modalImgWrap = document.getElementById('bib-modal-img-wrap');
+        var modalPrevBtn = document.getElementById('bib-modal-prev');
+        var modalNextBtn = document.getElementById('bib-modal-next');
         var modalThumbs = document.getElementById('bib-modal-thumbs');
         var modalName = document.getElementById('bib-modal-name');
         var modalPrice = document.getElementById('bib-modal-price');
@@ -455,6 +460,32 @@
         var currentProduct = null;
         var currentQty = 1;
         var currentVariant = null;
+        var currentImages = [];
+        var currentImageIndex = 0;
+
+        function showModalImage(index) {
+          if (!currentImages.length) return;
+          currentImageIndex = (index + currentImages.length) % currentImages.length;
+          modalImg.src = currentImages[currentImageIndex];
+          Array.prototype.forEach.call(modalThumbs.children, function (c, i) {
+            c.style.borderColor = i === currentImageIndex ? 'var(--color-accent)' : 'transparent';
+          });
+        }
+        modalPrevBtn.addEventListener('click', function () { showModalImage(currentImageIndex - 1); });
+        modalNextBtn.addEventListener('click', function () { showModalImage(currentImageIndex + 1); });
+        (function () {
+          var touchStartX = null;
+          modalImgWrap.addEventListener('touchstart', function (e) {
+            touchStartX = e.touches[0].clientX;
+          }, { passive: true });
+          modalImgWrap.addEventListener('touchend', function (e) {
+            if (touchStartX === null) return;
+            var deltaX = e.changedTouches[0].clientX - touchStartX;
+            touchStartX = null;
+            if (Math.abs(deltaX) < 40) return;
+            showModalImage(currentImageIndex + (deltaX < 0 ? 1 : -1));
+          });
+        })();
 
         function updateModalAddButton() {
           var hasVariants = currentProduct && currentProduct.variants && currentProduct.variants.length > 0;
@@ -515,19 +546,18 @@
           }
           modalDesc.textContent = product.description || '';
           modalDesc.style.display = product.description ? 'block' : 'none';
-          var images = product.images && product.images.length ? product.images : [];
-          modalImg.src = images[0] || '';
+          currentImages = product.images && product.images.length ? product.images : [];
+          currentImageIndex = 0;
+          modalImg.src = currentImages[0] || '';
+          modalPrevBtn.style.display = currentImages.length > 1 ? 'flex' : 'none';
+          modalNextBtn.style.display = currentImages.length > 1 ? 'flex' : 'none';
           modalThumbs.innerHTML = '';
-          modalThumbs.style.display = images.length > 1 ? 'flex' : 'none';
-          images.forEach(function (url, i) {
+          modalThumbs.style.display = currentImages.length > 1 ? 'flex' : 'none';
+          currentImages.forEach(function (url, i) {
             var t = document.createElement('img');
             t.src = url;
             t.style.cssText = 'width:52px;height:52px;object-fit:cover;border-radius:6px;cursor:pointer;flex:none;border:2px solid ' + (i === 0 ? 'var(--color-accent)' : 'transparent');
-            t.addEventListener('click', function () {
-              modalImg.src = url;
-              Array.prototype.forEach.call(modalThumbs.children, function (c) { c.style.borderColor = 'transparent'; });
-              t.style.borderColor = 'var(--color-accent)';
-            });
+            t.addEventListener('click', function () { showModalImage(i); });
             modalThumbs.appendChild(t);
           });
           modal.style.display = 'block';
