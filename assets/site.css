@@ -51,18 +51,9 @@ button{font-family:inherit}
 
 /* Cover/banner photo — full-bleed, no card treatment (not a duotone photo:
    this represents the business's own imagery, left untinted like the
-   profile avatar). On phones it fills the entire first screen (dvh
-   accounts for Safari's collapsing toolbar so it's always the true
-   visible height, not just the layout viewport) so nothing of the page's
-   own background color shows before the avatar/name/content below it —
-   only on a wide/desktop viewport, where the page becomes a centered card
-   rather than a full-screen phone-style layout, does it fall back to a
-   fixed banner ratio instead. */
-.cover-photo{width:100%;height:100vh;height:100dvh;overflow:hidden;display:block}
+   profile avatar). */
+.cover-photo{width:100%;aspect-ratio:21/9;overflow:hidden;display:block}
 .cover-photo img{width:100%;height:100%;object-fit:cover;display:block}
-@media (min-width:640px){
-  .cover-photo{height:auto;aspect-ratio:4/3}
-}
 
 /* Page/app wrapper — mobile-first narrow column, but widens (and gets a
    card shadow so the surrounding space reads as deliberate, not just
@@ -72,10 +63,10 @@ button{font-family:inherit}
    shell — anywhere that currently centers content with a fixed max-width. */
 .page-wrap{max-width:460px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
 @media (min-width:640px){
-  .page-wrap{max-width:560px}
+  .page-wrap{max-width:720px}
 }
 @media (min-width:1024px){
-  .page-wrap{max-width:640px;min-height:0;margin-top:var(--space-8);margin-bottom:var(--space-8);box-shadow:var(--shadow-md)}
+  .page-wrap{max-width:960px;min-height:0;box-shadow:var(--shadow-md)}
 }
 
 /* Profile avatar — sits as its own row above the header content (rather
