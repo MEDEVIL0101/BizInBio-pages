@@ -98,10 +98,10 @@
           <button type="button" class="btn btn-secondary bib-add-cart" data-id="5638546c-1b83-4a04-b6ef-3dcf1775a290" data-name="Special Request Bleached Graphic Hoodie" data-price="28000" style="margin-top:2px;font-size:12px;padding:8px">Add to cart</button>
         </div></div>
     </section>
-    <div id="bib-cart-bar" style="display:none;position:sticky;bottom:0;background:var(--color-card-bg);border-top:1px solid var(--color-divider);padding:var(--space-3) var(--space-4);align-items:center;gap:var(--space-3);z-index:5">
-      <button type="button" id="bib-cart-summary" style="flex:1;font-size:13px;text-align:left;background:none;border:none;padding:0;color:var(--color-text);text-decoration:underline;cursor:pointer"></button>
-      <button id="bib-cart-checkout" class="btn btn-primary" style="flex:none;opacity:.5;cursor:not-allowed" disabled title="Checkout isn't set up yet">Checkout</button>
-    </div>
+    <button type="button" id="bib-cart-bar" aria-label="View cart" style="display:none;position:fixed;top:var(--space-4);right:var(--space-4);align-items:center;gap:7px;background:var(--color-accent);color:var(--color-on-accent);border:none;border-radius:999px;padding:10px 15px;font-family:var(--font-heading);font-size:13px;font-weight:700;cursor:pointer;box-shadow:var(--shadow-md);z-index:20">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+      <span id="bib-cart-summary"></span>
+    </button>
 
     <div id="bib-cart-modal" style="display:none;position:fixed;inset:0;z-index:31">
       <div id="bib-cart-modal-backdrop" style="position:absolute;inset:0;background:rgba(0,0,0,.55)"></div>
@@ -215,7 +215,7 @@
           }
           var count = 0, total = 0;
           ids.forEach(function (id) { count += cart[id].qty; total += cart[id].qty * cart[id].price; });
-          document.getElementById('bib-cart-summary').textContent = count + (count === 1 ? ' item — $' : ' items — $') + (total / 100).toFixed(2) + ' — View cart';
+          document.getElementById('bib-cart-summary').textContent = count + ' · $' + (total / 100).toFixed(2);
           bar.style.display = 'flex';
           if (cartModalOpen) renderCartModalLines();
         }
@@ -293,7 +293,7 @@
           cartModal.style.display = 'none';
           document.body.style.overflow = '';
         }
-        document.getElementById('bib-cart-summary').addEventListener('click', openCartModal);
+        document.getElementById('bib-cart-bar').addEventListener('click', openCartModal);
         document.getElementById('bib-cart-modal-close').addEventListener('click', closeCartModal);
         document.getElementById('bib-cart-modal-backdrop').addEventListener('click', closeCartModal);
 
@@ -644,14 +644,6 @@
             return !p || p.productType !== 'digital';
           });
         }
-        document.getElementById('bib-cart-checkout').addEventListener('click', function () {
-          if (cartNeedsShipping()) {
-            openCartModal();
-            showCartScreen('address');
-          } else {
-            startCheckout(this);
-          }
-        });
         var cartModalCheckoutBtn = document.getElementById('bib-cart-modal-checkout');
         if (cartModalCheckoutBtn) {
           cartModalCheckoutBtn.addEventListener('click', function () {
@@ -718,7 +710,11 @@
           status.textContent = 'Something went wrong — please try again.';
         }
       });
-    </script><footer style="padding:var(--space-6) var(--space-4);text-align:center;border-top:1px solid var(--color-divider)"><span class="text-muted" style="font-size:12px">Powered by BizInBio</span></footer>
+    </script><footer style="padding:var(--space-6) var(--space-4);text-align:center;border-top:1px solid var(--color-divider)">
+    <a href="https://bizinbio.net/#pricing" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:var(--color-surface);border:1px solid var(--color-divider);color:var(--color-text);text-decoration:none;font-family:var(--font-heading);font-size:12px;font-weight:700">
+      Get your BizInBio today
+    </a>
+  </footer>
 </div>
 </body>
 </html>
