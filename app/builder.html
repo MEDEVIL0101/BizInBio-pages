@@ -548,6 +548,22 @@
                 </div>
                 <textarea class="bib-textarea bib-link-card-desc" data-id="${el.id}" data-index="${i}" placeholder="Short description" style="min-height:44px">${escapeHtml(l.description || "")}</textarea>
                 <input class="bib-row-input bib-link-card-button" data-id="${el.id}" data-index="${i}" value="${escapeHtml(l.button_text || "")}" placeholder="Button text (e.g. Get My Guide)" />
+                <div style="display:flex;align-items:center;gap:10px">
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:600;color:var(--bib-muted)">
+                    Card color
+                    <input type="color" class="bib-link-card-bg" data-id="${el.id}" data-index="${i}" value="${l.background_color || "#ffffff"}" style="width:38px;height:28px;border:none;border-radius:6px;padding:0;cursor:pointer" />
+                  </label>
+                  <span class="text-muted" style="font-size:11px;flex:1">${l.background_color ? "Custom color set" : "Using your theme's card color"}</span>
+                  ${l.background_color ? `<button type="button" class="bib-btn-text bib-reset-link-card-bg" data-id="${el.id}" data-index="${i}" style="font-size:11px;padding:0;width:auto">Reset</button>` : ""}
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <select class="bib-row-input bib-link-card-outline-style" data-id="${el.id}" data-index="${i}" style="flex:1">
+                    <option value="none" ${!l.outline_style || l.outline_style === "none" ? "selected" : ""}>No border/glow</option>
+                    <option value="border" ${l.outline_style === "border" ? "selected" : ""}>Border</option>
+                    <option value="glow" ${l.outline_style === "glow" ? "selected" : ""}>Glow</option>
+                  </select>
+                  ${l.outline_style && l.outline_style !== "none" ? `<input type="color" class="bib-link-card-outline-color" data-id="${el.id}" data-index="${i}" value="${l.outline_color || "#ff5a3c"}" style="width:38px;height:32px;border:none;border-radius:6px;padding:0;cursor:pointer;flex:none" />` : ""}
+                </div>
                 ${products.length ? `
                   <div class="bib-field-label" style="margin-bottom:0">Sell a product from your shop (optional)</div>
                   <select class="bib-row-input bib-link-card-product" data-id="${el.id}" data-index="${i}">
@@ -686,12 +702,20 @@
               const description = (linkedProduct && linkedProduct.description) || l.description || "";
               const priceHtml = linkedProduct ? `<div style="font-size:14px;font-weight:700;color:${palette.primary};margin-top:4px">$${(linkedProduct.price_cents / 100).toFixed(2)}</div>` : "";
               const buttonText = escapeHtml(l.button_text || (linkedProduct ? "Buy now" : l.label || "View"));
-              return `<div style="width:100%;padding:12px;border-radius:14px;border:1px solid color-mix(in srgb, ${palette.primary} 20%, transparent);display:flex;flex-direction:column;gap:2px;box-sizing:border-box">
+              const cardBg = l.background_color || null;
+              const cardTextColor = cardBg ? contrastTextColor(cardBg, CUSTOM_TEXT) : null;
+              let cardOutlineStyle = "border:1px solid color-mix(in srgb, " + palette.primary + " 20%, transparent);";
+              if (l.outline_style === "border" && l.outline_color) {
+                cardOutlineStyle = `border:2px solid ${l.outline_color};`;
+              } else if (l.outline_style === "glow" && l.outline_color) {
+                cardOutlineStyle = `border:1px solid transparent;box-shadow:0 0 18px 2px color-mix(in srgb, ${l.outline_color} 55%, transparent);`;
+              }
+              return `<div style="width:100%;padding:12px;border-radius:14px;${cardOutlineStyle}display:flex;flex-direction:column;gap:2px;box-sizing:border-box;${cardBg ? `background:${cardBg};` : ""}">
                 <div style="display:flex;gap:10px;align-items:flex-start">
                   ${imageUrl ? `<div style="width:52px;height:52px;border-radius:10px;overflow:hidden;flex:none"><img src="${escapeHtml(imageUrl)}" style="width:100%;height:100%;object-fit:cover;display:block" /></div>` : ""}
                   <div style="flex:1;min-width:0">
-                    <div style="font-size:13.5px;font-weight:700;line-height:1.3">${escapeHtml(title)}</div>
-                    ${description ? `<div style="font-size:11.5px;opacity:.7;margin-top:2px;line-height:1.4">${escapeHtml(description)}</div>` : ""}
+                    <div style="font-size:13.5px;font-weight:700;line-height:1.3;${cardTextColor ? `color:${cardTextColor};` : ""}">${escapeHtml(title)}</div>
+                    ${description ? `<div style="font-size:11.5px;opacity:.7;margin-top:2px;line-height:1.4;${cardTextColor ? `color:${cardTextColor};` : ""}">${escapeHtml(description)}</div>` : ""}
                     ${priceHtml}
                   </div>
                 </div>
@@ -953,6 +977,30 @@
     panel.querySelectorAll(".bib-link-card-button").forEach((input) => {
       input.addEventListener("input", (e) => {
         elById(e.target.dataset.id).content.links[Number(e.target.dataset.index)].button_text = e.target.value;
+        markDirty(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-link-card-bg").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        elById(e.target.dataset.id).content.links[Number(e.target.dataset.index)].background_color = e.target.value;
+        markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-reset-link-card-bg").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        delete elById(e.target.closest("button").dataset.id).content.links[Number(e.target.closest("button").dataset.index)].background_color;
+        markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-link-card-outline-style").forEach((select) => {
+      select.addEventListener("change", (e) => {
+        elById(e.target.dataset.id).content.links[Number(e.target.dataset.index)].outline_style = e.target.value;
+        markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-link-card-outline-color").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        elById(e.target.dataset.id).content.links[Number(e.target.dataset.index)].outline_color = e.target.value;
         markDirty(); renderPreview();
       });
     });
