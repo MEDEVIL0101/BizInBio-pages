@@ -59,7 +59,7 @@
   .bib-preview-label{position:absolute;top:24px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--bib-muted);display:flex;align-items:center;gap:6px}
   .bib-phone{width:auto;height:min(844px, calc(100vh - 180px));aspect-ratio:390/844;max-width:100%;border-radius:52px;border:10px solid #111;background:#111;box-shadow:0 30px 60px rgba(0,0,0,.25);overflow:hidden;position:relative;flex-shrink:0}
   .bib-phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:26px;background:#111;border-radius:0 0 16px 16px;z-index:5}
-  .bib-phone-screen{width:100%;height:100%;overflow-y:auto;background:#fff}
+  .bib-phone-screen{width:100%;height:100%;overflow-y:auto;background:#fff;border:0;display:block}
 </style>
 </head>
 <body>
@@ -94,7 +94,7 @@
       </div>
       <div class="bib-phone">
         <div class="bib-phone-notch"></div>
-        <div class="bib-phone-screen" id="preview-screen"></div>
+        <iframe class="bib-phone-screen" id="preview-screen" title="Live preview" sandbox="allow-scripts"></iframe>
       </div>
     </div>
   </div>
@@ -649,147 +649,71 @@
   }
 
   // ---------------------------------------------------------------------
-  // Live preview — an approximate client-side re-render (not a pixel copy
-  // of render-page's actual HTML), reflecting header/theme/about/contact/
-  // gallery/social/services in the same position order the real page uses.
+  // Live preview — fetches render-page's preview mode (same buildHtml()
+  // that publishes the real site) with the current in-memory draft state
+  // and drops the returned HTML straight into the phone's iframe via
+  // srcdoc. There is exactly one render implementation; the mockup cannot
+  // drift from what a customer actually sees. Debounced so rapid typing
+  // doesn't fire a network round-trip per keystroke.
+  //
+  // One deliberate behavior change from the old hand-rolled mock: gated
+  // (paywalled) sections used to render here anyway with an "All Access"
+  // ribbon, as an upsell preview. render-page's real tier gating hides
+  // them entirely for a free-tier page, so this preview now does too —
+  // that's what "exact display of the customer's site" requires. The
+  // per-section paywall banners in the editor panel are unaffected.
+  let previewDebounceTimer = null;
+  let previewRequestSeq = 0;
+
   function renderPreview() {
+    clearTimeout(previewDebounceTimer);
+    previewDebounceTimer = setTimeout(fetchPreview, 280);
+  }
+
+  function draftElementsForPreview() {
+    const header = { id: headerElId || "draft-header", type: "header", position: 0, content: headerContent };
+    const rest = elements.map((el, i) => ({ id: el.id, type: el.type, position: i + 1, content: el.content }));
+    return [header, ...rest];
+  }
+
+  function previewErrorHtml() {
+    return `<div style="font-family:sans-serif;padding:24px;color:#900;font-size:13px">Preview failed to load.</div>`;
+  }
+
+  async function fetchPreview() {
+    if (!page) return;
+    const seq = ++previewRequestSeq;
     const screen = document.getElementById("preview-screen");
-    const isCustom = theme.paletteId === "custom";
-    const palette = isCustom
-      ? { primary: theme.customAccent, bg: theme.customBg, text: theme.customText || contrastTextColor(theme.customBg, CUSTOM_TEXT) }
-      : PALETTES.find((p) => p.id === theme.paletteId) || PALETTES[0];
-    const fonts = FONT_PAIRS.find((f) => f.id === theme.fontPairId) || FONT_PAIRS[0];
-
-    const contactEl = elements.find((e) => e.type === "contact");
-    const visibleContacts = contactEl ? (contactEl.content.methods || []).filter((m) => m.enabled && (m.value || "").trim()) : [];
-
-    const bodyParts = elements.map((el) => {
-      if (isGated(el.type) && el.type !== "portfolio_gallery" && el.type !== "services_list" && el.type !== "youtube_video") return "";
-      switch (el.type) {
-        case "about":
-          return el.content.bio ? `<div style="font-size:13px;line-height:1.55;text-align:center;margin-top:22px;opacity:.85">${escapeHtml(el.content.bio)}</div>` : "";
-        case "portfolio_gallery": {
-          const photos = el.content.photos || [];
-          if (!photos.length) return "";
-          return `<div style="position:relative;width:100%;margin-top:26px">
-            ${isGated(el.type) ? `<div style="position:absolute;top:6px;right:6px;background:rgba(20,20,20,.55);color:#fff;font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em;z-index:2">All Access</div>` : ""}
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-              ${photos.map((photo) => `<div style="aspect-ratio:1;border-radius:10px;overflow:hidden"><img src="${escapeHtml(photo.url)}" style="width:100%;height:100%;object-fit:cover;display:block" /></div>`).join("")}
-            </div>
-          </div>`;
-        }
-        case "youtube_video": {
-          const ids = (el.content.videos || []).map(youtubeId).filter(Boolean);
-          if (!ids.length) return "";
-          // Static thumbnail + play icon, not a live iframe — the preview
-          // re-renders on every edit, and loading real YouTube players
-          // repeatedly would be slow and noisy. The real published page
-          // gets an actual embed (see render-page's videoSection).
-          return `<div style="position:relative;width:100%;margin-top:26px;display:flex;flex-direction:column;gap:10px">
-            ${isGated(el.type) ? `<div style="position:absolute;top:6px;right:6px;background:rgba(20,20,20,.55);color:#fff;font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em;z-index:2">All Access</div>` : ""}
-            ${ids.map((id) => `<div style="position:relative;width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000">
-              <img src="https://img.youtube.com/vi/${id}/hqdefault.jpg" style="width:100%;height:100%;object-fit:cover;display:block;opacity:.85" />
-              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><svg width="44" height="44" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="rgba(0,0,0,.5)"/><path d="M10 8l6 4-6 4V8z" fill="#fff"/></svg></div>
-            </div>`).join("")}
-          </div>`;
-        }
-        case "social_link": {
-          const links = (el.content.links || []).filter((l) => (l.label || l.url || "").trim());
-          if (!links.length) return "";
-          // Full-width, fixed-height pills — matches the real published
-          // page exactly (.social-row in site.css): every link the same
-          // size, a long label truncates instead of growing the pill.
-          return `<div style="display:flex;flex-direction:column;gap:10px;width:100%;margin-top:24px">
-            ${links.map((l) => {
-              if (l.style !== "card") {
-                return `<div style="display:flex;align-items:center;gap:10px;width:100%;height:52px;padding:0 20px;border-radius:999px;background:color-mix(in srgb, ${palette.primary} 14%, transparent);color:${palette.primary};font-size:13px;font-weight:700;overflow:hidden;box-sizing:border-box"><span style="flex-shrink:0;display:flex">${socialIcon(l.platform)}</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${escapeHtml(l.label || l.url)}</span></div>`;
-              }
-              const linkedProduct = l.linked_product_id ? products.find((p) => p.id === l.linked_product_id) : null;
-              const imageUrl = (linkedProduct && (linkedProduct.image_urls || [])[0]) || l.image_url || "";
-              const title = (linkedProduct && linkedProduct.name) || l.label || "";
-              const description = (linkedProduct && linkedProduct.description) || l.description || "";
-              const priceHtml = linkedProduct ? `<div style="font-size:14px;font-weight:700;color:${palette.primary};margin-top:4px">$${(linkedProduct.price_cents / 100).toFixed(2)}</div>` : "";
-              const buttonText = escapeHtml(l.button_text || (linkedProduct ? "Buy now" : l.label || "View"));
-              const cardBg = l.background_color || null;
-              const cardTextColor = cardBg ? contrastTextColor(cardBg, CUSTOM_TEXT) : null;
-              let cardOutlineStyle = "border:1px solid color-mix(in srgb, " + palette.primary + " 20%, transparent);";
-              if (l.outline_style === "border" && l.outline_color) {
-                cardOutlineStyle = `border:2px solid ${l.outline_color};`;
-              } else if (l.outline_style === "glow" && l.outline_color) {
-                cardOutlineStyle = `border:1px solid transparent;box-shadow:0 0 18px 2px color-mix(in srgb, ${l.outline_color} 55%, transparent);`;
-              }
-              var effectiveButtonColor = l.button_color || theme.buttonColor || palette.primary;
-              var buttonTextColor = contrastTextColor(effectiveButtonColor, CUSTOM_TEXT);
-              return `<div style="width:100%;padding:12px;border-radius:14px;${cardOutlineStyle}display:flex;flex-direction:column;gap:2px;box-sizing:border-box;${cardBg ? `background:${cardBg};` : ""}">
-                <div style="display:flex;gap:10px;align-items:flex-start">
-                  ${imageUrl ? `<div style="width:52px;height:52px;border-radius:10px;overflow:hidden;flex:none"><img src="${escapeHtml(imageUrl)}" style="width:100%;height:100%;object-fit:cover;display:block" /></div>` : ""}
-                  <div style="flex:1;min-width:0">
-                    <div style="font-size:13.5px;font-weight:700;line-height:1.3;${cardTextColor ? `color:${cardTextColor};` : ""}">${escapeHtml(title)}</div>
-                    ${description ? `<div style="font-size:11.5px;opacity:.7;margin-top:2px;line-height:1.4;${cardTextColor ? `color:${cardTextColor};` : ""}">${escapeHtml(description)}</div>` : ""}
-                    ${priceHtml}
-                  </div>
-                </div>
-                <div style="width:100%;margin-top:8px;height:38px;border-radius:10px;background:${effectiveButtonColor};color:${buttonTextColor};display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700">${buttonText}</div>
-              </div>`;
-            }).join("")}
-          </div>`;
-        }
-        case "services_list": {
-          const services = el.content.services || [];
-          if (!services.length) return "";
-          return `<div style="width:100%;margin-top:28px;display:flex;flex-direction:column;gap:10px;position:relative">
-            ${isGated(el.type) ? `<div style="position:absolute;top:-14px;right:0;background:rgba(20,20,20,.55);color:#fff;font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em">All Access</div>` : ""}
-            <div style="font-family:${fonts.display};font-weight:700;font-size:16px">Services</div>
-            ${services.map((s) => `<div style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:14px;background:color-mix(in srgb, ${palette.primary} 7%, white)">
-              <span style="font-size:13px;font-weight:600">${escapeHtml(s.name || "")}</span>
-              <span style="font-size:13px;font-weight:700;color:${palette.primary}">${escapeHtml(s.price_range || "")}</span>
-            </div>`).join("")}
-          </div>`;
-        }
-        case "product_shop": {
-          if (!products.length) return "";
-          var shopButtonColor = theme.buttonColor || palette.primary;
-          var shopButtonTextColor = contrastTextColor(shopButtonColor, CUSTOM_TEXT);
-          return `<div style="width:100%;margin-top:28px;display:flex;flex-direction:column;gap:10px">
-            <div style="font-family:${fonts.display};font-weight:700;font-size:16px">Shop</div>
-            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
-              ${products.map((p) => `<div style="display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:10px;border:1px solid color-mix(in srgb, ${palette.primary} 16%, transparent);background:color-mix(in srgb, white 72%, transparent)">
-                <div style="aspect-ratio:1;border-radius:8px;overflow:hidden;background:oklch(93% 0.01 70)">
-                  ${(p.image_urls || [])[0] ? `<img src="${escapeHtml(p.image_urls[0])}" style="width:100%;height:100%;object-fit:cover;display:block" />` : ""}
-                </div>
-                <span style="font-size:13px;font-weight:600;line-height:1.3">${escapeHtml(p.name || "")}</span>
-                <span style="font-size:13px">
-                  <span style="font-weight:700;color:${palette.primary}">$${(p.price_cents / 100).toFixed(2)}</span>
-                  ${p.compare_at_price_cents && p.compare_at_price_cents > p.price_cents ? `<span style="opacity:.45;text-decoration:line-through;margin-left:4px;font-size:11px">$${(p.compare_at_price_cents / 100).toFixed(2)}</span>` : ""}
-                </span>
-                <div style="width:100%;margin-top:2px;height:30px;border-radius:8px;background:${shopButtonColor};color:${shopButtonTextColor};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">${escapeHtml(theme.addToCartText || "Add to cart")}</div>
-              </div>`).join("")}
-            </div>
-          </div>`;
-        }
-        default:
-          return "";
-      }
-    }).join("");
-
-    screen.innerHTML = `
-      <div style="min-height:100%;background:${palette.bg};font-family:${fonts.body};color:${palette.text}">
-        <div style="width:100%;height:190px;background:oklch(93% 0.01 70)">
-          ${headerContent.cover_image_url ? `<img src="${escapeHtml(headerContent.cover_image_url)}" style="width:100%;height:100%;object-fit:cover;display:block" />` : ""}
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:center;padding:0 24px 40px;margin-top:-38px">
-          <div style="width:84px;height:84px;border-radius:50%;border:4px solid ${palette.bg};overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.15);background:#eee">
-            ${headerContent.logo_url ? `<img src="${escapeHtml(headerContent.logo_url)}" style="width:100%;height:100%;object-fit:cover;display:block" />` : ""}
-          </div>
-          <div style="font-family:${fonts.display};font-size:21px;font-weight:700;margin-top:14px;text-align:center">${escapeHtml(headerContent.business_name) || "Your business name"}</div>
-          ${headerContent.location ? `<div style="font-size:13px;opacity:.65;margin-top:3px">${escapeHtml(headerContent.location)}</div>` : ""}
-          ${visibleContacts.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px">
-            ${visibleContacts.map((m) => `<div style="display:inline-flex;align-items:center;gap:7px;background:${palette.primary};color:#fff;font-weight:700;font-size:13px;padding:${m.showValue ? "11px 18px" : "13px"};border-radius:999px">${contactIconSvg(m.type, 13)}${m.showValue ? `<span>${escapeHtml(m.value)}</span>` : ""}</div>`).join("")}
-          </div>` : ""}
-          ${bodyParts}
-          <div style="font-size:10.5px;opacity:.4;margin-top:32px">Made with bizinbio</div>
-        </div>
-      </div>`;
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/render-page`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${session ? session.access_token : SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          page_id: page.id,
+          preview: true,
+          elements: draftElementsForPreview(),
+          page_overrides: {
+            business_name: headerContent.business_name,
+            theme: theme.paletteId,
+            custom_accent_color: theme.customAccent || null,
+            custom_bg_color: theme.customBg || null,
+            custom_text_color: theme.customText || null,
+            font_pair: theme.fontPairId,
+            button_color: theme.buttonColor || null,
+          },
+        }),
+      });
+      if (seq !== previewRequestSeq) return;
+      const html = await res.text();
+      if (seq !== previewRequestSeq) return;
+      screen.srcdoc = res.ok ? html : previewErrorHtml();
+    } catch {
+      if (seq === previewRequestSeq) screen.srcdoc = previewErrorHtml();
+    }
   }
 
   // ---------------------------------------------------------------------
