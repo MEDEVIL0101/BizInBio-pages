@@ -706,6 +706,8 @@
   let editingProductId = null;
   let editingPhotos = [];
   let editingDigitalFile = null;
+  let editingVariants = [];
+  let removedVariantIds = [];
 
   async function loadProducts() {
     const { data: products } = await sb
@@ -778,6 +780,16 @@
           <div class="bib-field-label">Description</div>
           <textarea class="bib-textarea bib-edit-description" style="min-height:60px">${escapeHtml(p.description || "")}</textarea>
         </div>
+        <div style="margin-bottom:10px;padding-top:10px;border-top:1px solid var(--bib-border)">
+          <div class="bib-field-label">Variants (size, fit, etc. — optional)</div>
+          ${editingVariants.map((v, i) => `
+            <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+              <input class="bib-row-input bib-edit-variant-name" data-index="${i}" value="${escapeHtml(v.name)}" placeholder="e.g. Medium" style="flex:1" />
+              <input class="bib-row-input bib-edit-variant-stock" data-index="${i}" type="number" min="0" step="1" value="${v.stock_quantity}" placeholder="Stock" style="width:70px" />
+              <button type="button" class="bib-icon-btn bib-remove-variant" data-index="${i}">${TRASH_ICON_SM}</button>
+            </div>`).join("")}
+          <button type="button" class="bib-btn-secondary bib-btn-sm bib-add-variant" style="margin-top:8px;width:100%">+ Add variant</button>
+        </div>
         <button type="button" class="bib-btn-primary bib-btn-block bib-save-product" data-id="${p.id}">Save changes</button>
         <p class="text-muted bib-edit-msg" style="font-size:12px;text-align:center;margin-top:6px;min-height:16px"></p>
       </div>`;
@@ -820,17 +832,26 @@
       });
     });
     container.querySelectorAll(".bib-edit-product").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      btn.addEventListener("click", async () => {
         const id = btn.dataset.id;
         if (editingProductId === id) {
           editingProductId = null;
           editingPhotos = [];
           editingDigitalFile = null;
+          editingVariants = [];
+          removedVariantIds = [];
         } else {
           const p = allProducts.find((x) => x.id === id);
           editingProductId = id;
           editingPhotos = [...(p.image_urls || [])];
           editingDigitalFile = null;
+          removedVariantIds = [];
+          const { data: variants } = await sb
+            .from("product_variants")
+            .select("*")
+            .eq("product_id", id)
+            .order("position", { ascending: true });
+          editingVariants = variants || [];
         }
         renderProductsList();
       });
@@ -870,6 +891,29 @@
         if (!e.target.files.length) return;
         const msgEl = input.closest(".bib-edit-digital-file-row").querySelector(".bib-edit-digital-file-msg");
         editingDigitalFile = await uploadDigitalFile(e.target.files[0], msgEl);
+      });
+    });
+    container.querySelectorAll(".bib-add-variant").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        editingVariants.push({ name: "", stock_quantity: 0 });
+        renderProductsList();
+      });
+    });
+    container.querySelectorAll(".bib-remove-variant").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const removed = editingVariants.splice(Number(btn.dataset.index), 1)[0];
+        if (removed && removed.id) removedVariantIds.push(removed.id);
+        renderProductsList();
+      });
+    });
+    container.querySelectorAll(".bib-edit-variant-name").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        editingVariants[Number(e.target.dataset.index)].name = e.target.value;
+      });
+    });
+    container.querySelectorAll(".bib-edit-variant-stock").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        editingVariants[Number(e.target.dataset.index)].stock_quantity = Math.max(0, Math.round(Number(e.target.value) || 0));
       });
     });
     container.querySelectorAll(".bib-save-product").forEach((btn) => {
@@ -934,10 +978,25 @@
           }
           const { error } = await sb.from("products").update(update).eq("id", btn.dataset.id);
           if (error) throw error;
+
+          const cleanVariants = editingVariants.filter((v) => v.name.trim());
+          for (const v of cleanVariants) {
+            if (v.id) {
+              await sb.from("product_variants").update({ name: v.name.trim(), stock_quantity: v.stock_quantity }).eq("id", v.id);
+            } else {
+              await sb.from("product_variants").insert({ product_id: btn.dataset.id, name: v.name.trim(), stock_quantity: v.stock_quantity });
+            }
+          }
+          if (removedVariantIds.length) {
+            await sb.from("product_variants").delete().in("id", removedVariantIds);
+          }
+
           await callFunction("render-page", { page_id: page.id }, session);
           editingProductId = null;
           editingPhotos = [];
           editingDigitalFile = null;
+          editingVariants = [];
+          removedVariantIds = [];
           await loadProducts();
         } catch (err) {
           msgEl.textContent = err.message || "Something went wrong.";

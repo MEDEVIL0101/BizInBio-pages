@@ -405,15 +405,15 @@
           <div style="display:flex;gap:14px;margin-bottom:10px;padding:14px;background:oklch(97% 0.01 70);border-radius:14px">
             <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--bib-muted)">
               Accent
-              <input type="color" id="custom-accent-input" value="${theme.customAccent}" style="width:46px;height:32px;border:none;border-radius:8px;padding:0;cursor:pointer" />
+              <input type="color" id="custom-accent-input" value="${theme.customAccent}" style="width:46px;height:32px;border:1.5px solid var(--bib-border);border-radius:8px;padding:0;cursor:pointer" />
             </label>
             <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--bib-muted)">
               Background
-              <input type="color" id="custom-bg-input" value="${theme.customBg}" style="width:46px;height:32px;border:none;border-radius:8px;padding:0;cursor:pointer" />
+              <input type="color" id="custom-bg-input" value="${theme.customBg}" style="width:46px;height:32px;border:1.5px solid var(--bib-border);border-radius:8px;padding:0;cursor:pointer" />
             </label>
             <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:var(--bib-muted)">
               Text
-              <input type="color" id="custom-text-input" value="${theme.customText || contrastTextColor(theme.customBg, CUSTOM_TEXT)}" style="width:46px;height:32px;border:none;border-radius:8px;padding:0;cursor:pointer" />
+              <input type="color" id="custom-text-input" value="${theme.customText || contrastTextColor(theme.customBg, CUSTOM_TEXT)}" style="width:46px;height:32px;border:1.5px solid var(--bib-border);border-radius:8px;padding:0;cursor:pointer" />
             </label>
           </div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;padding:0 2px">
@@ -422,7 +422,7 @@
           </div>` : ""}
         <div class="bib-field-label">Button color</div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
-          <input type="color" id="custom-button-color-input" value="${theme.buttonColor || (isCustom ? theme.customAccent : (PALETTES.find((p) => p.id === theme.paletteId) || PALETTES[0]).primary)}" style="width:46px;height:32px;border:none;border-radius:8px;padding:0;cursor:pointer" />
+          <input type="color" id="custom-button-color-input" value="${theme.buttonColor || (isCustom ? theme.customAccent : (PALETTES.find((p) => p.id === theme.paletteId) || PALETTES[0]).primary)}" style="width:46px;height:32px;border:1.5px solid var(--bib-border);border-radius:8px;padding:0;cursor:pointer" />
           <span class="text-muted" style="font-size:12px;flex:1">${theme.buttonColor ? "Custom button color set" : "Using your theme's accent color"}</span>
           ${theme.buttonColor ? `<button type="button" class="bib-btn-text bib-reset-button-color" style="font-size:12px;padding:0;width:auto">Reset</button>` : ""}
         </div>
@@ -551,10 +551,18 @@
                 <div style="display:flex;align-items:center;gap:10px">
                   <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:600;color:var(--bib-muted)">
                     Card color
-                    <input type="color" class="bib-link-card-bg" data-id="${el.id}" data-index="${i}" value="${l.background_color || "#ffffff"}" style="width:38px;height:28px;border:none;border-radius:6px;padding:0;cursor:pointer" />
+                    <input type="color" class="bib-link-card-bg" data-id="${el.id}" data-index="${i}" value="${l.background_color || "#ffffff"}" style="width:38px;height:28px;border:1.5px solid var(--bib-border);border-radius:6px;padding:0;cursor:pointer" />
                   </label>
                   <span class="text-muted" style="font-size:11px;flex:1">${l.background_color ? "Custom color set" : "Using your theme's card color"}</span>
                   ${l.background_color ? `<button type="button" class="bib-btn-text bib-reset-link-card-bg" data-id="${el.id}" data-index="${i}" style="font-size:11px;padding:0;width:auto">Reset</button>` : ""}
+                </div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:600;color:var(--bib-muted)">
+                    Button color
+                    <input type="color" class="bib-link-card-button-color" data-id="${el.id}" data-index="${i}" value="${l.button_color || "#ff5a3c"}" style="width:38px;height:28px;border:1.5px solid var(--bib-border);border-radius:6px;padding:0;cursor:pointer" />
+                  </label>
+                  <span class="text-muted" style="font-size:11px;flex:1">${l.button_color ? "Custom color set" : "Using your theme's button color"}</span>
+                  ${l.button_color ? `<button type="button" class="bib-btn-text bib-reset-link-card-button-color" data-id="${el.id}" data-index="${i}" style="font-size:11px;padding:0;width:auto">Reset</button>` : ""}
                 </div>
                 <div style="display:flex;align-items:center;gap:8px">
                   <select class="bib-row-input bib-link-card-outline-style" data-id="${el.id}" data-index="${i}" style="flex:1">
@@ -562,7 +570,7 @@
                     <option value="border" ${l.outline_style === "border" ? "selected" : ""}>Border</option>
                     <option value="glow" ${l.outline_style === "glow" ? "selected" : ""}>Glow</option>
                   </select>
-                  ${l.outline_style && l.outline_style !== "none" ? `<input type="color" class="bib-link-card-outline-color" data-id="${el.id}" data-index="${i}" value="${l.outline_color || "#ff5a3c"}" style="width:38px;height:32px;border:none;border-radius:6px;padding:0;cursor:pointer;flex:none" />` : ""}
+                  ${l.outline_style && l.outline_style !== "none" ? `<input type="color" class="bib-link-card-outline-color" data-id="${el.id}" data-index="${i}" value="${l.outline_color || "#ff5a3c"}" style="width:38px;height:32px;border:1.5px solid var(--bib-border);border-radius:6px;padding:0;cursor:pointer;flex:none" />` : ""}
                 </div>
                 ${products.length ? `
                   <div class="bib-field-label" style="margin-bottom:0">Sell a product from your shop (optional)</div>
@@ -710,6 +718,8 @@
               } else if (l.outline_style === "glow" && l.outline_color) {
                 cardOutlineStyle = `border:1px solid transparent;box-shadow:0 0 18px 2px color-mix(in srgb, ${l.outline_color} 55%, transparent);`;
               }
+              var effectiveButtonColor = l.button_color || theme.buttonColor || palette.primary;
+              var buttonTextColor = contrastTextColor(effectiveButtonColor, CUSTOM_TEXT);
               return `<div style="width:100%;padding:12px;border-radius:14px;${cardOutlineStyle}display:flex;flex-direction:column;gap:2px;box-sizing:border-box;${cardBg ? `background:${cardBg};` : ""}">
                 <div style="display:flex;gap:10px;align-items:flex-start">
                   ${imageUrl ? `<div style="width:52px;height:52px;border-radius:10px;overflow:hidden;flex:none"><img src="${escapeHtml(imageUrl)}" style="width:100%;height:100%;object-fit:cover;display:block" /></div>` : ""}
@@ -719,7 +729,7 @@
                     ${priceHtml}
                   </div>
                 </div>
-                <div style="width:100%;margin-top:8px;height:38px;border-radius:10px;background:${palette.primary};color:#fff;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700">${buttonText}</div>
+                <div style="width:100%;margin-top:8px;height:38px;border-radius:10px;background:${effectiveButtonColor};color:${buttonTextColor};display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700">${buttonText}</div>
               </div>`;
             }).join("")}
           </div>`;
@@ -738,15 +748,21 @@
         }
         case "product_shop": {
           if (!products.length) return "";
+          var shopButtonColor = theme.buttonColor || palette.primary;
+          var shopButtonTextColor = contrastTextColor(shopButtonColor, CUSTOM_TEXT);
           return `<div style="width:100%;margin-top:28px;display:flex;flex-direction:column;gap:10px">
             <div style="font-family:${fonts.display};font-weight:700;font-size:16px">Shop</div>
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
-              ${products.map((p) => `<div style="display:flex;flex-direction:column;gap:6px">
-                <div style="aspect-ratio:1;border-radius:10px;overflow:hidden;background:oklch(93% 0.01 70)">
+              ${products.map((p) => `<div style="display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:10px;border:1px solid color-mix(in srgb, ${palette.primary} 16%, transparent);background:color-mix(in srgb, white 72%, transparent)">
+                <div style="aspect-ratio:1;border-radius:8px;overflow:hidden;background:oklch(93% 0.01 70)">
                   ${(p.image_urls || [])[0] ? `<img src="${escapeHtml(p.image_urls[0])}" style="width:100%;height:100%;object-fit:cover;display:block" />` : ""}
                 </div>
                 <span style="font-size:13px;font-weight:600;line-height:1.3">${escapeHtml(p.name || "")}</span>
-                <span style="font-size:13px;font-weight:700;color:${palette.primary}">$${(p.price_cents / 100).toFixed(2)}</span>
+                <span style="font-size:13px">
+                  <span style="font-weight:700;color:${palette.primary}">$${(p.price_cents / 100).toFixed(2)}</span>
+                  ${p.compare_at_price_cents && p.compare_at_price_cents > p.price_cents ? `<span style="opacity:.45;text-decoration:line-through;margin-left:4px;font-size:11px">$${(p.compare_at_price_cents / 100).toFixed(2)}</span>` : ""}
+                </span>
+                <div style="width:100%;margin-top:2px;height:30px;border-radius:8px;background:${shopButtonColor};color:${shopButtonTextColor};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">${escapeHtml(theme.addToCartText || "Add to cart")}</div>
               </div>`).join("")}
             </div>
           </div>`;
@@ -989,6 +1005,18 @@
     panel.querySelectorAll(".bib-reset-link-card-bg").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         delete elById(e.target.closest("button").dataset.id).content.links[Number(e.target.closest("button").dataset.index)].background_color;
+        markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-link-card-button-color").forEach((input) => {
+      input.addEventListener("input", (e) => {
+        elById(e.target.dataset.id).content.links[Number(e.target.dataset.index)].button_color = e.target.value;
+        markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-reset-link-card-button-color").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        delete elById(e.target.closest("button").dataset.id).content.links[Number(e.target.closest("button").dataset.index)].button_color;
         markDirty(); renderEditor(); renderPreview();
       });
     });
@@ -1243,7 +1271,7 @@
     const { data: sub } = await sb.from("subscriptions").select("tier, status").eq("user_id", session.user.id).maybeSingle();
     isPaid = !!(sub && sub.status === "active");
 
-    const { data: productRows } = await sb.from("products").select("id, name, price_cents, image_urls").eq("page_id", page.id).eq("active", true).order("position", { ascending: true });
+    const { data: productRows } = await sb.from("products").select("id, name, price_cents, compare_at_price_cents, image_urls").eq("page_id", page.id).eq("active", true).order("position", { ascending: true });
     products = productRows || [];
 
     document.getElementById("page-url").href = `https://bizinbio.net/${page.slug}/`;
