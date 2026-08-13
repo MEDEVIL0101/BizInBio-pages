@@ -91,8 +91,8 @@ button{font-family:inherit}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;text-decoration:none;font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:13px;color:var(--color-text);background:transparent;border:1px solid var(--color-divider);padding:11px 16px;border-radius:var(--radius-md)}
 .btn:hover{border-color:var(--color-accent)}
 .btn:focus-visible{outline:2px solid var(--color-accent);outline-offset:1px}
-.btn-primary{background:var(--color-accent);color:var(--color-on-accent);border-color:var(--color-accent)}
-.btn-primary:hover{background:var(--color-accent-700);border-color:var(--color-accent-700)}
+.btn-primary{background:var(--button-bg,var(--color-accent));color:var(--button-on-bg,var(--color-on-accent));border-color:var(--button-bg,var(--color-accent))}
+.btn-primary:hover{background:var(--button-bg-700,var(--color-accent-700));border-color:var(--button-bg-700,var(--color-accent-700))}
 .btn-secondary{border-color:var(--color-divider)}
 .btn-block{width:100%}
 

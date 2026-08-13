@@ -243,7 +243,7 @@
   let headerContent = { business_name: "", location: "", logo_url: "", cover_image_url: "" };
   let elements = []; // all non-header elements, in position order
   let products = []; // for the Shop section's preview only — real management lives on the dashboard
-  let theme = { paletteId: "coral", customAccent: PALETTES[0].primary, customBg: PALETTES[0].bg, fontPairId: "playful" };
+  let theme = { paletteId: "coral", customAccent: PALETTES[0].primary, customBg: PALETTES[0].bg, fontPairId: "playful", buttonColor: null };
   let expandedId = null;
   let selectedGalleryIndex = null; // index of the selected photo within the currently-open gallery panel, for editing its link
   let addMenuOpen = false;
@@ -384,6 +384,12 @@
               <input type="color" id="custom-bg-input" value="${theme.customBg}" style="width:46px;height:32px;border:none;border-radius:8px;padding:0;cursor:pointer" />
             </label>
           </div>` : ""}
+        <div class="bib-field-label">Button color</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+          <input type="color" id="custom-button-color-input" value="${theme.buttonColor || (isCustom ? theme.customAccent : (PALETTES.find((p) => p.id === theme.paletteId) || PALETTES[0]).primary)}" style="width:46px;height:32px;border:none;border-radius:8px;padding:0;cursor:pointer" />
+          <span class="text-muted" style="font-size:12px;flex:1">${theme.buttonColor ? "Custom button color set" : "Using your theme's accent color"}</span>
+          ${theme.buttonColor ? `<button type="button" class="bib-btn-text bib-reset-button-color" style="font-size:12px;padding:0;width:auto">Reset</button>` : ""}
+        </div>
         <div class="bib-field-label">Font pairing</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           ${FONT_PAIRS.map((f) => `
@@ -748,6 +754,10 @@
     if (accentInput) accentInput.addEventListener("input", (e) => { theme.customAccent = e.target.value; theme.paletteId = "custom"; markDirty(); renderPreview(); });
     const bgInput = document.getElementById("custom-bg-input");
     if (bgInput) bgInput.addEventListener("input", (e) => { theme.customBg = e.target.value; theme.paletteId = "custom"; markDirty(); renderPreview(); });
+    const buttonColorInput = document.getElementById("custom-button-color-input");
+    if (buttonColorInput) buttonColorInput.addEventListener("input", (e) => { theme.buttonColor = e.target.value; markDirty(); renderEditor(); renderPreview(); });
+    const resetButtonColorBtn = panel.querySelector(".bib-reset-button-color");
+    if (resetButtonColorBtn) resetButtonColorBtn.addEventListener("click", () => { theme.buttonColor = null; markDirty(); renderEditor(); renderPreview(); });
     panel.querySelectorAll(".bib-fontpair-item").forEach((btn) => {
       btn.addEventListener("click", () => { theme.fontPairId = btn.dataset.id; markDirty(); renderEditor(); renderPreview(); });
     });
@@ -1104,6 +1114,7 @@
         custom_accent_color: theme.customAccent || null,
         custom_bg_color: theme.customBg || null,
         font_pair: theme.fontPairId,
+        button_color: theme.buttonColor || null,
       }).eq("id", page.id);
       if (pageErr) throw pageErr;
       page.business_name = headerContent.business_name;
@@ -1136,6 +1147,7 @@
       customAccent: page.custom_accent_color || PALETTES[0].primary,
       customBg: page.custom_bg_color || PALETTES[0].bg,
       fontPairId: page.font_pair || "playful",
+      buttonColor: page.button_color || null,
     };
 
     const { data: sub } = await sb.from("subscriptions").select("tier, status").eq("user_id", session.user.id).maybeSingle();

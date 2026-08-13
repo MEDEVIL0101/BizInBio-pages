@@ -82,6 +82,22 @@
     <button id="connect-stripe-shop" class="bib-btn-secondary bib-btn-block" style="margin-top:10px">Connect Stripe to sell products</button>
     <button id="disconnect-stripe-shop" class="bib-btn-text" style="margin-top:8px;width:100%;display:none;margin-bottom:16px">Disconnect Stripe</button>
 
+    <div style="display:flex;flex-direction:column;gap:8px;padding:14px 0;margin-bottom:6px;border-top:1px solid var(--bib-border);border-bottom:1px solid var(--bib-border)">
+      <p class="text-muted" style="font-size:12px;margin:0;font-weight:600">Button text</p>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1">
+          <div class="bib-field-label">Add to cart</div>
+          <input class="bib-row-input" id="add_to_cart_text" placeholder="Add to cart" />
+        </div>
+        <div style="flex:1">
+          <div class="bib-field-label">Checkout</div>
+          <input class="bib-row-input" id="checkout_text" placeholder="Checkout" />
+        </div>
+      </div>
+      <button id="save-button-text" class="bib-btn-secondary bib-btn-block" style="margin-top:2px">Save</button>
+      <p id="button-text-msg" class="text-muted" style="text-align:center;font-size:12px;margin:0;min-height:16px"></p>
+    </div>
+
     <div id="shop-products" style="display:flex;flex-direction:column"></div>
 
     <div style="display:flex;flex-direction:column;gap:12px;padding-top:14px;margin-top:14px;border-top:1px solid var(--bib-border)">
@@ -391,6 +407,26 @@
     }
   });
 
+  document.getElementById("save-button-text").addEventListener("click", async () => {
+    const msg = document.getElementById("button-text-msg");
+    const addToCartText = document.getElementById("add_to_cart_text").value.trim();
+    const checkoutText = document.getElementById("checkout_text").value.trim();
+    msg.textContent = "Saving...";
+    try {
+      const { error } = await sb
+        .from("pages")
+        .update({ add_to_cart_button_text: addToCartText || null, checkout_button_text: checkoutText || null })
+        .eq("id", page.id);
+      if (error) throw error;
+      page.add_to_cart_button_text = addToCartText || null;
+      page.checkout_button_text = checkoutText || null;
+      await callFunction("render-page", { page_id: page.id }, session);
+      msg.textContent = "Saved and republished.";
+    } catch (err) {
+      msg.textContent = err.message || "Something went wrong.";
+    }
+  });
+
   document.getElementById("save-box-size").addEventListener("click", async () => {
     const msg = document.getElementById("chitchats-box-msg");
     const length = Number(document.getElementById("box_length").value);
@@ -478,6 +514,8 @@
       document.getElementById("shipping-section").style.display = "block";
       document.getElementById("orders-section").style.display = "block";
       document.getElementById("product-weight-required-note").style.display = "inline";
+      document.getElementById("add_to_cart_text").value = page.add_to_cart_button_text || "";
+      document.getElementById("checkout_text").value = page.checkout_button_text || "";
       await loadShippingConnection();
       // Shop rendering is gated on a "product_shop" element existing (same
       // pattern as every other opt-in element type) — make sure one exists
