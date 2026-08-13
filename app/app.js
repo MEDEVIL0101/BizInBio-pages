@@ -73,6 +73,8 @@ const FONT_PAIRS = [
   { id: "editorial", label: "Editorial", display: '"Playfair Display","Georgia",serif', body: '"Source Sans 3",system-ui,sans-serif' },
   { id: "modern", label: "Modern", display: '"Space Grotesk",system-ui,sans-serif', body: '"IBM Plex Sans",system-ui,sans-serif' },
   { id: "elegant", label: "Elegant", display: '"DM Serif Display","Georgia",serif', body: '"DM Sans",system-ui,sans-serif' },
+  { id: "script", label: "Script", display: '"Pacifico","Georgia",cursive', body: '"Nunito",system-ui,sans-serif' },
+  { id: "bold", label: "Bold", display: '"Bebas Neue","Arial Narrow",sans-serif', body: '"Work Sans",system-ui,sans-serif' },
 ];
 
 // Element types visible on a free-tier page — mirrors FREE_ELEMENTS in
