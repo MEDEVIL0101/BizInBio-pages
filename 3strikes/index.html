@@ -18,15 +18,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="//bizinbio.net/assets/site.css?v=22" />
 <style>:root{
-    --color-bg:#aa7942;
-    --body-bg:#aa7942;
+    --color-bg:#000000;
+    --body-bg:#000000;
     --color-card-bg:#ffffff;
-    --color-surface:color-mix(in srgb,#aa7942 70%,white);
-    --color-text:#77bb41;
-    --color-accent:#000000;
-    --color-on-accent:#FFFFFF;
-    --button-bg:#669c35;
-    --button-bg-700:color-mix(in srgb,#669c35 80%,black);
+    --color-surface:color-mix(in srgb,#000000 70%,white);
+    --color-text:#ed0202;
+    --color-accent:#ffffff;
+    --color-on-accent:#ed0202;
+    --button-bg:#f90133;
+    --button-bg-700:color-mix(in srgb,#f90133 80%,black);
     --button-on-bg:#FFFFFF;
     --font-heading:"Space Grotesk",system-ui,sans-serif;
     --font-heading-weight:700;
@@ -710,7 +710,24 @@
           status.textContent = 'Something went wrong — please try again.';
         }
       });
-    </script><footer style="padding:var(--space-6) var(--space-4);text-align:center;border-top:1px solid var(--color-divider)">
+    </script><div class="social-row" style="padding:0 var(--space-4) var(--space-6)"><a href="https://instagram.com/the3strikes" class="btn" target="_blank" rel="noopener"><span style="flex-shrink:0;display:flex"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l6-6"/><path d="M13 5l1-1a4 4 0 1 1 6 6l-1 1"/><path d="M11 19l-1 1a4 4 0 1 1-6-6l1-1"/></svg></span><span>Follow 3Strikes on IG</span></a>
+        <div class="blueprint" style="padding:var(--space-3);display:flex;flex-direction:column;gap:2px;background:#050000;border-color:transparent;box-shadow:0 0 18px 2px color-mix(in srgb,#fcfcfc 55%,transparent);">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:64px;height:64px;border-radius:var(--radius-md);overflow:hidden;flex:none"><img src="https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/8e9da974-cbfa-4e56-ab36-df345cc7d18a/1786644828000-IMG_1257.jpg" alt="" style="width:100%;height:100%;object-fit:cover;display:block" /></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14.5px;font-weight:700;line-height:1.3;color:#FFFFFF;">Follow us for more content</div>
+              <div style="font-size:12.5px;opacity:.7;margin-top:2px;line-height:1.4;color:#FFFFFF;">See more looks and past drops on our Instagram</div>
+              
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary bib-link-card-open" data-url="" style="width:100%;margin-top:10px;">CHECK IT OUT NOW</button>
+        </div></div><script>
+        document.body.addEventListener('click', function (e) {
+          var btn = e.target.closest('.bib-link-card-open');
+          if (!btn) return;
+          window.open(btn.dataset.url, '_blank', 'noopener');
+        });
+      </script><footer style="padding:var(--space-6) var(--space-4);text-align:center;border-top:1px solid var(--color-divider)">
     <a href="https://bizinbio.net/#pricing" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:var(--color-surface);border:1px solid var(--color-divider);color:var(--color-text);text-decoration:none;font-family:var(--font-heading);font-size:12px;font-weight:700">
       Get your BizInBio today
     </a>
