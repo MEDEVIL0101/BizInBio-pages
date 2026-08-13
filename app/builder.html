@@ -341,7 +341,7 @@
   // no longer a separate persisted-vs-pending state to fall out of sync.
   let session, page, isPaid = false;
   let headerElId = null;
-  let headerContent = { business_name: "", location: "", logo_url: "", cover_image_url: "" };
+  let headerContent = { business_name: "", location: "", logo_url: "", cover_image_url: "", cover_fade: false };
   let elements = []; // all non-header elements, in position order
   let products = []; // for the Shop section's preview only — real management lives on the dashboard
   let theme = { paletteId: "coral", customAccent: PALETTES[0].primary, customBg: PALETTES[0].bg, fontPairId: "playful", buttonColor: null, customText: null };
@@ -475,6 +475,11 @@
           </label>
         </div>
         <div style="margin-top:46px;display:flex;flex-direction:column;gap:14px">
+          ${headerContent.cover_image_url ? `
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--bib-muted);cursor:pointer">
+              <input type="checkbox" id="h-cover-fade-input" ${headerContent.cover_fade ? "checked" : ""} />
+              Fade cover photo into your background color
+            </label>` : ""}
           <div>
             <div class="bib-field-label">Business Name / Heading</div>
             ${editingField === "businessName"
@@ -669,10 +674,24 @@
                 <input class="bib-row-input bib-link-url" data-id="${el.id}" data-index="${i}" value="${escapeHtml(l.url || "")}" placeholder="Link or handle" style="flex:1;min-width:0" />
                 <button type="button" class="bib-icon-btn bib-remove-link" data-id="${el.id}" data-index="${i}">${CLOSE_ICON}</button>
               </div>
+              ${i === 0 ? `
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--bib-muted);cursor:pointer">
+                  <input type="checkbox" class="bib-link-shake-toggle" data-id="${el.id}" ${c.shake_top_link ? "checked" : ""} />
+                  Shake to grab attention (top link only)
+                </label>` : ""}
               <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--bib-muted);cursor:pointer">
                 <input type="checkbox" class="bib-link-card-toggle" data-id="${el.id}" data-index="${i}" ${isCard ? "checked" : ""} />
                 Show as a rich card (image, description, button)
               </label>
+              ${!isCard ? `
+                <div style="display:flex;gap:8px;align-items:center">
+                  ${l.image_url ? `
+                    <img src="${escapeHtml(l.image_url)}" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex:none" />
+                    <span class="text-muted" style="font-size:11px;flex:1">Image-only button — icon/text hidden</span>
+                    <button type="button" class="bib-btn-text bib-remove-link-image" data-id="${el.id}" data-index="${i}" style="font-size:11px;padding:0;width:auto">Remove</button>
+                  ` : `<label class="bib-btn-secondary" style="cursor:pointer;font-size:12px;padding:8px 12px;border-radius:8px;display:inline-block">Make this an image button<input type="file" accept="image/*" class="bib-link-plain-image" data-id="${el.id}" data-index="${i}" style="display:none" /></label>`}
+                </div>
+              ` : ""}
               ${isCard ? `
                 <div style="display:flex;gap:8px;align-items:center">
                   ${l.image_url ? `<img src="${escapeHtml(l.image_url)}" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex:none" />` : ""}
@@ -894,6 +913,8 @@
     }
     wireImageDrop(document.getElementById("h-cover-drop"), document.getElementById("h-cover-input"), (url) => { headerContent.cover_image_url = url; });
     wireImageDrop(document.getElementById("h-avatar-drop"), document.getElementById("h-avatar-input"), (url) => { headerContent.logo_url = url; });
+    const coverFadeInput = document.getElementById("h-cover-fade-input");
+    if (coverFadeInput) coverFadeInput.addEventListener("change", (e) => { headerContent.cover_fade = e.target.checked; markDirty(); renderPreview(); });
 
     // Theme
     panel.querySelectorAll(".bib-palette-btn").forEach((btn) => {
@@ -1070,6 +1091,25 @@
     panel.querySelectorAll(".bib-link-card-toggle").forEach((input) => {
       input.addEventListener("change", (e) => {
         elById(e.target.dataset.id).content.links[Number(e.target.dataset.index)].style = e.target.checked ? "card" : "pill";
+        markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-link-shake-toggle").forEach((input) => {
+      input.addEventListener("change", (e) => {
+        elById(e.target.dataset.id).content.shake_top_link = e.target.checked;
+        markDirty(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-link-plain-image").forEach((input) => {
+      input.addEventListener("change", (e) => {
+        if (!e.target.files.length) return;
+        const link = elById(e.target.dataset.id).content.links[Number(e.target.dataset.index)];
+        uploadImage(e.target.files[0], (url) => { link.image_url = url; });
+      });
+    });
+    panel.querySelectorAll(".bib-remove-link-image").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        delete elById(e.target.dataset.id).content.links[Number(e.target.dataset.index)].image_url;
         markDirty(); renderEditor(); renderPreview();
       });
     });

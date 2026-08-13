@@ -149,13 +149,42 @@ button{font-family:inherit}
 
 /* Wrapped, tinted bars — icon-optional label chips in the accent color at
    low opacity, matching the builder's live-preview panel exactly. */
-/* Full-width, fixed-height stacked bars — every link the same size
-   regardless of label length (a long label truncates, it doesn't grow
-   the bar). Shares .blueprint's --radius-md corner so plain links and
-   rich (style:"card") links read as the same family, just two densities. */
+/* Full-width, centered-text stacked bars — a label that outgrows one line
+   wraps to a second instead of truncating, and the bar grows with it
+   (min-height, not a fixed height), matching how long titles behave on
+   reference link-in-bio sites rather than clipping with an ellipsis.
+   Shares .blueprint's --radius-md corner so plain links and rich
+   (style:"card") links read as the same family, just two densities. */
 .social-row{display:flex;flex-direction:column;gap:18px}
-.social-row a{display:flex;align-items:center;gap:10px;width:100%;height:52px;padding:0 20px;border-radius:var(--radius-md);background:color-mix(in srgb,var(--color-accent) 14%,transparent);color:var(--color-accent);font-weight:700;font-size:16px;border:none;overflow:hidden}
-.social-row a span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.social-row a{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:52px;padding:16px 20px;border-radius:var(--radius-md);background:color-mix(in srgb,var(--color-accent) 14%,transparent);color:var(--color-accent);font-weight:700;font-size:16px;border:none;text-align:center}
+.social-row a .bib-link-label-text{overflow-wrap:break-word;white-space:normal;min-width:0}
+
+/* Image-only link — the uploaded image itself is the whole button, no
+   icon/text. Needs its own override since .social-row a above (fixed
+   height/padding/tint background, meant for icon+text pills) would
+   otherwise apply to any bare <a> in this container. */
+.social-row a.bib-link-image{height:auto;min-height:0;padding:0;background:none;overflow:hidden}
+.social-row a.bib-link-image img{width:100%;height:auto;display:block;border-radius:var(--radius-md)}
+
+/* Shake — an attention-grabbing wiggle a business can opt into for
+   whichever link sits at the very top of their list. Runs a brief shake
+   burst then holds still for the rest of the cycle (periodic, not
+   constant jitter), and backs off entirely for anyone who's asked their
+   OS/browser to reduce motion. */
+@keyframes bib-shake{
+  0%,100%{transform:translateX(0) rotate(0)}
+  2%{transform:translateX(-6px) rotate(-2deg)}
+  4%{transform:translateX(6px) rotate(2deg)}
+  6%{transform:translateX(-5px) rotate(-1.5deg)}
+  8%{transform:translateX(5px) rotate(1.5deg)}
+  10%{transform:translateX(-3px) rotate(-0.5deg)}
+  12%{transform:translateX(3px) rotate(0.5deg)}
+  14%{transform:translateX(0) rotate(0)}
+}
+.bib-shake{animation:bib-shake 3.2s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){
+  .bib-shake{animation:none}
+}
 
 /* Form fields (quote request, onboarding, dashboard edit) */
 .field{display:flex;flex-direction:column;gap:5px;margin-bottom:var(--space-3)}
