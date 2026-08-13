@@ -59,7 +59,16 @@
   .bib-preview-label{position:absolute;top:24px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--bib-muted);display:flex;align-items:center;gap:6px}
   .bib-phone{width:auto;height:min(844px, calc(100vh - 180px));aspect-ratio:390/844;max-width:100%;border-radius:52px;border:10px solid #111;background:#111;box-shadow:0 30px 60px rgba(0,0,0,.25);overflow:hidden;position:relative;flex-shrink:0}
   .bib-phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:120px;height:26px;background:#111;border-radius:0 0 16px 16px;z-index:5}
-  .bib-phone-screen{width:100%;height:100%;overflow-y:auto;background:#fff;border:0;display:block}
+  /* The iframe always renders at true device CSS pixels (390x844 — a real
+     phone's viewport), so every media query inside it evaluates exactly
+     like it would on an actual phone regardless of how small the bezel
+     graphic above gets squeezed on a short browser window. The bezel
+     shrinking is then purely a visual CSS transform:scale() of that fixed
+     canvas (see scalePreviewToFit() below), not a change to the content's
+     actual rendered pixel size — otherwise fixed-px elements (like the
+     120px avatar) end up looking oversized relative to a shrunken frame
+     even though their real, on-device size is correct. */
+  .bib-phone-screen{width:390px;height:844px;overflow-y:auto;background:#fff;border:0;display:block;transform-origin:top left}
 </style>
 </head>
 <body>
@@ -676,6 +685,24 @@
   // per-section paywall banners in the editor panel are unaffected.
   let previewDebounceTimer = null;
   let previewRequestSeq = 0;
+
+  // The iframe's own box is always exactly 390x844 (see .bib-phone-screen)
+  // so its content renders at true device pixels no matter how small the
+  // bezel graphic gets squeezed on a short window — visually fitting it
+  // into whatever size the bezel actually is is a pure CSS scale of that
+  // fixed canvas, done here rather than left to the browser, since letting
+  // the iframe's own box shrink is what caused fixed-px content (e.g. a
+  // 120px avatar) to look oversized relative to a shrunken frame.
+  function scalePreviewToFit() {
+    const phone = document.querySelector(".bib-phone");
+    const screenEl = document.getElementById("preview-screen");
+    if (!phone || !screenEl) return;
+    const scale = phone.clientWidth / 390;
+    screenEl.style.transform = `scale(${scale})`;
+  }
+  new ResizeObserver(scalePreviewToFit).observe(document.querySelector(".bib-phone"));
+  window.addEventListener("resize", scalePreviewToFit);
+  scalePreviewToFit();
 
   function renderPreview() {
     clearTimeout(previewDebounceTimer);
