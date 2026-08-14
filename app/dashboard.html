@@ -546,14 +546,24 @@
     }
   });
 
+  // A physical product with no weight can still be added/saved fine right
+  // up until a real customer's cart tries to get a shipping rate for it —
+  // at which point checkout just breaks with no way for the buyer to
+  // finish. Once shipping is actually connected, weight has to be required
+  // at save time instead of just hinted at, or that failure only ever
+  // surfaces mid-transaction.
+  let shippingConnected = false;
+
   async function loadShippingConnection() {
     const { data: connection } = await sb
       .from("shipping_connections")
       .select("default_length_cm, default_width_cm, default_height_cm")
       .eq("page_id", page.id)
       .maybeSingle();
+    shippingConnected = !!connection;
     document.getElementById("shipping-not-connected").style.display = connection ? "none" : "block";
     document.getElementById("shipping-connected").style.display = connection ? "block" : "none";
+    document.getElementById("product-weight-required-note").style.display = connection ? "inline" : "none";
     if (connection) {
       document.getElementById("box_length").value = connection.default_length_cm;
       document.getElementById("box_width").value = connection.default_width_cm;
@@ -689,7 +699,6 @@
       document.getElementById("shop-section").style.display = "block";
       document.getElementById("shipping-section").style.display = "block";
       document.getElementById("orders-section").style.display = "block";
-      document.getElementById("product-weight-required-note").style.display = "inline";
       document.getElementById("add_to_cart_text").value = page.add_to_cart_button_text || "";
       document.getElementById("checkout_text").value = page.checkout_button_text || "";
       document.querySelectorAll(".price-currency-label").forEach((el) => {
@@ -846,6 +855,10 @@
         msg.textContent = "Enter a download link for this digital product.";
         return;
       }
+    }
+    if (productType !== "digital" && shippingConnected && !weightG) {
+      msg.textContent = "Enter a weight — it's required to calculate shipping for this product.";
+      return;
     }
     msg.textContent = "Adding...";
     try {
@@ -1135,6 +1148,10 @@
             msgEl.textContent = "Enter a download link for this digital product.";
             return;
           }
+        }
+        if (productType !== "digital" && shippingConnected && !weightG) {
+          msgEl.textContent = "Enter a weight — it's required to calculate shipping for this product.";
+          return;
         }
         btn.disabled = true;
         msgEl.textContent = "Saving...";
