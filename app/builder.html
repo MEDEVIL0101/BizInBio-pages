@@ -344,7 +344,7 @@
   // no longer a separate persisted-vs-pending state to fall out of sync.
   let session, page, isPaid = false;
   let headerElId = null;
-  let headerContent = { business_name: "", location: "", logo_url: "", logo_shape: "circle", cover_image_url: "", cover_fade: false };
+  let headerContent = { business_name: "", location: "", logo_url: "", logo_shape: "circle", logo_width_pct: 50, cover_image_url: "", cover_fade: false };
   let elements = []; // all non-header elements, in position order
   let products = []; // for the Shop section's preview only — real management lives on the dashboard
   let theme = { paletteId: "coral", customAccent: PALETTES[0].primary, customBg: PALETTES[0].bg, fontPairId: "playful", buttonColor: null, customText: null };
@@ -472,12 +472,22 @@
             ${headerContent.cover_image_url ? `<img src="${escapeHtml(headerContent.cover_image_url)}" />` : `<span>${UPLOAD_ICON}<br/>Drop a cover photo</span>`}
             <input type="file" accept="image/*" id="h-cover-input" />
           </label>
-          <label class="bib-upload" id="h-avatar-drop" style="position:absolute;left:50%;bottom:-34px;transform:translateX(-50%);width:76px;height:76px;border-radius:${headerContent.logo_shape === "natural" ? "10px" : "50%"};border:4px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.12);${headerContent.logo_shape === "natural" ? "background:repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%) 50% / 12px 12px" : ""}">
-            ${headerContent.logo_url ? `<img src="${escapeHtml(headerContent.logo_url)}" style="${headerContent.logo_shape === "natural" ? "width:100%;height:100%;object-fit:contain" : ""}" />` : `<span style="font-size:10px">Photo</span>`}
-            <input type="file" accept="image/*" id="h-avatar-input" />
-          </label>
+          ${headerContent.logo_shape !== "natural" ? `
+            <label class="bib-upload" id="h-avatar-drop" style="position:absolute;left:50%;bottom:-34px;transform:translateX(-50%);width:76px;height:76px;border-radius:50%;border:4px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.12)">
+              ${headerContent.logo_url ? `<img src="${escapeHtml(headerContent.logo_url)}" />` : `<span style="font-size:10px">Photo</span>`}
+              <input type="file" accept="image/*" id="h-avatar-input" />
+            </label>` : ""}
         </div>
-        <div style="margin-top:46px;display:flex;flex-direction:column;gap:14px">
+        ${headerContent.logo_shape === "natural" ? `
+          <div style="margin-top:14px">
+            <label id="h-avatar-drop" style="display:flex;align-items:center;justify-content:center;min-height:64px;cursor:pointer;${headerContent.logo_url ? "" : "border:1.5px dashed var(--bib-border);border-radius:10px;padding:14px"}">
+              ${headerContent.logo_url
+                ? `<img src="${escapeHtml(headerContent.logo_url)}" style="max-width:${headerContent.logo_width_pct || 50}%;max-height:160px;object-fit:contain;display:block;margin:0 auto" />`
+                : `<span class="text-muted" style="font-size:12px;text-align:center">${UPLOAD_ICON}<br/>Drop your logo (transparent PNG works best)</span>`}
+              <input type="file" accept="image/*" id="h-avatar-input" />
+            </label>
+          </div>` : ""}
+        <div style="margin-top:${headerContent.logo_shape === "natural" ? "14" : "46"}px;display:flex;flex-direction:column;gap:14px">
           ${headerContent.logo_url ? `
             <div>
               <div class="bib-field-label">Logo shape</div>
@@ -485,7 +495,14 @@
                 <button type="button" class="bib-shape-btn bib-logo-shape-btn ${headerContent.logo_shape !== "natural" ? "sel" : ""}" data-shape="circle">Circle crop</button>
                 <button type="button" class="bib-shape-btn bib-logo-shape-btn ${headerContent.logo_shape === "natural" ? "sel" : ""}" data-shape="natural">Logo, uncropped</button>
               </div>
-              ${headerContent.logo_shape === "natural" ? `<p class="text-muted" style="font-size:11px;margin-top:6px">Best with a transparent-background PNG — it'll show at full size, not cropped into a circle.</p>` : ""}
+              ${headerContent.logo_shape === "natural" ? `
+                <p class="text-muted" style="font-size:11px;margin-top:6px">Best with a transparent-background PNG — no circle, no border, sized however you like.</p>
+                <div style="margin-top:10px">
+                  <div class="bib-field-label" style="display:flex;justify-content:space-between;margin-bottom:4px">
+                    <span>Logo size</span><span id="h-logo-width-value">${headerContent.logo_width_pct || 50}%</span>
+                  </div>
+                  <input type="range" min="15" max="100" value="${headerContent.logo_width_pct || 50}" id="h-logo-width-input" style="width:100%" />
+                </div>` : ""}
             </div>` : ""}
           ${headerContent.cover_image_url ? `
             <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--bib-muted);cursor:pointer">
@@ -928,6 +945,21 @@
     document.querySelectorAll(".bib-logo-shape-btn").forEach((btn) => {
       btn.addEventListener("click", () => { headerContent.logo_shape = btn.dataset.shape; markDirty(); renderEditor(); renderPreview(); });
     });
+    const logoWidthInput = document.getElementById("h-logo-width-input");
+    if (logoWidthInput) {
+      // Updates the size label + preview image directly rather than a full
+      // renderEditor() on every tick -- re-rendering the panel mid-drag would
+      // recreate the <input type="range"> and interrupt the drag gesture.
+      logoWidthInput.addEventListener("input", (e) => {
+        headerContent.logo_width_pct = Number(e.target.value);
+        const valueLabel = document.getElementById("h-logo-width-value");
+        if (valueLabel) valueLabel.textContent = headerContent.logo_width_pct + "%";
+        const dropPreviewImg = document.querySelector("#h-avatar-drop img");
+        if (dropPreviewImg) dropPreviewImg.style.maxWidth = headerContent.logo_width_pct + "%";
+        markDirty();
+        renderPreview();
+      });
+    }
     const coverFadeInput = document.getElementById("h-cover-fade-input");
     if (coverFadeInput) coverFadeInput.addEventListener("change", (e) => { headerContent.cover_fade = e.target.checked; markDirty(); renderPreview(); });
 
@@ -1453,7 +1485,7 @@
     const header = all.find((e) => e.type === "header");
     if (header) {
       headerElId = header.id;
-      headerContent = { business_name: "", location: "", logo_url: "", logo_shape: "circle", cover_image_url: "", cover_fade: false, ...header.content };
+      headerContent = { business_name: "", location: "", logo_url: "", logo_shape: "circle", logo_width_pct: 50, cover_image_url: "", cover_fade: false, ...header.content };
     }
     elements = all.filter((e) => e.type !== "header").map((e) => {
       if (e.type === "booking_deposit") e._depositOn = Number(e.content.deposit_amount) > 0;

@@ -88,12 +88,11 @@ button{font-family:inherit}
 }
 
 /* A transparent wordmark/logo, deliberately not cropped into the circular
-   avatar shape — sized by its own aspect ratio (object-fit:contain) with no
-   border, ring, or shadow so it reads as sitting directly on the page. */
-.avatar-img.natural{width:auto;height:auto;max-width:220px;max-height:130px;object-fit:contain;border-radius:0;border:none;box-shadow:none;background:transparent}
-@media (min-width:640px){
-  .avatar-img.natural{max-width:300px;max-height:170px}
-}
+   avatar shape and not boxed into any fixed-size container — width is set
+   inline per-page as a percentage (the business's own size slider, up to
+   the full width of the content column), height follows automatically via
+   object-fit:contain so the logo's own aspect ratio is preserved. */
+.avatar-img.natural{height:auto;max-width:100%;object-fit:contain;border-radius:0;border:none;box-shadow:none;background:transparent}
 
 /* Buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;text-decoration:none;font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:13px;color:var(--color-text);background:transparent;border:1px solid var(--color-divider);padding:11px 16px;border-radius:var(--radius-md)}
