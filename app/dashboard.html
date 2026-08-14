@@ -131,6 +131,15 @@
     <button id="connect-stripe-shop" class="bib-btn-secondary bib-btn-block" style="margin-top:10px" disabled>Connect Stripe to sell products</button>
     <button id="disconnect-stripe-shop" class="bib-btn-text" style="margin-top:8px;width:100%;display:none;margin-bottom:16px">Disconnect Stripe</button>
 
+    <div style="display:flex;flex-direction:column;gap:8px;padding:14px 0;margin-bottom:6px;border-top:1px solid var(--bib-border)">
+      <p class="text-muted" style="font-size:12px;margin:0;font-weight:600">Currency <span style="font-weight:400">(your choice — separate from your Stripe account's country)</span></p>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="bib-currency-btn bib-btn-secondary" data-currency="usd" style="flex:1">USD</button>
+        <button type="button" class="bib-currency-btn bib-btn-secondary" data-currency="cad" style="flex:1">CAD</button>
+      </div>
+      <p id="currency-msg" class="text-muted" style="text-align:center;font-size:12px;margin:0;min-height:16px"></p>
+    </div>
+
     <div style="display:flex;flex-direction:column;gap:8px;padding:14px 0;margin-bottom:6px;border-top:1px solid var(--bib-border);border-bottom:1px solid var(--bib-border)">
       <p class="text-muted" style="font-size:12px;margin:0;font-weight:600">Button text</p>
       <div style="display:flex;gap:8px">
@@ -164,7 +173,7 @@
       </div>
       <div style="display:flex;gap:8px">
         <div style="flex:1">
-          <div class="bib-field-label">Price (USD)</div>
+          <div class="bib-field-label price-currency-label">Price (USD)</div>
           <input class="bib-row-input" id="product_price" type="number" min="0" step="0.01" placeholder="24.99" />
         </div>
         <div style="flex:1">
@@ -402,6 +411,41 @@
       const connectBtn = document.getElementById(btn.dataset.connectBtn);
       connectBtn.dataset.country = btn.dataset.country;
       connectBtn.disabled = false;
+    });
+  });
+
+  // Currency is a real choice the business makes and can change any time —
+  // separate from the Connect account's country, which is locked forever
+  // once the account exists.
+  function renderCurrencyState() {
+    const active = currentCurrencyLabel().toLowerCase();
+    document.querySelectorAll(".bib-currency-btn").forEach((btn) => {
+      const isActive = btn.dataset.currency === active;
+      btn.style.background = isActive ? "var(--bib-accent)" : "";
+      btn.style.borderColor = isActive ? "var(--bib-accent)" : "";
+      btn.style.color = isActive ? "#fff" : "";
+    });
+  }
+  document.querySelectorAll(".bib-currency-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const msg = document.getElementById("currency-msg");
+      const newCurrency = btn.dataset.currency;
+      if (currentCurrencyLabel().toLowerCase() === newCurrency) return;
+      msg.textContent = "Saving...";
+      try {
+        const { error } = await sb.from("pages").update({ currency: newCurrency }).eq("id", page.id);
+        if (error) throw error;
+        page.currency = newCurrency;
+        renderCurrencyState();
+        document.querySelectorAll(".price-currency-label").forEach((el) => {
+          el.textContent = `Price (${currentCurrencyLabel()})`;
+        });
+        await loadProducts();
+        await callFunction("render-page", { page_id: page.id }, session);
+        msg.textContent = "Saved and republished.";
+      } catch (err) {
+        msg.textContent = err.message || "Something went wrong.";
+      }
     });
   });
 
@@ -648,6 +692,10 @@
       document.getElementById("product-weight-required-note").style.display = "inline";
       document.getElementById("add_to_cart_text").value = page.add_to_cart_button_text || "";
       document.getElementById("checkout_text").value = page.checkout_button_text || "";
+      document.querySelectorAll(".price-currency-label").forEach((el) => {
+        el.textContent = `Price (${currentCurrencyLabel()})`;
+      });
+      renderCurrencyState();
       await loadShippingConnection();
       // Shop rendering is gated on a "product_shop" element existing (same
       // pattern as every other opt-in element type) — make sure one exists
@@ -669,6 +717,16 @@
   function escapeHtml(str) {
     return String(str ?? "")
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  // Mirrors _shared/currency.ts's resolveCurrency -- just for labeling
+  // price inputs, the actual charge currency is always decided server-side.
+  // pages.currency (business's own explicit choice) wins over whatever the
+  // locked Connect account country would otherwise imply.
+  function currentCurrencyLabel() {
+    if (!page) return "USD";
+    if (page.currency === "usd" || page.currency === "cad") return page.currency.toUpperCase();
+    return page.country === "US" ? "USD" : "CAD";
   }
 
   async function uploadProductPhotos(files, targetArray, msgEl) {
@@ -868,7 +926,7 @@
         </div>
         <div style="display:flex;gap:8px;margin-bottom:10px">
           <div style="flex:1">
-            <div class="bib-field-label">Price (USD)</div>
+            <div class="bib-field-label">Price (${currentCurrencyLabel()})</div>
             <input class="bib-row-input bib-edit-price" type="number" min="0" step="0.01" value="${(p.price_cents / 100).toFixed(2)}" />
           </div>
           <div style="flex:1">
@@ -944,7 +1002,7 @@
             : `<div style="width:44px;height:44px;border-radius:10px;background:oklch(96% 0.01 70);flex:none"></div>`}
           <div style="flex:1;min-width:0">
             <div style="font-size:14px;font-weight:600">${escapeHtml(p.name)}</div>
-            <div class="text-muted" style="font-size:12px">$${(p.price_cents / 100).toFixed(2)}${p.compare_at_price_cents ? ` (was $${(p.compare_at_price_cents / 100).toFixed(2)})` : ""}${p.product_type === "digital" ? " · Digital" : ""}${p.category ? ` · ${escapeHtml(p.category)}` : ""}${p.weight_g ? ` · ${p.weight_g}g` : ""}${photoCount > 1 ? ` · ${photoCount} photos` : ""}</div>
+            <div class="text-muted" style="font-size:12px">${formatCents(p.price_cents, currentCurrencyLabel())}${p.compare_at_price_cents ? ` (was ${formatCents(p.compare_at_price_cents, currentCurrencyLabel())})` : ""}${p.product_type === "digital" ? " · Digital" : ""}${p.category ? ` · ${escapeHtml(p.category)}` : ""}${p.weight_g ? ` · ${p.weight_g}g` : ""}${photoCount > 1 ? ` · ${photoCount} photos` : ""}</div>
           </div>
           <button class="bib-btn-secondary bib-btn-sm bib-edit-product" data-id="${p.id}" style="flex:none">${isEditing ? "Close" : "Edit"}</button>
           <button class="bib-btn-secondary bib-btn-sm bib-delete-product" data-id="${p.id}" style="flex:none">Delete</button>
