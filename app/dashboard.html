@@ -1341,6 +1341,20 @@
     document.getElementById("status-badge").textContent = page.published ? "Live" : "Not published";
     document.getElementById("dash-slug-input").value = page.slug;
 
+    // stripe_connect_onboarding_complete only ever flips true via a Stripe
+    // webhook landing -- if a business genuinely finished onboarding but the
+    // webhook was missed/delayed, the dashboard would otherwise show "Not
+    // connected" forever with no way to self-recover. If there's a connected
+    // account on file but it isn't marked complete yet, ask Stripe directly
+    // (self-heals the flag if it's actually done) before rendering state.
+    if (page.stripe_connect_account_id && !page.stripe_connect_onboarding_complete) {
+      try {
+        const status = await callFunction("check-connect-account-status", { pageId: page.id }, session);
+        if (status.complete) page.stripe_connect_onboarding_complete = true;
+      } catch (err) {
+        console.error("check-connect-account-status failed:", err);
+      }
+    }
     renderStripeConnectState();
 
     const { data: elements } = await sb.from("elements").select("*").eq("page_id", page.id);
