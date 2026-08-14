@@ -88,7 +88,11 @@
     <div id="domain-set" style="display:none;margin-top:12px">
       <p style="font-size:14px"><strong id="domain-name"></strong> <span class="bib-tag" id="domain-status-tag" style="margin-left:6px"></span></p>
       <p id="domain-instructions" class="text-muted" style="font-size:12px;margin-top:8px"></p>
-      <button id="recheck-domain" class="bib-btn-secondary bib-btn-block" style="margin-top:10px">Check status</button>
+      <div id="domain-dns-records" style="margin-top:8px"></div>
+      <p style="font-size:14px;margin-top:14px"><strong>Sending email from this domain</strong> <span class="bib-tag" id="email-status-tag" style="margin-left:6px"></span></p>
+      <p id="email-instructions" class="text-muted" style="font-size:12px;margin-top:4px"></p>
+      <div id="email-dns-records" style="margin-top:8px"></div>
+      <button id="recheck-domain" class="bib-btn-secondary bib-btn-block" style="margin-top:14px">Check status</button>
       <button id="remove-domain" class="bib-btn-text" style="margin-top:6px;width:100%">Remove domain</button>
     </div>
     <p id="domain-msg" class="text-muted" style="text-align:center;font-size:13px;margin-top:8px;min-height:18px"></p>
@@ -1398,7 +1402,18 @@
     });
   }
 
-  function renderDomainState(dcvMethod) {
+  function dnsRecordsTableHtml(rows) {
+    if (!rows || !rows.length) return "";
+    return `<div style="background:#F6F6F6;border-radius:8px;padding:10px 12px;font-family:monospace;font-size:11px;overflow-x:auto">
+      ${rows.map((r) => `<div style="display:flex;gap:10px;padding:4px 0;white-space:nowrap">
+        <span style="font-weight:700;width:44px;flex-shrink:0">${escapeHtml(r.type)}</span>
+        <span style="color:#6B6B70;width:170px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.name)}</span>
+        <span>${escapeHtml(r.value)}${r.priority != null ? ` (priority ${r.priority})` : ""}</span>
+      </div>`).join("")}
+    </div>`;
+  }
+
+  function renderDomainState(dcvMethod, emailStatus, emailRecords) {
     const noneView = document.getElementById("domain-none");
     const setView = document.getElementById("domain-set");
     if (!page.custom_domain) {
@@ -1410,19 +1425,46 @@
     setView.style.display = "block";
     document.getElementById("domain-name").textContent = page.custom_domain;
     const statusTag = document.getElementById("domain-status-tag");
+    const dnsRecordsEl = document.getElementById("domain-dns-records");
     if (page.custom_domain_status === "active") {
       statusTag.textContent = "Active";
       statusTag.className = "bib-tag live";
       document.getElementById("domain-instructions").textContent = "Your page is live at this domain.";
+      dnsRecordsEl.innerHTML = "";
     } else {
       statusTag.textContent = "Pending";
       statusTag.className = "bib-tag outline";
-      let text = "Add a CNAME record at your domain's registrar pointing to cf.bizinbio.net.";
+      document.getElementById("domain-instructions").textContent = "Add these DNS records at your domain's registrar, then check status. This can take a few minutes to a few hours.";
+      const rows = [{ type: "CNAME", name: page.custom_domain, value: "cf.bizinbio.net" }];
       if (dcvMethod && dcvMethod.type === "txt") {
-        text += ` Also add a TXT record — name: ${dcvMethod.name}, value: ${dcvMethod.value}.`;
+        rows.push({ type: "TXT", name: dcvMethod.name, value: dcvMethod.value });
       }
-      text += " This can take a few minutes to a few hours, then check status.";
-      document.getElementById("domain-instructions").textContent = text;
+      dnsRecordsEl.innerHTML = dnsRecordsTableHtml(rows);
+    }
+
+    // Email sending from the same domain -- surfaced right alongside the
+    // website DNS setup since it's the same "connect your domain" step from
+    // the business's perspective, even though it's a separate provider call.
+    const emailTag = document.getElementById("email-status-tag");
+    const emailInstructions = document.getElementById("email-instructions");
+    const emailRecordsEl = document.getElementById("email-dns-records");
+    const status = emailStatus || (page.email_domain_verified ? "verified" : "pending");
+    if (status === "verified") {
+      emailTag.textContent = "Verified";
+      emailTag.className = "bib-tag live";
+      emailInstructions.textContent = `Order emails to your customers now send from orders@${page.custom_domain}.`;
+      emailRecordsEl.innerHTML = "";
+    } else if (status === "none") {
+      emailTag.textContent = "Unavailable";
+      emailTag.className = "bib-tag outline";
+      emailInstructions.textContent = "Couldn't set up email sending for this domain right now — order emails will keep sending from bizinbio.net. Try Check status again shortly.";
+      emailRecordsEl.innerHTML = "";
+    } else {
+      emailTag.textContent = "Pending";
+      emailTag.className = "bib-tag outline";
+      emailInstructions.textContent = "Add these DNS records too, so order emails can send from your own domain instead of bizinbio.net.";
+      const rows = (emailRecords || []).map((r) => ({ type: r.type, name: r.name, value: r.value, priority: r.priority }));
+      emailRecordsEl.innerHTML = dnsRecordsTableHtml(rows);
     }
   }
 
@@ -1435,8 +1477,8 @@
       const data = await callFunction("register-custom-domain", { pageId: page.id, domain }, session);
       page.custom_domain = data.domain;
       page.custom_domain_status = data.status;
-      renderDomainState(data.dcvMethod);
-      domainMsg.textContent = "";
+      renderDomainState(data.dcvMethod, data.emailStatus, data.emailDcvRecords);
+      domainMsg.textContent = data.emailError ? `Domain connected. ${data.emailError}` : "";
     } catch (err) {
       domainMsg.textContent = err.message || "Something went wrong.";
     }
@@ -1448,7 +1490,8 @@
     try {
       const data = await callFunction("register-custom-domain", { pageId: page.id }, session);
       page.custom_domain_status = data.status;
-      renderDomainState(data.dcvMethod);
+      if (data.emailStatus === "verified") page.email_domain_verified = true;
+      renderDomainState(data.dcvMethod, data.emailStatus, data.emailDcvRecords);
       domainMsg.textContent = data.status === "active" ? "Domain is live!" : "Still pending — DNS may take a while to propagate.";
     } catch (err) {
       domainMsg.textContent = err.message || "Something went wrong.";
@@ -1527,11 +1570,12 @@
     (elements || []).forEach((el) => { elementsByType[el.type] = el; });
 
     await loadPlan();
-    if (page.custom_domain && page.custom_domain_status === "pending") {
+    if (page.custom_domain && (page.custom_domain_status === "pending" || !page.email_domain_verified)) {
       try {
         const data = await callFunction("register-custom-domain", { pageId: page.id }, session);
         page.custom_domain_status = data.status;
-        renderDomainState(data.dcvMethod);
+        if (data.emailStatus === "verified") page.email_domain_verified = true;
+        renderDomainState(data.dcvMethod, data.emailStatus, data.emailDcvRecords);
       } catch {
         renderDomainState();
       }
