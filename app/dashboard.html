@@ -195,8 +195,15 @@
         </div>
       </div>
       <div id="product-physical-fields">
-        <div class="bib-field-label">Weight in grams <span id="product-weight-required-note" class="text-muted" style="display:none">(required for shipping)</span></div>
-        <input class="bib-row-input" id="product_weight" type="number" min="0" step="1" placeholder="250" />
+        <div class="bib-field-label">Weight <span id="product-weight-required-note" class="text-muted" style="display:none">(required for shipping)</span></div>
+        <div style="display:flex;gap:8px">
+          <input class="bib-row-input" id="product_weight" type="number" min="0" step="0.01" placeholder="250" style="flex:1" />
+          <select class="bib-row-input" id="product_weight_unit" style="flex:none;width:80px">
+            <option value="g">g</option>
+            <option value="kg">kg</option>
+            <option value="lb">lb</option>
+          </select>
+        </div>
       </div>
       <div id="product-digital-fields" style="display:none">
         <div class="bib-field-label">Delivery</div>
@@ -738,6 +745,16 @@
     return page.country === "US" ? "USD" : "CAD";
   }
 
+  // products.weight_g is always grams (Chit Chats' API takes weight_unit:
+  // 'g' throughout) -- this just lets the business type in whatever unit
+  // is natural for them instead of doing the conversion in their head.
+  const WEIGHT_TO_GRAMS = { g: 1, kg: 1000, lb: 453.592 };
+  function weightToGrams(value, unit) {
+    const n = Number(value);
+    if (!(n > 0)) return null;
+    return Math.round(n * (WEIGHT_TO_GRAMS[unit] || 1));
+  }
+
   async function uploadProductPhotos(files, targetArray, msgEl) {
     for (const file of files) {
       msgEl.textContent = "Uploading photo...";
@@ -835,7 +852,8 @@
     const category = document.getElementById("product_category").value.trim();
     const description = document.getElementById("product_description").value.trim();
     const weightInput = document.getElementById("product_weight").value;
-    const weightG = weightInput ? Math.round(Number(weightInput)) : null;
+    const weightUnit = document.getElementById("product_weight_unit").value;
+    const weightG = weightInput ? weightToGrams(weightInput, weightUnit) : null;
     const priceCents = Math.round(Number(priceInput) * 100);
     const productType = document.getElementById("product_type").value;
     const comparePriceInput = document.getElementById("product_compare_price").value;
@@ -884,6 +902,7 @@
       document.getElementById("product_category").value = "";
       document.getElementById("product_description").value = "";
       document.getElementById("product_weight").value = "";
+      document.getElementById("product_weight_unit").value = "g";
       document.getElementById("product_type").value = "physical";
       document.getElementById("product_compare_price").value = "";
       document.getElementById("product_digital_delivery_type").value = "hosted_file";
@@ -961,8 +980,15 @@
           </div>
         </div>
         <div class="bib-edit-physical-fields" style="margin-bottom:10px;${p.product_type === "digital" ? "display:none" : ""}">
-          <div class="bib-field-label">Weight in grams</div>
-          <input class="bib-row-input bib-edit-weight" type="number" min="0" step="1" value="${p.weight_g || ""}" />
+          <div class="bib-field-label">Weight</div>
+          <div style="display:flex;gap:8px">
+            <input class="bib-row-input bib-edit-weight" type="number" min="0" step="0.01" value="${p.weight_g || ""}" style="flex:1" />
+            <select class="bib-row-input bib-edit-weight-unit" style="flex:none;width:80px">
+              <option value="g">g</option>
+              <option value="kg">kg</option>
+              <option value="lb">lb</option>
+            </select>
+          </div>
         </div>
         <div class="bib-edit-digital-fields" style="margin-bottom:10px;${p.product_type === "digital" ? "" : "display:none"}">
           <div class="bib-field-label">Delivery</div>
@@ -1128,7 +1154,8 @@
         const category = panel.querySelector(".bib-edit-category").value.trim();
         const description = panel.querySelector(".bib-edit-description").value.trim();
         const weightInput = panel.querySelector(".bib-edit-weight").value;
-        const weightG = weightInput ? Math.round(Number(weightInput)) : null;
+        const weightUnit = panel.querySelector(".bib-edit-weight-unit").value;
+        const weightG = weightInput ? weightToGrams(weightInput, weightUnit) : null;
         const productType = panel.querySelector(".bib-edit-type").value;
         const comparePriceInput = panel.querySelector(".bib-edit-compare-price").value;
         const compareAtPriceCents = comparePriceInput ? Math.round(Number(comparePriceInput) * 100) : null;
@@ -1220,7 +1247,7 @@
   async function loadOrders() {
     const { data: orders } = await sb
       .from("orders")
-      .select("id, buyer_name, buyer_email, total_cents, status, created_at, shipping_cents, shipping_postage_type, shipping_status, shipping_tracking_url, shipping_label_url")
+      .select("id, buyer_name, buyer_email, total_cents, status, created_at, shipping_cents, shipping_postage_type, shipping_status, shipping_tracking_url, shipping_label_url, shipping_name, shipping_address_1, shipping_address_2, shipping_city, shipping_province_code, shipping_postal_code, shipping_country_code, shipping_phone, stripe_session_id")
       .eq("page_id", page.id)
       .order("created_at", { ascending: false });
     allOrders = orders || [];
@@ -1229,18 +1256,36 @@
 
   function shippingSectionHtml(o) {
     if (!o.shipping_postage_type) return "";
+    // The mailing address was always captured at checkout (shipping_name/
+    // shipping_address_1/etc columns) but never actually rendered anywhere
+    // in the dashboard — a business could see a paid order needed shipping
+    // and even buy a label for it, but had no way to just look up who to
+    // ship to and where.
+    const addressLines = [
+      o.shipping_name,
+      [o.shipping_address_1, o.shipping_address_2].filter(Boolean).join(", "),
+      [o.shipping_city, o.shipping_province_code, o.shipping_postal_code].filter(Boolean).join(", "),
+      o.shipping_country_code,
+      o.shipping_phone,
+    ].filter(Boolean);
+    const addressHtml = addressLines.length
+      ? `<div style="font-size:13px;padding:8px 0;border-top:1px solid var(--bib-border);margin-top:6px">
+          <div class="text-muted" style="font-size:11px;font-weight:600;margin-bottom:2px">Ship to</div>
+          ${addressLines.map((l) => `<div>${escapeHtml(l)}</div>`).join("")}
+        </div>`
+      : "";
     const costLine = `<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0"><span class="text-muted">Shipping</span><span class="text-muted">$${((o.shipping_cents || 0) / 100).toFixed(2)}</span></div>`;
     if (o.shipping_status === "purchased") {
-      return costLine + `<div style="display:flex;gap:10px;margin-top:6px;font-size:13px">
+      return addressHtml + costLine + `<div style="display:flex;gap:10px;margin-top:6px;font-size:13px">
         ${o.shipping_tracking_url ? `<a href="${escapeHtml(o.shipping_tracking_url)}" target="_blank" rel="noopener">Track shipment</a>` : ""}
         ${o.shipping_label_url ? `<a href="${escapeHtml(o.shipping_label_url)}" target="_blank" rel="noopener">Print label</a>` : ""}
       </div>`;
     }
-    if (o.status !== "paid") return costLine;
+    if (o.status !== "paid") return addressHtml + costLine;
     const failedNote = o.shipping_status === "failed"
       ? `<p class="text-muted" style="font-size:12px;color:#d6336c;margin:4px 0 0">Label purchase failed — try again.</p>`
       : "";
-    return costLine + failedNote + `<button type="button" class="bib-btn-secondary bib-btn-sm bib-buy-label" data-id="${o.id}" style="margin-top:6px">Buy shipping label</button>`;
+    return addressHtml + costLine + failedNote + `<button type="button" class="bib-btn-secondary bib-btn-sm bib-buy-label" data-id="${o.id}" style="margin-top:6px">Buy shipping label</button>`;
   }
 
   function renderOrdersList() {
@@ -1272,6 +1317,7 @@
             ${o.buyer_email ? `<div class="text-muted" style="font-size:12px;margin-bottom:4px">${escapeHtml(o.buyer_email)}</div>` : ""}
             ${itemsHtml}
             ${shippingSectionHtml(o)}
+            ${o.status === "paid" ? `<button type="button" class="bib-btn-text bib-refund-order" data-id="${o.id}" style="margin-top:8px;padding:0;color:#d6336c">Refund this order</button>` : ""}
           </div>` : ""}
         </div>`;
     }).join("");
@@ -1302,6 +1348,22 @@
           alert(err.message || "Something went wrong.");
           btn.disabled = false;
           btn.textContent = "Buy shipping label";
+        }
+      });
+    });
+    container.querySelectorAll(".bib-refund-order").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        if (!confirm("Refund this order in full? This can't be undone.")) return;
+        btn.disabled = true;
+        btn.textContent = "Refunding...";
+        try {
+          await callFunction("refund-order", { orderId: btn.dataset.id }, session);
+          await loadOrders();
+        } catch (err) {
+          alert(err.message || "Something went wrong.");
+          btn.disabled = false;
+          btn.textContent = "Refund this order";
         }
       });
     });
