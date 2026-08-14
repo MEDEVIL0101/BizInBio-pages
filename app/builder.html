@@ -780,6 +780,15 @@
       case "quote_request_form":
         return `<div style="display:flex;flex-direction:column;gap:12px">
           <div>
+            <div class="bib-field-label">Template <span style="font-weight:400">(quick start — tweak anything after)</span></div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              ${Object.entries(QUOTE_FORM_TEMPLATES).map(([key, t]) => `
+                <button type="button" class="bib-shape-btn bib-quote-template-btn ${(c.form_template || "quote_request") === key ? "sel" : ""}" data-id="${el.id}" data-template="${key}">${escapeHtml(t.label)}</button>
+              `).join("")}
+              <button type="button" class="bib-shape-btn bib-quote-template-btn ${c.form_template === "custom" ? "sel" : ""}" data-id="${el.id}" data-template="custom">Build your own</button>
+            </div>
+          </div>
+          <div>
             <div class="bib-field-label">Heading</div>
             <input class="bib-row-input bib-quote-heading" data-id="${el.id}" value="${escapeHtml(c.heading ?? "")}" placeholder="e.g. See what your home is really worth" />
           </div>
@@ -1287,6 +1296,21 @@
         const f = elById(btn.dataset.id).content.fields.find((x) => x.id === btn.dataset.field);
         f.enabled = !f.enabled;
         markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    panel.querySelectorAll(".bib-quote-template-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const content = elById(btn.dataset.id).content;
+        const key = btn.dataset.template;
+        content.form_template = key;
+        const t = QUOTE_FORM_TEMPLATES[key];
+        if (t) {
+          content.heading = t.heading;
+          content.button_text = t.button_text;
+          content.prompt_placeholder = t.prompt_placeholder;
+          content.fields = JSON.parse(JSON.stringify(t.fields));
+        }
+        markDirty(); renderEditor(); renderPreview(); updateElementSummaries();
       });
     });
     const quoteHeadingInput = panel.querySelector(".bib-quote-heading");

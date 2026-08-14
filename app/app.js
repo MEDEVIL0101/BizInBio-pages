@@ -143,6 +143,7 @@ const ELEMENT_DEFAULTS = {
   },
   service_area: { area: "" },
   quote_request_form: {
+    form_template: "quote_request",
     heading: "Request a quote",
     prompt_placeholder: "Tell us what you need",
     button_text: "Send request",
@@ -158,6 +159,54 @@ const ELEMENT_DEFAULTS = {
   },
   booking_deposit: { deposit_amount: 0 },
   product_shop: {},
+};
+
+// Quick-start presets for the quote_request_form element — same underlying
+// fields/heading/button_text the business can already hand-edit, just
+// pre-filled for the handful of shapes this form gets used for in practice
+// (a mailing-list opt-in wants very different defaults than a contractor's
+// quote request). "custom" is a no-op marker, not a real preset: picking it
+// just deselects the others without touching whatever's already there.
+const QUOTE_FORM_TEMPLATES = {
+  mailing_list: {
+    label: "Mailing list",
+    heading: "Join our mailing list",
+    button_text: "Subscribe",
+    prompt_placeholder: "Tell us what you need",
+    fields: [
+      { id: "name", label: "Name", enabled: false },
+      { id: "email", label: "Email", enabled: true },
+      { id: "phone", label: "Phone", enabled: false },
+      { id: "address", label: "Address", enabled: false },
+      { id: "details", label: "Project details", enabled: false },
+    ],
+  },
+  lead_capture: {
+    label: "Lead capture",
+    heading: "Get more information",
+    button_text: "Request Info",
+    prompt_placeholder: "Tell us what you're looking for",
+    fields: [
+      { id: "name", label: "Name", enabled: true },
+      { id: "email", label: "Email", enabled: true },
+      { id: "phone", label: "Phone", enabled: true },
+      { id: "address", label: "Address", enabled: false },
+      { id: "details", label: "Project details", enabled: false },
+    ],
+  },
+  quote_request: {
+    label: "Quote request",
+    heading: "Request a quote",
+    button_text: "Send Request",
+    prompt_placeholder: "Tell us what you need",
+    fields: [
+      { id: "name", label: "Name", enabled: true },
+      { id: "email", label: "Email", enabled: true },
+      { id: "phone", label: "Phone", enabled: false },
+      { id: "address", label: "Address", enabled: false },
+      { id: "details", label: "Project details", enabled: true },
+    ],
+  },
 };
 
 // Applies a theme's full token set to a root element (defaults to the
