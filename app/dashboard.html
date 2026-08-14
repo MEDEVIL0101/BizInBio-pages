@@ -102,7 +102,14 @@
       <h2>Booking deposits</h2>
     </div>
     <p id="connect-status" class="text-muted" style="font-size:13px">Not connected yet.</p>
-    <button id="connect-stripe" class="bib-btn-secondary bib-btn-block" style="margin-top:10px">Connect Stripe to accept deposits</button>
+    <div id="connect-country-wrap" style="margin-top:10px">
+      <div class="bib-field-label">Where's your business based? <span style="font-weight:400">(can't be changed later)</span></div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button type="button" class="bib-country-btn bib-btn-secondary" data-country="US" data-picker="connect-country-wrap" data-connect-btn="connect-stripe" style="flex:1">United States</button>
+        <button type="button" class="bib-country-btn bib-btn-secondary" data-country="CA" data-picker="connect-country-wrap" data-connect-btn="connect-stripe" style="flex:1">Canada</button>
+      </div>
+    </div>
+    <button id="connect-stripe" class="bib-btn-secondary bib-btn-block" style="margin-top:10px" disabled>Connect Stripe to accept deposits</button>
     <button id="disconnect-stripe" class="bib-btn-text" style="margin-top:8px;width:100%;display:none">Disconnect Stripe</button>
   </section>
 
@@ -114,7 +121,14 @@
       <h2>Shop</h2>
     </div>
     <p id="shop-connect-status" class="text-muted" style="font-size:13px">Not connected yet.</p>
-    <button id="connect-stripe-shop" class="bib-btn-secondary bib-btn-block" style="margin-top:10px">Connect Stripe to sell products</button>
+    <div id="connect-country-wrap-shop" style="margin-top:10px">
+      <div class="bib-field-label">Where's your business based? <span style="font-weight:400">(can't be changed later)</span></div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button type="button" class="bib-country-btn bib-btn-secondary" data-country="US" data-picker="connect-country-wrap-shop" data-connect-btn="connect-stripe-shop" style="flex:1">United States</button>
+        <button type="button" class="bib-country-btn bib-btn-secondary" data-country="CA" data-picker="connect-country-wrap-shop" data-connect-btn="connect-stripe-shop" style="flex:1">Canada</button>
+      </div>
+    </div>
+    <button id="connect-stripe-shop" class="bib-btn-secondary bib-btn-block" style="margin-top:10px" disabled>Connect Stripe to sell products</button>
     <button id="disconnect-stripe-shop" class="bib-btn-text" style="margin-top:8px;width:100%;display:none;margin-bottom:16px">Disconnect Stripe</button>
 
     <div style="display:flex;flex-direction:column;gap:8px;padding:14px 0;margin-bottom:6px;border-top:1px solid var(--bib-border);border-bottom:1px solid var(--bib-border)">
@@ -195,6 +209,37 @@
       </div>
       <button id="add-product" class="bib-btn-primary bib-btn-block">Add product</button>
       <p id="product-msg" class="text-muted" style="text-align:center;font-size:13px;min-height:18px"></p>
+    </div>
+  </section>
+
+  <section class="bib-card" id="payouts-section" style="display:none">
+    <div class="bib-card-head">
+      <div class="bib-card-icon" style="background:oklch(90% 0.06 145);color:oklch(45% 0.14 145)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      </div>
+      <h2>Payouts</h2>
+    </div>
+    <p class="text-muted" style="font-size:13px">Money from sales and deposits lands directly in your own connected Stripe account, not BizInBio's.</p>
+    <div id="payouts-loading" class="text-muted" style="font-size:13px;margin-top:12px">Loading...</div>
+    <div id="payouts-content" style="display:none;margin-top:14px">
+      <div style="display:flex;gap:10px">
+        <div style="flex:1;background:var(--bib-row-bg,oklch(97% 0.01 70));border-radius:12px;padding:12px 14px">
+          <div class="text-muted" style="font-size:11px;font-weight:600">Available</div>
+          <div id="payouts-available" style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:19px;margin-top:2px">$0.00</div>
+        </div>
+        <div style="flex:1;background:var(--bib-row-bg,oklch(97% 0.01 70));border-radius:12px;padding:12px 14px">
+          <div class="text-muted" style="font-size:11px;font-weight:600">Pending</div>
+          <div id="payouts-pending" style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:19px;margin-top:2px">$0.00</div>
+        </div>
+      </div>
+      <p id="payouts-no-bank" class="text-muted" style="display:none;font-size:12px;margin-top:10px;color:oklch(52% 0.18 30)">Add a bank account on your Stripe dashboard before you can request a payout.</p>
+      <button id="request-payout" class="bib-btn-primary bib-btn-block" style="margin-top:12px" disabled>Request payout</button>
+      <p id="payouts-msg" class="text-muted" style="text-align:center;font-size:12px;margin-top:6px;min-height:16px"></p>
+      <a id="payouts-dashboard-link" href="#" target="_blank" rel="noopener" class="bib-btn-secondary bib-btn-block" style="margin-top:4px">View full dashboard on Stripe</a>
+      <details style="margin-top:14px">
+        <summary style="font-size:12px;font-weight:600;color:var(--bib-muted);cursor:pointer">Recent activity</summary>
+        <div id="payouts-activity" style="display:flex;flex-direction:column;gap:8px;margin-top:10px"></div>
+      </details>
     </div>
   </section>
 
@@ -338,16 +383,38 @@
     }
   });
 
-  async function connectStripe(statusElId) {
+  // Country picker for Connect setup — a Connect account's country can't
+  // change after creation, so the business has to pick explicitly (no
+  // silent default) before "Connect Stripe" is even clickable. Two
+  // independent pickers (Booking, Shop) since either section's button can
+  // be the one that actually creates the account.
+  document.querySelectorAll(".bib-country-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const picker = document.getElementById(btn.dataset.picker);
+      picker.querySelectorAll(".bib-country-btn").forEach((b) => {
+        b.style.background = "";
+        b.style.borderColor = "";
+        b.style.color = "";
+      });
+      btn.style.background = "var(--bib-accent)";
+      btn.style.borderColor = "var(--bib-accent)";
+      btn.style.color = "#fff";
+      const connectBtn = document.getElementById(btn.dataset.connectBtn);
+      connectBtn.dataset.country = btn.dataset.country;
+      connectBtn.disabled = false;
+    });
+  });
+
+  async function connectStripe(country) {
     try {
-      const data = await callFunction("create-connect-account-link", { pageId: page.id }, session);
+      const data = await callFunction("create-connect-account-link", { pageId: page.id, country }, session);
       window.location.href = data.url;
     } catch (err) {
       alert(err.message || "Something went wrong.");
     }
   }
-  document.getElementById("connect-stripe").addEventListener("click", () => connectStripe());
-  document.getElementById("connect-stripe-shop").addEventListener("click", () => connectStripe());
+  document.getElementById("connect-stripe").addEventListener("click", (e) => connectStripe(e.target.dataset.country));
+  document.getElementById("connect-stripe-shop").addEventListener("click", (e) => connectStripe(e.target.dataset.country));
 
   function renderStripeConnectState() {
     const connected = !!page.stripe_connect_onboarding_complete;
@@ -355,8 +422,12 @@
     document.getElementById("shop-connect-status").textContent = connected ? "Connected — checkout is enabled." : "Not connected yet.";
     document.getElementById("connect-stripe").style.display = connected ? "none" : "block";
     document.getElementById("connect-stripe-shop").style.display = connected ? "none" : "block";
+    document.getElementById("connect-country-wrap").style.display = connected ? "none" : "block";
+    document.getElementById("connect-country-wrap-shop").style.display = connected ? "none" : "block";
     document.getElementById("disconnect-stripe").style.display = connected ? "block" : "none";
     document.getElementById("disconnect-stripe-shop").style.display = connected ? "block" : "none";
+    document.getElementById("payouts-section").style.display = connected ? "block" : "none";
+    if (connected) loadPayoutSummary();
   }
 
   async function disconnectStripe() {
@@ -372,6 +443,64 @@
   }
   document.getElementById("disconnect-stripe").addEventListener("click", disconnectStripe);
   document.getElementById("disconnect-stripe-shop").addEventListener("click", disconnectStripe);
+
+  function formatCents(cents, currency) {
+    return "$" + (cents / 100).toFixed(2) + (currency && currency !== "USD" ? " " + currency : "");
+  }
+
+  async function loadPayoutSummary() {
+    const loading = document.getElementById("payouts-loading");
+    const content = document.getElementById("payouts-content");
+    loading.style.display = "block";
+    content.style.display = "none";
+    try {
+      const data = await callFunction("get-payout-summary", { pageId: page.id }, session);
+      document.getElementById("payouts-available").textContent = formatCents(data.available_cents, data.currency);
+      document.getElementById("payouts-pending").textContent = formatCents(data.pending_cents, data.currency);
+      document.getElementById("payouts-dashboard-link").href = data.dashboard_login_url;
+      document.getElementById("payouts-no-bank").style.display = data.has_bank_account ? "none" : "block";
+      const requestBtn = document.getElementById("request-payout");
+      requestBtn.disabled = !data.has_bank_account || data.available_cents <= 0;
+      const activity = document.getElementById("payouts-activity");
+      activity.innerHTML = "";
+      if (!data.recent_transactions.length) {
+        activity.innerHTML = '<p class="text-muted" style="font-size:12px;margin:0">No activity yet.</p>';
+      } else {
+        data.recent_transactions.forEach((tx) => {
+          const row = document.createElement("div");
+          row.style.cssText = "display:flex;justify-content:space-between;align-items:center;font-size:12px";
+          const label = document.createElement("span");
+          label.className = "text-muted";
+          label.textContent = tx.type.replace(/_/g, " ") + " — " + new Date(tx.created_at).toLocaleDateString();
+          const amount = document.createElement("span");
+          amount.style.fontWeight = "600";
+          amount.textContent = formatCents(tx.net_cents, data.currency);
+          row.appendChild(label);
+          row.appendChild(amount);
+          activity.appendChild(row);
+        });
+      }
+      loading.style.display = "none";
+      content.style.display = "block";
+    } catch (err) {
+      loading.textContent = err.message || "Couldn't load payout info.";
+    }
+  }
+
+  document.getElementById("request-payout").addEventListener("click", async () => {
+    const btn = document.getElementById("request-payout");
+    const msg = document.getElementById("payouts-msg");
+    btn.disabled = true;
+    msg.textContent = "Requesting payout...";
+    try {
+      const data = await callFunction("trigger-payout", { pageId: page.id }, session);
+      msg.textContent = "Payout of " + formatCents(data.amount_cents, data.currency) + " on its way — arrives " + new Date(data.arrival_date).toLocaleDateString() + ".";
+      await loadPayoutSummary();
+    } catch (err) {
+      msg.textContent = err.message || "Something went wrong.";
+      btn.disabled = false;
+    }
+  });
 
   async function loadShippingConnection() {
     const { data: connection } = await sb
