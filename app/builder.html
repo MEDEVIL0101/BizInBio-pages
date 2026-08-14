@@ -704,6 +704,14 @@
                   ` : `<label class="bib-btn-secondary" style="cursor:pointer;font-size:12px;padding:8px 12px;border-radius:8px;display:inline-block">Make this an image button<input type="file" accept="image/*" class="bib-link-plain-image" data-id="${el.id}" data-index="${i}" style="display:none" /></label>`}
                 </div>
               ` : ""}
+              <div style="display:flex;align-items:center;gap:8px">
+                <select class="bib-row-input bib-link-card-outline-style" data-id="${el.id}" data-index="${i}" style="flex:1">
+                  <option value="none" ${!l.outline_style || l.outline_style === "none" ? "selected" : ""}>No border/glow</option>
+                  <option value="border" ${l.outline_style === "border" ? "selected" : ""}>Border</option>
+                  <option value="glow" ${l.outline_style === "glow" ? "selected" : ""}>Glow</option>
+                </select>
+                ${l.outline_style && l.outline_style !== "none" ? `<input type="color" class="bib-link-card-outline-color" data-id="${el.id}" data-index="${i}" value="${l.outline_color || "#ff5a3c"}" style="width:38px;height:32px;border:1.5px solid var(--bib-border);border-radius:6px;padding:0;cursor:pointer;flex:none" />` : ""}
+              </div>
               ${isCard ? `
                 <div style="display:flex;gap:8px;align-items:center">
                   ${l.image_url ? `<img src="${escapeHtml(l.image_url)}" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex:none" />` : ""}
@@ -726,14 +734,6 @@
                   </label>
                   <span class="text-muted" style="font-size:11px;flex:1">${l.button_color ? "Custom color set" : "Using your theme's button color"}</span>
                   ${l.button_color ? `<button type="button" class="bib-btn-text bib-reset-link-card-button-color" data-id="${el.id}" data-index="${i}" style="font-size:11px;padding:0;width:auto">Reset</button>` : ""}
-                </div>
-                <div style="display:flex;align-items:center;gap:8px">
-                  <select class="bib-row-input bib-link-card-outline-style" data-id="${el.id}" data-index="${i}" style="flex:1">
-                    <option value="none" ${!l.outline_style || l.outline_style === "none" ? "selected" : ""}>No border/glow</option>
-                    <option value="border" ${l.outline_style === "border" ? "selected" : ""}>Border</option>
-                    <option value="glow" ${l.outline_style === "glow" ? "selected" : ""}>Glow</option>
-                  </select>
-                  ${l.outline_style && l.outline_style !== "none" ? `<input type="color" class="bib-link-card-outline-color" data-id="${el.id}" data-index="${i}" value="${l.outline_color || "#ff5a3c"}" style="width:38px;height:32px;border:1.5px solid var(--bib-border);border-radius:6px;padding:0;cursor:pointer;flex:none" />` : ""}
                 </div>
                 ${products.length ? `
                   <div class="bib-field-label" style="margin-bottom:0">Sell a product from your shop (optional)</div>
