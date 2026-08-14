@@ -1281,11 +1281,23 @@
         ${o.shipping_label_url ? `<a href="${escapeHtml(o.shipping_label_url)}" target="_blank" rel="noopener">Print label</a>` : ""}
       </div>`;
     }
+    if (o.shipping_status === "shipped") {
+      const trackingIsUrl = /^https?:\/\//i.test(o.shipping_tracking_url || "");
+      const trackingHtml = o.shipping_tracking_url
+        ? trackingIsUrl
+          ? `<a href="${escapeHtml(o.shipping_tracking_url)}" target="_blank" rel="noopener">Track shipment</a>`
+          : `<span class="text-muted">Tracking: ${escapeHtml(o.shipping_tracking_url)}</span>`
+        : `<span class="text-muted">Marked shipped — no tracking provided</span>`;
+      return addressHtml + costLine + `<div style="margin-top:6px;font-size:13px">${trackingHtml}</div>`;
+    }
     if (o.status !== "paid") return addressHtml + costLine;
     const failedNote = o.shipping_status === "failed"
       ? `<p class="text-muted" style="font-size:12px;color:#d6336c;margin:4px 0 0">Label purchase failed — try again.</p>`
       : "";
-    return addressHtml + costLine + failedNote + `<button type="button" class="bib-btn-secondary bib-btn-sm bib-buy-label" data-id="${o.id}" style="margin-top:6px">Buy shipping label</button>`;
+    return addressHtml + costLine + failedNote + `<div style="display:flex;gap:8px;margin-top:6px">
+      <button type="button" class="bib-btn-secondary bib-btn-sm bib-buy-label" data-id="${o.id}">Buy shipping label</button>
+      <button type="button" class="bib-btn-text bib-btn-sm bib-mark-shipped" data-id="${o.id}">Mark as shipped</button>
+    </div>`;
   }
 
   function renderOrdersList() {
@@ -1348,6 +1360,23 @@
           alert(err.message || "Something went wrong.");
           btn.disabled = false;
           btn.textContent = "Buy shipping label";
+        }
+      });
+    });
+    container.querySelectorAll(".bib-mark-shipped").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const tracking = prompt("Tracking number or link (optional) — leave blank if none:", "");
+        if (tracking === null) return;
+        btn.disabled = true;
+        btn.textContent = "Marking shipped...";
+        try {
+          await callFunction("mark-order-shipped", { orderId: btn.dataset.id, tracking }, session);
+          await loadOrders();
+        } catch (err) {
+          alert(err.message || "Something went wrong.");
+          btn.disabled = false;
+          btn.textContent = "Mark as shipped";
         }
       });
     });
