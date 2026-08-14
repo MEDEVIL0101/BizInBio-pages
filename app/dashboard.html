@@ -1452,7 +1452,7 @@
     if (status === "verified") {
       emailTag.textContent = "Verified";
       emailTag.className = "bib-tag live";
-      emailInstructions.textContent = `Order emails to your customers now send from orders@${page.custom_domain}.`;
+      emailInstructions.textContent = `Order emails to your customers now send from orders@${page.custom_domain.replace(/^www\./i, "")}.`;
       emailRecordsEl.innerHTML = "";
     } else if (status === "none") {
       emailTag.textContent = "Unavailable";
