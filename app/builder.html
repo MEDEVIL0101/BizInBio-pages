@@ -47,6 +47,9 @@
   .bib-fontpair-btn{text-align:left;padding:12px;border-radius:14px;background:oklch(97% 0.01 70);border:1.5px solid transparent;cursor:pointer}
   .bib-fontpair-btn:hover{background:oklch(95% 0.015 70)}
   .bib-fontpair-btn.sel{border-color:var(--bib-accent);background:oklch(96% 0.05 30)}
+  .bib-shape-btn{padding:7px 12px;border-radius:8px;background:oklch(97% 0.01 70);border:1.5px solid transparent;cursor:pointer;font-size:12px;color:var(--bib-muted)}
+  .bib-shape-btn:hover{background:oklch(95% 0.015 70)}
+  .bib-shape-btn.sel{border-color:var(--bib-accent);background:oklch(96% 0.05 30);color:var(--bib-text)}
   .bib-fontpair-aa{font-size:19px;font-weight:700;margin-bottom:2px}
   .bib-fontpair-name{font-size:12px;font-weight:600;color:oklch(35% 0.02 50)}
 
@@ -341,7 +344,7 @@
   // no longer a separate persisted-vs-pending state to fall out of sync.
   let session, page, isPaid = false;
   let headerElId = null;
-  let headerContent = { business_name: "", location: "", logo_url: "", cover_image_url: "", cover_fade: false };
+  let headerContent = { business_name: "", location: "", logo_url: "", logo_shape: "circle", cover_image_url: "", cover_fade: false };
   let elements = []; // all non-header elements, in position order
   let products = []; // for the Shop section's preview only — real management lives on the dashboard
   let theme = { paletteId: "coral", customAccent: PALETTES[0].primary, customBg: PALETTES[0].bg, fontPairId: "playful", buttonColor: null, customText: null };
@@ -469,12 +472,21 @@
             ${headerContent.cover_image_url ? `<img src="${escapeHtml(headerContent.cover_image_url)}" />` : `<span>${UPLOAD_ICON}<br/>Drop a cover photo</span>`}
             <input type="file" accept="image/*" id="h-cover-input" />
           </label>
-          <label class="bib-upload" id="h-avatar-drop" style="position:absolute;left:50%;bottom:-34px;transform:translateX(-50%);width:76px;height:76px;border-radius:50%;border:4px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.12)">
-            ${headerContent.logo_url ? `<img src="${escapeHtml(headerContent.logo_url)}" />` : `<span style="font-size:10px">Photo</span>`}
+          <label class="bib-upload" id="h-avatar-drop" style="position:absolute;left:50%;bottom:-34px;transform:translateX(-50%);width:76px;height:76px;border-radius:${headerContent.logo_shape === "natural" ? "10px" : "50%"};border:4px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.12);${headerContent.logo_shape === "natural" ? "background:repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%) 50% / 12px 12px" : ""}">
+            ${headerContent.logo_url ? `<img src="${escapeHtml(headerContent.logo_url)}" style="${headerContent.logo_shape === "natural" ? "width:100%;height:100%;object-fit:contain" : ""}" />` : `<span style="font-size:10px">Photo</span>`}
             <input type="file" accept="image/*" id="h-avatar-input" />
           </label>
         </div>
         <div style="margin-top:46px;display:flex;flex-direction:column;gap:14px">
+          ${headerContent.logo_url ? `
+            <div>
+              <div class="bib-field-label">Logo shape</div>
+              <div style="display:flex;gap:8px">
+                <button type="button" class="bib-shape-btn bib-logo-shape-btn ${headerContent.logo_shape !== "natural" ? "sel" : ""}" data-shape="circle">Circle crop</button>
+                <button type="button" class="bib-shape-btn bib-logo-shape-btn ${headerContent.logo_shape === "natural" ? "sel" : ""}" data-shape="natural">Logo, uncropped</button>
+              </div>
+              ${headerContent.logo_shape === "natural" ? `<p class="text-muted" style="font-size:11px;margin-top:6px">Best with a transparent-background PNG — it'll show at full size, not cropped into a circle.</p>` : ""}
+            </div>` : ""}
           ${headerContent.cover_image_url ? `
             <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--bib-muted);cursor:pointer">
               <input type="checkbox" id="h-cover-fade-input" ${headerContent.cover_fade ? "checked" : ""} />
@@ -913,6 +925,9 @@
     }
     wireImageDrop(document.getElementById("h-cover-drop"), document.getElementById("h-cover-input"), (url) => { headerContent.cover_image_url = url; });
     wireImageDrop(document.getElementById("h-avatar-drop"), document.getElementById("h-avatar-input"), (url) => { headerContent.logo_url = url; });
+    document.querySelectorAll(".bib-logo-shape-btn").forEach((btn) => {
+      btn.addEventListener("click", () => { headerContent.logo_shape = btn.dataset.shape; markDirty(); renderEditor(); renderPreview(); });
+    });
     const coverFadeInput = document.getElementById("h-cover-fade-input");
     if (coverFadeInput) coverFadeInput.addEventListener("change", (e) => { headerContent.cover_fade = e.target.checked; markDirty(); renderPreview(); });
 
@@ -1438,7 +1453,7 @@
     const header = all.find((e) => e.type === "header");
     if (header) {
       headerElId = header.id;
-      headerContent = { business_name: "", location: "", logo_url: "", cover_image_url: "", ...header.content };
+      headerContent = { business_name: "", location: "", logo_url: "", logo_shape: "circle", cover_image_url: "", cover_fade: false, ...header.content };
     }
     elements = all.filter((e) => e.type !== "header").map((e) => {
       if (e.type === "booking_deposit") e._depositOn = Number(e.content.deposit_amount) > 0;
