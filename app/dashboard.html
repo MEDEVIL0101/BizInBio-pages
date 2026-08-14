@@ -319,13 +319,16 @@
   </section>
 
   <section class="bib-card">
-    <div class="bib-card-head">
-      <div class="bib-card-icon" style="background:oklch(90% 0.05 350);color:oklch(50% 0.16 350)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke-linecap="round"/></svg>
+    <div class="bib-card-head" style="justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="bib-card-icon" style="background:oklch(90% 0.05 350);color:oklch(50% 0.16 350)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke-linecap="round"/></svg>
+        </div>
+        <h2>Leads</h2>
       </div>
-      <h2>Quote requests</h2>
+      <button type="button" id="export-leads-csv" class="bib-btn-text" style="font-size:12px;padding:0;width:auto;display:none">Export CSV</button>
     </div>
-    <div id="leads"><p class="text-muted" style="font-size:13px">No requests yet — they'll show up here once your page is live and someone reaches out.</p></div>
+    <div id="leads"><p class="text-muted" style="font-size:13px">No leads yet — they'll show up here once your page is live and someone submits your quote/lead form.</p></div>
   </section>
 
 </div>
@@ -1512,22 +1515,50 @@
     }
   });
 
+  let allLeads = [];
+
+  function leadsToCsv(leads) {
+    const rows = [["Name", "Email", "Phone", "Address", "Message", "Submitted"]];
+    leads.forEach((l) => {
+      rows.push([
+        l.name || "", l.email || "", l.phone || "", l.address || "", l.message || "",
+        new Date(l.submitted_at).toISOString(),
+      ]);
+    });
+    return rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+  }
+
   async function loadLeads() {
     const { data: leads } = await sb
       .from("quote_requests")
-      .select("id, name, contact_info, message, submitted_at")
+      .select("id, name, email, phone, address, contact_info, message, submitted_at")
       .eq("page_id", page.id)
       .order("submitted_at", { ascending: false });
-    if (!leads || !leads.length) return;
+    allLeads = leads || [];
+    if (!allLeads.length) return;
+    document.getElementById("export-leads-csv").style.display = "inline-block";
     const container = document.getElementById("leads");
-    container.innerHTML = leads.map((l) => `
+    container.innerHTML = allLeads.map((l) => `
       <div class="bib-list-row" style="flex-direction:column;align-items:stretch;gap:2px">
         <div style="font-family:'Fredoka',sans-serif;font-weight:600">${l.name || "Anonymous"}</div>
         <div class="text-muted" style="font-size:13px">${l.contact_info || ""} · ${new Date(l.submitted_at).toLocaleDateString()}</div>
+        ${l.address ? `<div class="text-muted" style="font-size:13px">${l.address}</div>` : ""}
         ${l.message ? `<div style="margin-top:4px">${l.message}</div>` : ""}
       </div>
     `).join("");
   }
+
+  document.getElementById("export-leads-csv").addEventListener("click", () => {
+    const blob = new Blob([leadsToCsv(allLeads)], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(page.slug || "leads")}-leads.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
 
   (async () => {
     session = await requireSession();

@@ -202,7 +202,7 @@
       icon: `<path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/><circle cx="4" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.4" fill="currentColor" stroke="none"/>` },
     service_area: { title: "Service area", hue: 150, paywalled: true,
       icon: `<path d="M12 21s-7-6.5-7-11a7 7 0 0114 0c0 4.5-7 11-7 11z" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.3"/>` },
-    quote_request_form: { title: "Quote request form", hue: 350, paywalled: true,
+    quote_request_form: { title: "Quote / lead capture form", hue: 350, paywalled: true,
       icon: `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke-linecap="round"/>` },
     booking_deposit: { title: "Booking deposit", hue: 270, paywalled: true,
       icon: `<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v4M16 3v4" stroke-linecap="round"/>` },
@@ -778,15 +778,46 @@
         </div>`;
 
       case "quote_request_form":
-        return `<div class="bib-field-label" style="margin-bottom:10px">Fields to collect</div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          ${(c.fields || []).map((f) => `
-            <div style="display:flex;align-items:center;gap:10px">
-              <button type="button" class="bib-toggle bib-quote-toggle" data-id="${el.id}" data-field="${f.id}" style="background:${f.enabled ? "var(--bib-accent)" : "oklch(88% 0.015 60)"}">
-                <span class="bib-toggle-knob" style="transform:translateX(${f.enabled ? "16px" : "0px"})"></span>
-              </button>
-              <div style="font-size:13.5px;font-weight:600">${escapeHtml(f.label)}</div>
-            </div>`).join("")}
+        return `<div style="display:flex;flex-direction:column;gap:12px">
+          <div>
+            <div class="bib-field-label">Heading</div>
+            <input class="bib-row-input bib-quote-heading" data-id="${el.id}" value="${escapeHtml(c.heading ?? "")}" placeholder="e.g. See what your home is really worth" />
+          </div>
+          <div>
+            <div class="bib-field-label">Details prompt <span style="font-weight:400">(placeholder text, if "Project details" is on)</span></div>
+            <input class="bib-row-input bib-quote-prompt" data-id="${el.id}" value="${escapeHtml(c.prompt_placeholder ?? "")}" placeholder="e.g. Tell us what you need" />
+          </div>
+          <div>
+            <div class="bib-field-label">Button text</div>
+            <input class="bib-row-input bib-quote-button-text" data-id="${el.id}" value="${escapeHtml(c.button_text ?? "")}" placeholder="e.g. Receive Home Evaluation" />
+          </div>
+          <div>
+            <div class="bib-field-label" style="margin-bottom:6px">Fields to collect</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              ${(c.fields || []).map((f) => `
+                <div style="display:flex;align-items:center;gap:10px">
+                  <button type="button" class="bib-toggle bib-quote-toggle" data-id="${el.id}" data-field="${f.id}" style="background:${f.enabled ? "var(--bib-accent)" : "oklch(88% 0.015 60)"}">
+                    <span class="bib-toggle-knob" style="transform:translateX(${f.enabled ? "16px" : "0px"})"></span>
+                  </button>
+                  <div style="font-size:13.5px;font-weight:600">${escapeHtml(f.label)}</div>
+                </div>`).join("")}
+            </div>
+          </div>
+          <div>
+            <div class="bib-field-label">Show as</div>
+            <div style="display:flex;gap:8px">
+              <button type="button" class="bib-shape-btn bib-quote-display-style-btn ${c.display_style !== "popup" ? "sel" : ""}" data-id="${el.id}" data-style="inline">Inline on the page</button>
+              <button type="button" class="bib-shape-btn bib-quote-display-style-btn ${c.display_style === "popup" ? "sel" : ""}" data-id="${el.id}" data-style="popup">Pop-up</button>
+            </div>
+            ${c.display_style === "popup" ? `
+              <div style="margin-top:10px">
+                <div class="bib-field-label">Show after</div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input type="number" min="0" max="60" class="bib-row-input bib-quote-popup-delay" data-id="${el.id}" value="${Number(c.popup_delay_seconds) || 5}" style="width:70px" />
+                  <span class="text-muted" style="font-size:12px">seconds — won't nag a visitor who already closed or submitted it for about a week</span>
+                </div>
+              </div>` : ""}
+          </div>
         </div>`;
 
       case "service_area":
@@ -1250,14 +1281,28 @@
       });
     });
 
-    // Quote request form
+    // Quote request form (also used as a general lead-capture form)
     panel.querySelectorAll(".bib-quote-toggle").forEach((btn) => {
       btn.addEventListener("click", () => {
         const f = elById(btn.dataset.id).content.fields.find((x) => x.id === btn.dataset.field);
         f.enabled = !f.enabled;
-        markDirty(); renderEditor();
+        markDirty(); renderEditor(); renderPreview();
       });
     });
+    const quoteHeadingInput = panel.querySelector(".bib-quote-heading");
+    if (quoteHeadingInput) quoteHeadingInput.addEventListener("input", (e) => { elById(e.target.dataset.id).content.heading = e.target.value; markDirty(); renderPreview(); updateElementSummaries(); });
+    const quotePromptInput = panel.querySelector(".bib-quote-prompt");
+    if (quotePromptInput) quotePromptInput.addEventListener("input", (e) => { elById(e.target.dataset.id).content.prompt_placeholder = e.target.value; markDirty(); renderPreview(); });
+    const quoteButtonTextInput = panel.querySelector(".bib-quote-button-text");
+    if (quoteButtonTextInput) quoteButtonTextInput.addEventListener("input", (e) => { elById(e.target.dataset.id).content.button_text = e.target.value; markDirty(); renderPreview(); });
+    panel.querySelectorAll(".bib-quote-display-style-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        elById(btn.dataset.id).content.display_style = btn.dataset.style;
+        markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    const quotePopupDelayInput = panel.querySelector(".bib-quote-popup-delay");
+    if (quotePopupDelayInput) quotePopupDelayInput.addEventListener("input", (e) => { elById(e.target.dataset.id).content.popup_delay_seconds = Number(e.target.value) || 0; markDirty(); renderPreview(); });
 
     // Service area
     const areaInput = panel.querySelector(".bib-servicearea-input");
@@ -1489,6 +1534,15 @@
     }
     elements = all.filter((e) => e.type !== "header").map((e) => {
       if (e.type === "booking_deposit") e._depositOn = Number(e.content.deposit_amount) > 0;
+      if (e.type === "quote_request_form") {
+        e.content = {
+          heading: "Request a quote", prompt_placeholder: "Tell us what you need", button_text: "Send request",
+          display_style: "inline", popup_delay_seconds: 5, ...e.content,
+        };
+        const fields = Array.isArray(e.content.fields) ? e.content.fields.slice() : [];
+        if (!fields.some((f) => f.id === "address")) fields.push({ id: "address", label: "Address", enabled: false });
+        e.content.fields = fields;
+      }
       return e;
     });
 

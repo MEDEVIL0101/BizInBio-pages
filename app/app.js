@@ -143,10 +143,16 @@ const ELEMENT_DEFAULTS = {
   },
   service_area: { area: "" },
   quote_request_form: {
+    heading: "Request a quote",
+    prompt_placeholder: "Tell us what you need",
+    button_text: "Send request",
+    display_style: "inline",
+    popup_delay_seconds: 5,
     fields: [
       { id: "name", label: "Name", enabled: true },
       { id: "email", label: "Email", enabled: true },
       { id: "phone", label: "Phone", enabled: false },
+      { id: "address", label: "Address", enabled: false },
       { id: "details", label: "Project details", enabled: true },
     ],
   },
