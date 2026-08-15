@@ -286,6 +286,18 @@
   // ---------------------------------------------------------------------
   // Drag-and-drop — Pointer Events, not the HTML5 native DnD API (no
   // reliable touch support there, and this app's usage skews mobile).
+  //
+  // Deliberately never mutates the DOM mid-gesture (no insertBefore while
+  // dragging) — only the previous implementation did that, and it caused
+  // two real bugs: (1) reflowing the tree while a pointer is captured is
+  // known-flaky on WebKit and can silently drop the capture, which reads
+  // as the drag just "getting stuck" mid-gesture; (2) with nothing
+  // clamping the translateY offset, the item could be thrown arbitrarily
+  // far past the list's own bounds, including off-screen. Fixed by only
+  // ever moving the dragged item and its siblings with CSS transforms
+  // (siblings slide out of the way to show where it'll land), clamped to
+  // the list's actual index range, and committing the real DOM order
+  // exactly once, on release.
   function initDragList(container, itemClass, onReorder) {
     container.addEventListener("pointerdown", (e) => {
       const handle = e.target.closest(".bib-drag-handle");
@@ -293,34 +305,38 @@
       const item = handle.closest("." + itemClass);
       if (!item || item.parentElement !== container) return;
 
-      let curStartY = e.clientY;
+      const items = [...container.querySelectorAll(":scope > ." + itemClass)];
+      const startIndex = items.indexOf(item);
+      if (startIndex === -1 || items.length < 2) return;
+
+      const step = item.getBoundingClientRect().height + (parseFloat(getComputedStyle(container).rowGap) || 0);
+      const startY = e.clientY;
+      let currentIndex = startIndex;
+
       item.setPointerCapture(e.pointerId);
       item.classList.add("bib-drag-lift");
+      item.style.position = "relative";
+      item.style.zIndex = "10";
       e.preventDefault();
 
+      function applySiblingOffsets() {
+        items.forEach((el, i) => {
+          if (el === item) return;
+          let shift = 0;
+          if (currentIndex > startIndex && i > startIndex && i <= currentIndex) shift = -step;
+          else if (currentIndex < startIndex && i < startIndex && i >= currentIndex) shift = step;
+          el.style.transition = "transform .15s ease";
+          el.style.transform = shift ? `translateY(${shift}px)` : "";
+        });
+      }
+
       function onMove(ev) {
-        const delta = ev.clientY - curStartY;
+        const minDelta = -startIndex * step;
+        const maxDelta = (items.length - 1 - startIndex) * step;
+        const delta = Math.max(minDelta, Math.min(maxDelta, ev.clientY - startY));
         item.style.transform = `translateY(${delta}px)`;
-        const rect = item.getBoundingClientRect();
-        const prev = item.previousElementSibling;
-        if (prev && prev.classList.contains(itemClass)) {
-          const pr = prev.getBoundingClientRect();
-          if (rect.top < pr.top + pr.height / 2) {
-            container.insertBefore(item, prev);
-            curStartY -= pr.height;
-            item.style.transform = `translateY(${ev.clientY - curStartY}px)`;
-            return;
-          }
-        }
-        const next = item.nextElementSibling;
-        if (next && next.classList.contains(itemClass)) {
-          const nr = next.getBoundingClientRect();
-          if (rect.bottom > nr.top + nr.height / 2) {
-            container.insertBefore(next, item);
-            curStartY += nr.height;
-            item.style.transform = `translateY(${ev.clientY - curStartY}px)`;
-          }
-        }
+        currentIndex = Math.max(0, Math.min(items.length - 1, startIndex + Math.round(delta / step)));
+        applySiblingOffsets();
       }
       function onUp(ev) {
         item.releasePointerCapture(ev.pointerId);
@@ -329,6 +345,16 @@
         item.removeEventListener("pointercancel", onUp);
         item.classList.remove("bib-drag-lift");
         item.style.transform = "";
+        item.style.position = "";
+        item.style.zIndex = "";
+        items.forEach((el) => { el.style.transition = ""; el.style.transform = ""; });
+
+        if (currentIndex !== startIndex) {
+          const reordered = items.slice();
+          reordered.splice(startIndex, 1);
+          reordered.splice(currentIndex, 0, item);
+          reordered.forEach((el) => container.appendChild(el));
+        }
         const orderedEls = [...container.querySelectorAll(":scope > ." + itemClass)];
         onReorder(orderedEls);
       }
@@ -724,6 +750,14 @@
                     <span class="text-muted" style="font-size:11px;flex:1">Image-only button — icon/text hidden</span>
                     <button type="button" class="bib-btn-text bib-remove-link-image" data-id="${el.id}" data-index="${i}" style="font-size:11px;padding:0;width:auto">Remove</button>
                   ` : `<label class="bib-btn-secondary" style="cursor:pointer;font-size:12px;padding:8px 12px;border-radius:8px;display:inline-block">Make this an image button<input type="file" accept="image/*" class="bib-link-plain-image" data-id="${el.id}" data-index="${i}" style="display:none" /></label>`}
+                </div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:600;color:var(--bib-muted)">
+                    Button color
+                    <input type="color" class="bib-link-card-button-color" data-id="${el.id}" data-index="${i}" value="${l.button_color || "#ff5a3c"}" style="width:38px;height:28px;border:1.5px solid var(--bib-border);border-radius:6px;padding:0;cursor:pointer" />
+                  </label>
+                  <span class="text-muted" style="font-size:11px;flex:1">${l.button_color ? "Custom color set" : "Using your theme's default outline look"}</span>
+                  ${l.button_color ? `<button type="button" class="bib-btn-text bib-reset-link-card-button-color" data-id="${el.id}" data-index="${i}" style="font-size:11px;padding:0;width:auto">Reset</button>` : ""}
                 </div>
               ` : ""}
               <div style="display:flex;align-items:center;gap:8px">
