@@ -751,6 +751,7 @@
                     <button type="button" class="bib-btn-text bib-remove-link-image" data-id="${el.id}" data-index="${i}" style="font-size:11px;padding:0;width:auto">Remove</button>
                   ` : `<label class="bib-btn-secondary" style="cursor:pointer;font-size:12px;padding:8px 12px;border-radius:8px;display:inline-block">Make this an image button<input type="file" accept="image/*" class="bib-link-plain-image" data-id="${el.id}" data-index="${i}" style="display:none" /></label>`}
                 </div>
+                ${!l.image_url ? `<span class="text-muted" style="font-size:11px">Square photos work best — we'll crop and resize automatically.</span>` : ""}
                 <div style="display:flex;align-items:center;gap:10px">
                   <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:600;color:var(--bib-muted)">
                     Button color
@@ -773,6 +774,7 @@
                   ${l.image_url ? `<img src="${escapeHtml(l.image_url)}" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex:none" />` : ""}
                   <label class="bib-btn-secondary" style="cursor:pointer;font-size:12px;padding:8px 12px;border-radius:8px;display:inline-block">Upload image<input type="file" accept="image/*" class="bib-link-card-image" data-id="${el.id}" data-index="${i}" style="display:none" /></label>
                 </div>
+                ${!l.image_url ? `<span class="text-muted" style="font-size:11px">Square photos work best — we'll crop and resize automatically.</span>` : ""}
                 <textarea class="bib-textarea bib-link-card-desc" data-id="${el.id}" data-index="${i}" placeholder="Short description" style="min-height:44px">${escapeHtml(l.description || "")}</textarea>
                 <input class="bib-row-input bib-link-card-button" data-id="${el.id}" data-index="${i}" value="${escapeHtml(l.button_text || "")}" placeholder="Button text (e.g. Get My Guide)" />
                 <div style="display:flex;align-items:center;gap:10px">
@@ -1279,7 +1281,7 @@
       input.addEventListener("change", (e) => {
         if (!e.target.files.length) return;
         const link = elById(e.target.dataset.id).content.links[Number(e.target.dataset.index)];
-        uploadImage(e.target.files[0], (url) => { link.image_url = url; });
+        uploadImage(e.target.files[0], (url) => { link.image_url = url; }, { square: true, maxSize: 800 });
       });
     });
     panel.querySelectorAll(".bib-remove-link-image").forEach((btn) => {
@@ -1292,7 +1294,7 @@
       input.addEventListener("change", (e) => {
         if (!e.target.files.length) return;
         const link = elById(e.target.dataset.id).content.links[Number(e.target.dataset.index)];
-        uploadImage(e.target.files[0], (url) => { link.image_url = url; });
+        uploadImage(e.target.files[0], (url) => { link.image_url = url; }, { square: true, maxSize: 800 });
       });
     });
     panel.querySelectorAll(".bib-link-card-desc").forEach((input) => {
@@ -1500,9 +1502,50 @@
     });
   }
 
-  async function uploadImage(file, onUploaded) {
-    const path = `${session.user.id}/${Date.now()}-${file.name}`;
-    const { error } = await sb.storage.from("page-photos").upload(path, file);
+  // Rich-card images and image-only buttons are always displayed as fixed
+  // square thumbnails (object-fit:cover) -- uploading a raw, arbitrarily-
+  // shaped photo straight to storage meant the *browser* did an uncontrolled
+  // center-crop at display time, on a multi-MB original nobody actually
+  // wanted served at full size. Cropping to a square canvas ourselves before
+  // upload makes the result predictable and caps the file size, for any
+  // upload spot that opts in via { square: true }.
+  function resizeImageToSquare(file, size) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const cropSize = Math.min(img.naturalWidth, img.naturalHeight);
+        const sx = (img.naturalWidth - cropSize) / 2;
+        const sy = (img.naturalHeight - cropSize) / 2;
+        const outSize = Math.min(size, cropSize); // never upscale a small source image
+        const canvas = document.createElement("canvas");
+        canvas.width = outSize;
+        canvas.height = outSize;
+        canvas.getContext("2d").drawImage(img, sx, sy, cropSize, cropSize, 0, 0, outSize, outSize);
+        const mimeType = file.type === "image/png" || file.type === "image/webp" ? file.type : "image/jpeg";
+        canvas.toBlob((blob) => {
+          if (!blob) { reject(new Error("couldn't process that image")); return; }
+          resolve(new File([blob], file.name, { type: mimeType }));
+        }, mimeType, 0.85);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("couldn't read that image")); };
+      img.src = url;
+    });
+  }
+
+  async function uploadImage(file, onUploaded, opts) {
+    let uploadFile = file;
+    if (opts && opts.square) {
+      try {
+        uploadFile = await resizeImageToSquare(file, opts.maxSize || 800);
+      } catch (err) {
+        alert("Upload failed: " + err.message);
+        return;
+      }
+    }
+    const path = `${session.user.id}/${Date.now()}-${uploadFile.name}`;
+    const { error } = await sb.storage.from("page-photos").upload(path, uploadFile);
     if (error) { alert("Upload failed: " + error.message); return; }
     const { data } = sb.storage.from("page-photos").getPublicUrl(path);
     onUploaded(data.publicUrl);

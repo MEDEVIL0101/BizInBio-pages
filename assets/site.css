@@ -52,7 +52,7 @@ button{font-family:inherit}
 /* Cover/banner photo — full-bleed, no card treatment (not a duotone photo:
    this represents the business's own imagery, left untinted like the
    profile avatar). */
-.cover-photo{width:100%;aspect-ratio:21/9;overflow:hidden;display:block}
+.cover-photo{width:100%;aspect-ratio:4/3;overflow:hidden;display:block}
 .cover-photo img{width:100%;height:100%;object-fit:cover;display:block}
 
 /* Page/app wrapper — mobile-first narrow column, but widens (and gets a
@@ -89,10 +89,22 @@ button{font-family:inherit}
 
 /* A transparent wordmark/logo, deliberately not cropped into the circular
    avatar shape and not boxed into any fixed-size container — width is set
-   inline per-page as a percentage (the business's own size slider, up to
-   the full width of the content column), height follows automatically via
-   object-fit:contain so the logo's own aspect ratio is preserved. */
-.avatar-img.natural{height:auto;max-width:100%;object-fit:contain;border-radius:0;border:none;box-shadow:none;background:transparent}
+   inline per-page as a percentage (the business's own size slider). That
+   percentage is of .page-wrap, which itself grows from 460px on mobile to
+   960px on desktop (see .page-wrap above) -- uncapped, the same slider
+   value more than doubles in absolute size from mobile to desktop, which
+   is what actually made it look "too big" there rather than any one wrong
+   slider setting. Capped in real pixels per breakpoint so the slider still
+   controls relative size within a screen size, without runaway growth
+   across them; height still follows the logo's own aspect ratio via
+   object-fit:contain either way. */
+.avatar-img.natural{height:auto;max-width:min(100%,220px);object-fit:contain;border-radius:0;border:none;box-shadow:none;background:transparent}
+@media (min-width:640px){
+  .avatar-img.natural{max-width:min(100%,260px)}
+}
+@media (min-width:1024px){
+  .avatar-img.natural{max-width:min(100%,300px)}
+}
 
 /* Buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;text-decoration:none;font-family:var(--font-heading);font-weight:var(--font-heading-weight);font-size:13px;color:var(--color-text);background:transparent;border:1px solid var(--color-divider);padding:11px 16px;border-radius:var(--radius-md)}
