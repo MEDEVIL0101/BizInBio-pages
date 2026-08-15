@@ -57,7 +57,7 @@
   .bib-el-card.drag-over{border:2px dashed var(--bib-accent)}
   .bib-el-card.bib-drag-lift{opacity:.4}
   .bib-el-head{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer}
-  .bib-drag-handle{cursor:grab;touch-action:none;color:oklch(75% 0.01 60);padding:4px;flex:none;display:flex}
+  .bib-drag-handle{cursor:grab;touch-action:none;color:oklch(75% 0.01 60);padding:10px;margin:-10px;flex:none;display:flex;align-items:center;justify-content:center;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
   .bib-el-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .bib-el-title{font-size:14px;font-weight:700}
   .bib-el-summary{font-size:12px;color:var(--bib-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -484,9 +484,9 @@
         </div>
         ${headerContent.logo_shape === "natural" ? `
           <div style="margin-top:14px">
-            <label id="h-avatar-drop" style="display:flex;align-items:center;justify-content:center;min-height:64px;cursor:pointer;${headerContent.logo_url ? "" : "border:1.5px dashed var(--bib-border);border-radius:10px;padding:14px"}">
+            <label id="h-avatar-drop" style="display:flex;align-items:center;justify-content:center;min-height:64px;width:100%;box-sizing:border-box;overflow:hidden;cursor:pointer;${headerContent.logo_url ? "" : "border:1.5px dashed var(--bib-border);border-radius:10px;padding:14px"}">
               ${headerContent.logo_url
-                ? `<img src="${escapeHtml(headerContent.logo_url)}" style="max-width:${headerContent.logo_width_pct || 50}%;max-height:160px;object-fit:contain;display:block;margin:0 auto" />`
+                ? `<img src="${escapeHtml(headerContent.logo_url)}" style="width:${headerContent.logo_width_pct || 50}%;max-width:100%;height:auto;max-height:160px;object-fit:contain;display:block;margin:0 auto" />`
                 : `<span class="text-muted" style="font-size:12px;text-align:center">${UPLOAD_ICON}<br/>Drop your logo (transparent PNG works best)</span>`}
               <input type="file" accept="image/*" id="h-avatar-input" />
             </label>
@@ -1049,7 +1049,7 @@
         const valueLabel = document.getElementById("h-logo-width-value");
         if (valueLabel) valueLabel.textContent = headerContent.logo_width_pct + "%";
         const dropPreviewImg = document.querySelector("#h-avatar-drop img");
-        if (dropPreviewImg) dropPreviewImg.style.maxWidth = headerContent.logo_width_pct + "%";
+        if (dropPreviewImg) dropPreviewImg.style.width = headerContent.logo_width_pct + "%";
         markDirty();
         renderPreview();
       });
