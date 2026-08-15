@@ -11,7 +11,11 @@
 <link rel="stylesheet" href="../assets/bib-chrome.css?v=2" />
 <style>
   .bib-page{max-width:560px;margin:0 auto;padding:28px 24px 80px;display:flex;flex-direction:column;gap:16px}
+  .bib-page.bib-page-grid{max-width:1120px;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));align-items:start;gap:16px}
   .bib-card h2{font-family:"Fredoka",sans-serif;font-size:17px;font-weight:700;margin:0}
+  .bib-layout-toggle{display:flex;gap:2px;background:oklch(96% 0.01 70);border-radius:9px;padding:3px}
+  .bib-layout-btn{display:flex;align-items:center;justify-content:center;width:30px;height:26px;border:none;background:transparent;border-radius:7px;color:var(--bib-muted);cursor:pointer}
+  .bib-layout-btn.sel{background:#fff;color:var(--bib-text);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 </style>
 </head>
 <body>
@@ -22,10 +26,20 @@
     <span class="bib-wordmark-text">Biz<span class="accent">In</span>Bio</span>
     <span class="bib-wordmark-label">dashboard</span>
   </div>
-  <a href="#" id="logout" class="bib-back">Log out</a>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="bib-layout-toggle">
+      <button type="button" id="layout-stacked-btn" class="bib-layout-btn" aria-label="Stacked layout" title="Stacked layout">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <button type="button" id="layout-grid-btn" class="bib-layout-btn" aria-label="Grid layout" title="Grid layout">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>
+      </button>
+    </div>
+    <a href="#" id="logout" class="bib-back">Log out</a>
+  </div>
 </div>
 
-<div class="bib-page">
+<div class="bib-page" id="bib-dashboard-page">
 
   <section class="bib-card">
     <div class="bib-card-head">
@@ -368,6 +382,32 @@
 <script src="app.js?v=13"></script>
 <script>
   let session, page, elementsByType = {};
+
+  // Dashboard layout: stacked (default, one card per row) vs grid (cards
+  // wrap into columns on wider screens) — a personal display preference,
+  // not page data, so it's remembered per-browser via localStorage rather
+  // than synced through the account.
+  (function initDashboardLayout() {
+    const pageEl = document.getElementById("bib-dashboard-page");
+    const stackedBtn = document.getElementById("layout-stacked-btn");
+    const gridBtn = document.getElementById("layout-grid-btn");
+    function applyLayout(layout) {
+      pageEl.classList.toggle("bib-page-grid", layout === "grid");
+      stackedBtn.classList.toggle("sel", layout !== "grid");
+      gridBtn.classList.toggle("sel", layout === "grid");
+    }
+    let saved = "stacked";
+    try { saved = localStorage.getItem("bib_dashboard_layout") || "stacked"; } catch (e) {}
+    applyLayout(saved);
+    stackedBtn.addEventListener("click", () => {
+      applyLayout("stacked");
+      try { localStorage.setItem("bib_dashboard_layout", "stacked"); } catch (e) {}
+    });
+    gridBtn.addEventListener("click", () => {
+      applyLayout("grid");
+      try { localStorage.setItem("bib_dashboard_layout", "grid"); } catch (e) {}
+    });
+  })();
 
   document.getElementById("logout").addEventListener("click", async (e) => {
     e.preventDefault();
