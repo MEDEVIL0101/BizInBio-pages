@@ -475,6 +475,7 @@
             ${headerContent.cover_image_url ? `<img src="${escapeHtml(headerContent.cover_image_url)}" />` : `<span>${UPLOAD_ICON}<br/>Drop a cover photo</span>`}
             <input type="file" accept="image/*" id="h-cover-input" />
           </label>
+          ${headerContent.cover_image_url ? `<button type="button" class="bib-gallery-remove bib-remove-cover" title="Remove cover photo">${CLOSE_ICON}</button>` : ""}
           ${headerContent.logo_shape !== "natural" ? `
             <label class="bib-upload" id="h-avatar-drop" style="position:absolute;left:50%;bottom:-34px;transform:translateX(-50%);width:76px;height:76px;border-radius:50%;border:4px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.12)">
               ${headerContent.logo_url ? `<img src="${escapeHtml(headerContent.logo_url)}" />` : `<span style="font-size:10px">Photo</span>`}
@@ -498,6 +499,7 @@
                 <button type="button" class="bib-shape-btn bib-logo-shape-btn ${headerContent.logo_shape !== "natural" ? "sel" : ""}" data-shape="circle">Circle crop</button>
                 <button type="button" class="bib-shape-btn bib-logo-shape-btn ${headerContent.logo_shape === "natural" ? "sel" : ""}" data-shape="natural">Logo, uncropped</button>
               </div>
+              <button type="button" class="bib-btn-text bib-remove-logo" style="margin-top:8px;padding:0;width:auto;font-size:12px;color:#d6336c">Remove logo</button>
               ${headerContent.logo_shape === "natural" ? `
                 <p class="text-muted" style="font-size:11px;margin-top:6px">Best with a transparent-background PNG — no circle, no border, sized however you like.</p>
                 <div style="margin-top:10px">
@@ -1017,6 +1019,23 @@
     }
     wireImageDrop(document.getElementById("h-cover-drop"), document.getElementById("h-cover-input"), (url) => { headerContent.cover_image_url = url; });
     wireImageDrop(document.getElementById("h-avatar-drop"), document.getElementById("h-avatar-input"), (url) => { headerContent.logo_url = url; });
+    const removeCoverBtn = document.querySelector(".bib-remove-cover");
+    if (removeCoverBtn) {
+      removeCoverBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        headerContent.cover_image_url = "";
+        headerContent.cover_fade = false;
+        markDirty(); renderEditor(); renderPreview();
+      });
+    }
+    const removeLogoBtn = document.querySelector(".bib-remove-logo");
+    if (removeLogoBtn) {
+      removeLogoBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        headerContent.logo_url = "";
+        markDirty(); renderEditor(); renderPreview();
+      });
+    }
     document.querySelectorAll(".bib-logo-shape-btn").forEach((btn) => {
       btn.addEventListener("click", () => { headerContent.logo_shape = btn.dataset.shape; markDirty(); renderEditor(); renderPreview(); });
     });
