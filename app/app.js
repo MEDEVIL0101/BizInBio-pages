@@ -158,6 +158,7 @@ const ELEMENT_DEFAULTS = {
     ],
   },
   booking_deposit: { deposit_amount: 0 },
+  booking_calendar: { provider: "calendly", link: "", heading: "Book a call", button_text: "Book a call", display_style: "popup" },
   product_shop: {},
 };
 

@@ -206,6 +206,8 @@
       icon: `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke-linecap="round"/>` },
     booking_deposit: { title: "Booking deposit", hue: 270, paywalled: true,
       icon: `<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v4M16 3v4" stroke-linecap="round"/>` },
+    booking_calendar: { title: "Book a call", hue: 210, paywalled: true,
+      icon: `<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v4M16 3v4" stroke-linecap="round"/><path d="M9 14l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>` },
     product_shop: { title: "Shop", hue: 55, paywalled: true,
       icon: `<path d="M6 8h12l-1 12a2 2 0 01-2 2H9a2 2 0 01-2-2L6 8z" stroke-linejoin="round"/><path d="M9 8V6a3 3 0 016 0v2"/>` },
   };
@@ -413,6 +415,7 @@
       case "quote_request_form": { const n = (c.fields || []).filter((f) => f.enabled).length; return `${n} field${n === 1 ? "" : "s"} enabled`; }
       case "service_area": return c.area || "Not set";
       case "booking_deposit": { const on = Number(c.deposit_amount) > 0 || el._depositOn; return on ? `$${c.deposit_amount || "0"} deposit` : "Off"; }
+      case "booking_calendar": return c.link ? `${c.provider === "cal_com" ? "Cal.com" : "Calendly"} — ${c.link}` : "Not set up yet";
       case "product_shop": return "Manage products on your dashboard";
       default: return "";
     }
@@ -844,6 +847,38 @@
           ${on ? `<input class="bib-row-input bib-deposit-amount" data-id="${el.id}" value="${escapeHtml(c.deposit_amount || "")}" placeholder="Deposit amount, e.g. 25" style="font-size:14px" />
           <p class="text-muted" style="font-size:12px;margin-top:6px;color:var(--bib-muted)">Won't show on your page until Stripe is connected — see Booking deposits in your dashboard.</p>` : ""}`;
       }
+
+      case "booking_calendar":
+        return `<div style="display:flex;flex-direction:column;gap:12px">
+          <div>
+            <div class="bib-field-label">Scheduling tool</div>
+            <div style="display:flex;gap:8px">
+              <button type="button" class="bib-shape-btn bib-cal-provider-btn ${c.provider !== "cal_com" ? "sel" : ""}" data-id="${el.id}" data-provider="calendly">Calendly</button>
+              <button type="button" class="bib-shape-btn bib-cal-provider-btn ${c.provider === "cal_com" ? "sel" : ""}" data-id="${el.id}" data-provider="cal_com">Cal.com</button>
+            </div>
+          </div>
+          <div>
+            <div class="bib-field-label">${c.provider === "cal_com" ? "Cal.com link" : "Calendly link"}</div>
+            <input class="bib-row-input bib-cal-link" data-id="${el.id}" value="${escapeHtml(c.link || "")}" placeholder="${c.provider === "cal_com" ? "e.g. yourname/30min" : "e.g. calendly.com/yourname/30min"}" />
+            <p class="text-muted" style="font-size:11px;margin-top:4px">Your public booking page from ${c.provider === "cal_com" ? "cal.com" : "calendly.com"} — paste the link or just the username.</p>
+          </div>
+          <div>
+            <div class="bib-field-label">Show as</div>
+            <div style="display:flex;gap:8px">
+              <button type="button" class="bib-shape-btn bib-cal-display-style-btn ${c.display_style !== "inline" ? "sel" : ""}" data-id="${el.id}" data-style="popup">Pop-up button</button>
+              <button type="button" class="bib-shape-btn bib-cal-display-style-btn ${c.display_style === "inline" ? "sel" : ""}" data-id="${el.id}" data-style="inline">Inline on the page</button>
+            </div>
+          </div>
+          ${c.display_style === "inline" ? `
+            <div>
+              <div class="bib-field-label">Heading</div>
+              <input class="bib-row-input bib-cal-heading" data-id="${el.id}" value="${escapeHtml(c.heading || "")}" placeholder="e.g. Book a call" />
+            </div>` : `
+            <div>
+              <div class="bib-field-label">Button text</div>
+              <input class="bib-row-input bib-cal-button-text" data-id="${el.id}" value="${escapeHtml(c.button_text || "")}" placeholder="e.g. Book a call" />
+            </div>`}
+        </div>`;
 
       case "product_shop":
         return `<p style="font-size:13px;color:var(--bib-muted);line-height:1.5">Products, photos, and pricing are managed on your dashboard — this section just controls where your shop appears on the page.</p>
@@ -1344,6 +1379,26 @@
     });
     const depositInput = panel.querySelector(".bib-deposit-amount");
     if (depositInput) depositInput.addEventListener("input", (e) => { elById(e.target.dataset.id).content.deposit_amount = e.target.value; markDirty(); updateElementSummaries(); });
+
+    // Booking calendar (Calendly / Cal.com)
+    panel.querySelectorAll(".bib-cal-provider-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        elById(btn.dataset.id).content.provider = btn.dataset.provider;
+        markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    const calLinkInput = panel.querySelector(".bib-cal-link");
+    if (calLinkInput) calLinkInput.addEventListener("input", (e) => { elById(e.target.dataset.id).content.link = e.target.value; markDirty(); renderPreview(); updateElementSummaries(); });
+    panel.querySelectorAll(".bib-cal-display-style-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        elById(btn.dataset.id).content.display_style = btn.dataset.style;
+        markDirty(); renderEditor(); renderPreview();
+      });
+    });
+    const calHeadingInput = panel.querySelector(".bib-cal-heading");
+    if (calHeadingInput) calHeadingInput.addEventListener("input", (e) => { elById(e.target.dataset.id).content.heading = e.target.value; markDirty(); renderPreview(); });
+    const calButtonTextInput = panel.querySelector(".bib-cal-button-text");
+    if (calButtonTextInput) calButtonTextInput.addEventListener("input", (e) => { elById(e.target.dataset.id).content.button_text = e.target.value; markDirty(); renderPreview(); });
 
     // Add section
     const addToggle = document.getElementById("add-section-toggle");
