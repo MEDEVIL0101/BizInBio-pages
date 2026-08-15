@@ -32,7 +32,7 @@
       <div class="bib-card-icon" style="background:oklch(90% 0.05 190);color:oklch(49% 0.16 190)">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.07 0l2-2a5 5 0 00-7.07-7.07l-1 1M14 11a5 5 0 00-7.07 0l-2 2a5 5 0 007.07 7.07l1-1"/></svg>
       </div>
-      <h2>Status</h2>
+      <h2>Your URL</h2>
     </div>
     <a id="page-url" href="#" target="_blank" style="display:block;font-size:14px;word-break:break-all;font-weight:600"></a>
     <span class="bib-tag live" id="status-badge" style="margin-top:10px"></span>
@@ -306,6 +306,37 @@
       <button id="disconnect-chitchats" class="bib-btn-text" style="margin-top:8px;width:100%">Disconnect Chit Chats</button>
       <p id="chitchats-box-msg" class="text-muted" style="text-align:center;font-size:13px;margin-top:6px;min-height:18px"></p>
     </div>
+  </section>
+
+  <section class="bib-card" id="dropship-section" style="display:none">
+    <div class="bib-card-head">
+      <div class="bib-card-icon" style="background:oklch(90% 0.05 260);color:oklch(49% 0.16 260)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2l9 4.9v10.2L12 22l-9-4.9V6.9L12 2z"/><path d="M3 6.9L12 12l9-5.1M12 12v10" stroke-linecap="round"/></svg>
+      </div>
+      <h2>Dropshipping</h2>
+    </div>
+    <p class="text-muted" style="font-size:13px">Connect a supplier, import products from their catalog, and paid orders are sent to them automatically for fulfillment.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+      <button type="button" class="bib-dropship-tile" data-provider="printful" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 10px;border-radius:12px;border:1.5px solid var(--bib-border);background:#fff;cursor:pointer">
+        <img src="../assets/printful-logo.svg" alt="Printful" style="height:18px;width:auto;max-width:90%;object-fit:contain" />
+        <span class="bib-tag outline" id="dropship-status-printful">Not connected</span>
+      </button>
+      <button type="button" class="bib-dropship-tile" data-provider="printify" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 10px;border-radius:12px;border:1.5px solid var(--bib-border);background:#fff;cursor:pointer">
+        <img src="../assets/printify-logo.svg" alt="Printify" style="height:18px;width:auto;max-width:90%;object-fit:contain" />
+        <span class="bib-tag outline" id="dropship-status-printify">Not connected</span>
+      </button>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px 10px;border-radius:12px;border:1.5px solid var(--bib-border);opacity:.5">
+        <span style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:13px">CJdropshipping</span>
+        <span class="bib-tag outline">Coming soon</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px 10px;border-radius:12px;border:1.5px solid var(--bib-border);opacity:.5">
+        <span style="font-family:'Fredoka',sans-serif;font-weight:700;font-size:13px">Spocket</span>
+        <span class="bib-tag outline">Coming soon</span>
+      </div>
+    </div>
+
+    <div id="dropship-panel" style="margin-top:14px"></div>
   </section>
 
   <section class="bib-card" id="orders-section" style="display:none">
@@ -585,6 +616,145 @@
     }
   }
 
+  // --- Dropshipping (Printful / Printify) ---
+  let dropshipConnections = {}; // provider -> { store_id }
+  let dropshipActiveProvider = null; // which tile's panel is expanded
+  let dropshipCatalog = {}; // provider -> cached catalog list once loaded
+
+  function dropshipProviderLabel(provider) { return provider === "printful" ? "Printful" : "Printify"; }
+
+  async function loadDropshipConnections() {
+    const { data: rows } = await sb
+      .from("dropship_connections")
+      .select("provider, store_id")
+      .eq("page_id", page.id);
+    dropshipConnections = {};
+    (rows || []).forEach((r) => { dropshipConnections[r.provider] = r; });
+    ["printful", "printify"].forEach((provider) => {
+      const tag = document.getElementById(`dropship-status-${provider}`);
+      const connected = !!dropshipConnections[provider];
+      tag.textContent = connected ? "Connected" : "Not connected";
+      tag.className = connected ? "bib-tag live" : "bib-tag outline";
+    });
+    renderDropshipPanel();
+  }
+
+  function renderDropshipPanel() {
+    const panel = document.getElementById("dropship-panel");
+    if (!dropshipActiveProvider) { panel.innerHTML = ""; return; }
+    const provider = dropshipActiveProvider;
+    const label = dropshipProviderLabel(provider);
+    const connected = !!dropshipConnections[provider];
+
+    if (!connected) {
+      panel.innerHTML = `
+        <div style="padding:14px;background:oklch(97% 0.01 70);border-radius:12px">
+          <div class="bib-field-label">${label} API key</div>
+          <input class="bib-row-input" id="dropship-api-key-input" type="password" placeholder="${provider === "printful" ? "Settings → API on printful.com" : "My Profile → Connections on printify.com"}" />
+          <button type="button" class="bib-btn-secondary bib-btn-block" id="dropship-connect-btn" style="margin-top:10px">Connect ${label}</button>
+          <p class="text-muted" id="dropship-connect-msg" style="text-align:center;font-size:13px;margin-top:6px;min-height:18px"></p>
+        </div>`;
+      document.getElementById("dropship-connect-btn").addEventListener("click", async () => {
+        const msg = document.getElementById("dropship-connect-msg");
+        const apiKey = document.getElementById("dropship-api-key-input").value.trim();
+        if (!apiKey) { msg.textContent = "Enter an API key."; return; }
+        msg.textContent = "Connecting...";
+        try {
+          await callFunction(`connect-${provider}-account`, { apiKey }, session);
+          await loadDropshipConnections();
+        } catch (err) {
+          msg.textContent = err.message || "Something went wrong.";
+        }
+      });
+      return;
+    }
+
+    const catalog = dropshipCatalog[provider];
+    panel.innerHTML = `
+      <div style="padding:14px;background:oklch(97% 0.01 70);border-radius:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <p class="text-muted" style="font-size:13px;margin:0">Connected to ${label}.</p>
+          <button type="button" class="bib-btn-text" id="dropship-disconnect-btn" style="font-size:12px;padding:0;width:auto;color:#d6336c">Disconnect</button>
+        </div>
+        <div id="dropship-catalog-list" style="margin-top:10px">${catalog ? "" : `<p class="text-muted" style="font-size:13px">Loading your ${label} catalog...</p>`}</div>
+      </div>`;
+    document.getElementById("dropship-disconnect-btn").addEventListener("click", async () => {
+      if (!confirm(`Disconnect ${label}? Products already imported will stay, but new orders won't auto-forward until you reconnect.`)) return;
+      try {
+        await callFunction(`disconnect-${provider}-account`, {}, session);
+        dropshipCatalog[provider] = null;
+        await loadDropshipConnections();
+      } catch (err) {
+        alert(err.message || "Something went wrong.");
+      }
+    });
+    if (!catalog) {
+      loadDropshipCatalog(provider);
+    } else {
+      renderDropshipCatalogList(provider);
+    }
+  }
+
+  async function loadDropshipCatalog(provider) {
+    try {
+      const data = await callFunction(`list-${provider}-products`, {}, session);
+      dropshipCatalog[provider] = data.products || [];
+    } catch (err) {
+      dropshipCatalog[provider] = [];
+      const list = document.getElementById("dropship-catalog-list");
+      if (list) list.innerHTML = `<p class="text-muted" style="font-size:13px;color:#d6336c">${escapeHtml(err.message || "Couldn't load your catalog.")}</p>`;
+      return;
+    }
+    renderDropshipCatalogList(provider);
+  }
+
+  function renderDropshipCatalogList(provider) {
+    const list = document.getElementById("dropship-catalog-list");
+    if (!list) return;
+    const items = dropshipCatalog[provider] || [];
+    if (!items.length) {
+      list.innerHTML = `<p class="text-muted" style="font-size:13px">No products found — design something in your ${dropshipProviderLabel(provider)} account first, then come back here to import it.</p>`;
+      return;
+    }
+    list.innerHTML = items.map((item) => {
+      const name = provider === "printful" ? item.name : item.title;
+      const thumb = item.thumbnail_url;
+      const alreadyImported = allProducts.some((p) => p.dropship_provider === provider && p.dropship_external_product_id === String(item.id));
+      return `
+        <div class="bib-list-row">
+          ${thumb ? `<img src="${escapeHtml(thumb)}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex:none" />` : `<div style="width:40px;height:40px;border-radius:8px;background:oklch(93% 0.01 70);flex:none"></div>`}
+          <div style="flex:1;min-width:0;font-size:13.5px;font-weight:600">${escapeHtml(name || "Untitled product")}</div>
+          <button type="button" class="bib-btn-secondary bib-btn-sm bib-dropship-import" data-provider="${provider}" data-id="${escapeHtml(String(item.id))}" style="flex:none" ${alreadyImported ? "disabled" : ""}>${alreadyImported ? "Imported" : "Import"}</button>
+        </div>`;
+    }).join("");
+    list.querySelectorAll(".bib-dropship-import").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        btn.textContent = "Importing...";
+        try {
+          const fnName = btn.dataset.provider === "printful" ? "import-printful-product" : "import-printify-product";
+          const payload = btn.dataset.provider === "printful" ? { syncProductId: Number(btn.dataset.id) } : { productId: btn.dataset.id };
+          await callFunction(fnName, payload, session);
+          await callFunction("render-page", { page_id: page.id }, session);
+          await loadProducts();
+          btn.textContent = "Imported";
+        } catch (err) {
+          alert(err.message || "Something went wrong.");
+          btn.disabled = false;
+          btn.textContent = "Import";
+        }
+      });
+    });
+  }
+
+  document.querySelectorAll(".bib-dropship-tile[data-provider]").forEach((tile) => {
+    tile.addEventListener("click", () => {
+      const provider = tile.dataset.provider;
+      dropshipActiveProvider = dropshipActiveProvider === provider ? null : provider;
+      renderDropshipPanel();
+    });
+  });
+
   document.getElementById("connect-chitchats").addEventListener("click", async () => {
     const msg = document.getElementById("chitchats-connect-msg");
     const apiToken = document.getElementById("chitchats_api_token").value.trim();
@@ -712,6 +882,7 @@
     if (tier === "website_shop" || tier === "custom_domain") {
       document.getElementById("shop-section").style.display = "block";
       document.getElementById("shipping-section").style.display = "block";
+      document.getElementById("dropship-section").style.display = "block";
       document.getElementById("orders-section").style.display = "block";
       document.getElementById("add_to_cart_text").value = page.add_to_cart_button_text || "";
       document.getElementById("checkout_text").value = page.checkout_button_text || "";
@@ -720,6 +891,7 @@
       });
       renderCurrencyState();
       await loadShippingConnection();
+      await loadDropshipConnections();
       // Shop rendering is gated on a "product_shop" element existing (same
       // pattern as every other opt-in element type) — make sure one exists
       // as soon as someone's on this tier, rather than waiting for a UI
@@ -1048,7 +1220,7 @@
             : `<div style="width:44px;height:44px;border-radius:10px;background:oklch(96% 0.01 70);flex:none"></div>`}
           <div style="flex:1;min-width:0">
             <div style="font-size:14px;font-weight:600">${escapeHtml(p.name)}</div>
-            <div class="text-muted" style="font-size:12px">${formatCents(p.price_cents, currentCurrencyLabel())}${p.compare_at_price_cents ? ` (was ${formatCents(p.compare_at_price_cents, currentCurrencyLabel())})` : ""}${p.product_type === "digital" ? " · Digital" : ""}${p.category ? ` · ${escapeHtml(p.category)}` : ""}${p.weight_g ? ` · ${p.weight_g}g` : ""}${photoCount > 1 ? ` · ${photoCount} photos` : ""}</div>
+            <div class="text-muted" style="font-size:12px">${formatCents(p.price_cents, currentCurrencyLabel())}${p.compare_at_price_cents ? ` (was ${formatCents(p.compare_at_price_cents, currentCurrencyLabel())})` : ""}${p.product_type === "digital" ? " · Digital" : ""}${p.dropship_provider ? ` · ${p.dropship_provider === "printful" ? "Printful" : "Printify"} dropship` : ""}${p.category ? ` · ${escapeHtml(p.category)}` : ""}${p.weight_g ? ` · ${p.weight_g}g` : ""}${photoCount > 1 ? ` · ${photoCount} photos` : ""}</div>
           </div>
           <button class="bib-btn-secondary bib-btn-sm bib-edit-product" data-id="${p.id}" style="flex:none">${isEditing ? "Close" : "Edit"}</button>
           <button class="bib-btn-secondary bib-btn-sm bib-delete-product" data-id="${p.id}" style="flex:none">Delete</button>
