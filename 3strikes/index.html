@@ -47,7 +47,7 @@
     <header style="padding:0 var(--space-4) var(--space-4);text-align:center">
       <h1 style="font-size:26px">THE3STRIKES</h1>
       
-    </header><div style="display:flex;flex-wrap:wrap;gap:var(--space-2);justify-content:center;padding:0 var(--space-4) var(--space-6)"><a href="mailto:the3strikes@gmail.com" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:7px;flex:none;border-radius:999px;padding:11px 18px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M4 6.5l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>the3strikes@gmail.com</span></a></div><div class="social-row" style="padding:0 var(--space-4) var(--space-6)"><a href="https://@the3strikes" class="btn" target="_blank" rel="noopener"><span style="flex-shrink:0;display:flex"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l6-6"/><path d="M13 5l1-1a4 4 0 1 1 6 6l-1 1"/><path d="M11 19l-1 1a4 4 0 1 1-6-6l1-1"/></svg></span><span class="bib-link-label-text">Instagram</span></a></div>
+    </header><div style="display:flex;flex-wrap:wrap;gap:var(--space-2);justify-content:center;padding:0 var(--space-4) var(--space-6)"><a href="mailto:the3strikes@gmail.com" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:7px;flex:none;border-radius:999px;padding:11px 18px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M4 6.5l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>the3strikes@gmail.com</span></a></div><div class="social-row" style="padding:0 var(--space-4) var(--space-6)"><a href="https://@the3strikes" class="btn" target="_blank" rel="noopener" style=""><span style="flex-shrink:0;display:flex"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l6-6"/><path d="M13 5l1-1a4 4 0 1 1 6 6l-1 1"/><path d="M11 19l-1 1a4 4 0 1 1-6-6l1-1"/></svg></span><span class="bib-link-label-text">Instagram</span></a></div>
     <section style="padding:0 var(--space-4) var(--space-6)">
       <h6 style="color:var(--color-accent-700);margin-bottom:var(--space-2)">Shop</h6>
       
@@ -156,7 +156,7 @@
         </div>
       </div>
     </div>
-    <script id="bib-shop-data" type="application/json">[{"id":"afe83166-15a2-4136-a8fa-f8b5beb6c493","name":"Nickelback (Shirt) - XL","price":100,"compareAtPrice":null,"images":["https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/969f05bd-53fa-4da3-873d-c327f16adec1/1786725088081-Photoroom_20260726_182638.png"],"description":"","productType":"physical","variants":[]}]</script>
+    <script id="bib-shop-data" type="application/json">[{"id":"afe83166-15a2-4136-a8fa-f8b5beb6c493","name":"Nickelback (Shirt) - XL","price":100,"compareAtPrice":null,"images":["https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/969f05bd-53fa-4da3-873d-c327f16adec1/1786725088081-Photoroom_20260726_182638.png"],"description":"","productType":"physical","dropshipProvider":null,"dropshipShippingCents":0,"variants":[]}]</script>
     <script>
       (function () {
         var STRIPE_CONNECTED = true;
@@ -304,6 +304,21 @@
           btn.disabled = true;
           btn.textContent = 'Getting rates...';
           msg.textContent = '';
+          var dropshipFlatCents = cartDropshipFlatCents();
+          // No live carrier rate to shop for a dropship-only cart (or a page
+          // with no Chit Chats connection at all) — just the flat per-item
+          // fee the business set on the product. The real charge is always
+          // re-verified server-side in create-shop-checkout regardless.
+          if (!cartHasSelfShipItem()) {
+            lastShippingAddress = address;
+            lastRates = [{ postageType: 'flat', description: 'Standard shipping', deliveryTime: '', amountCents: dropshipFlatCents }];
+            selectedPostageType = null;
+            renderRatesList();
+            showCartScreen('rates');
+            btn.disabled = false;
+            btn.textContent = original;
+            return;
+          }
           try {
             var cart = getCart();
             var items = Object.keys(cart).map(function (id) { return { productId: id, quantity: cart[id].qty }; });
@@ -320,7 +335,12 @@
             if (!res.ok) throw new Error(data.error || 'Could not get shipping rates.');
             if (!data.rates || !data.rates.length) throw new Error('No shipping options available for this address.');
             lastShippingAddress = address;
-            lastRates = data.rates;
+            // Any dropshipped items in the same cart still need their flat
+            // fee added on top of whatever the carrier quotes for the
+            // self-shipped items — one combined price per option.
+            lastRates = dropshipFlatCents
+              ? data.rates.map(function (r) { return Object.assign({}, r, { amountCents: r.amountCents + dropshipFlatCents }); })
+              : data.rates;
             selectedPostageType = null;
             renderRatesList();
             showCartScreen('rates');
@@ -607,14 +627,39 @@
         // Whether THIS cart needs shipping isn't just "does the page have
         // Chit Chats connected" — an all-digital cart never needs it, even
         // on a page that also sells physical goods. Missing product info
-        // defaults to "needs shipping" (the safer failure mode).
+        // defaults to "needs shipping" (the safer failure mode). A
+        // dropshipped item always needs a shipping address regardless of
+        // whether Chit Chats is connected — it ships from the supplier, not
+        // this app's own carrier integration.
         function cartNeedsShipping() {
+          var cart = getCart();
+          return Object.keys(cart).some(function (key) {
+            var p = PRODUCTS_BY_ID[cart[key].productId];
+            if (!p) return true;
+            if (p.dropshipProvider) return true;
+            if (!HAS_SHIPPING) return false;
+            return p.productType !== 'digital';
+          });
+        }
+        // A "self-ship" item is one this app's own Chit Chats integration
+        // needs to rate-shop for — dropship items are excluded even though
+        // they're physical, since the supplier ships those, not the business.
+        function cartHasSelfShipItem() {
           if (!HAS_SHIPPING) return false;
           var cart = getCart();
           return Object.keys(cart).some(function (key) {
             var p = PRODUCTS_BY_ID[cart[key].productId];
-            return !p || p.productType !== 'digital';
+            return p && p.productType !== 'digital' && !p.dropshipProvider;
           });
+        }
+        function cartDropshipFlatCents() {
+          var cart = getCart();
+          var total = 0;
+          Object.keys(cart).forEach(function (key) {
+            var p = PRODUCTS_BY_ID[cart[key].productId];
+            if (p && p.dropshipProvider) total += (p.dropshipShippingCents || 0) * cart[key].qty;
+          });
+          return total;
         }
         var cartModalCheckoutBtn = document.getElementById('bib-cart-modal-checkout');
         if (cartModalCheckoutBtn) {
