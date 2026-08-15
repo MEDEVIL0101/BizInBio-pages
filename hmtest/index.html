@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Bonnie Joslin-Diaby</title>
+<title>BizInBio</title>
 <meta name="description" content="Distressed graphic tees, hoodies and apparel. Everything 1 of 1." />
 <link rel="canonical" href="https://bizinbio.net/hmtest/" />
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Bonnie Joslin-Diaby" />
+<meta property="og:title" content="BizInBio" />
 <meta property="og:description" content="Distressed graphic tees, hoodies and apparel. Everything 1 of 1." />
 <meta property="og:url" content="https://bizinbio.net/hmtest/" />
 
@@ -18,10 +18,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&family=Pacifico&family=Nunito:wght@400;500;600;700&family=Bebas+Neue&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="//bizinbio.net/assets/site.css?v=23" />
 <style>:root{
-    --color-bg:#000000;
-    --body-bg:#000000;
+    --color-bg:#3f7cb0;
+    --body-bg:#3f7cb0;
     --color-card-bg:#ffffff;
-    --color-surface:color-mix(in srgb,#000000 70%,white);
+    --color-surface:color-mix(in srgb,#3f7cb0 70%,white);
     --color-text:#ed0202;
     --color-accent:#ffffff;
     --color-on-accent:#ed0202;
@@ -42,51 +42,78 @@
 <body>
 <div class="page-wrap">
 
-    <div class="cover-photo" style="position:relative"><img src="https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/8e9da974-cbfa-4e56-ab36-df345cc7d18a/1785296077950-3strikes%20hero.jpg" alt="" /></div>
-    <div class="avatar-wrap center overlap"><img src="https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/8e9da974-cbfa-4e56-ab36-df345cc7d18a/1786748923555-Photoroom_20260726_212607.png" alt="" class="avatar-img ring" /></div>
+    
+    <div class="avatar-wrap natural center"><img src="https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/8e9da974-cbfa-4e56-ab36-df345cc7d18a/1786772898060-BizInBio_Logo.png" alt="" class="avatar-img natural" style="width:82%" /></div>
     <header style="padding:0 var(--space-4) var(--space-4);text-align:center">
-      <h1 style="font-size:26px">Bonnie Joslin-Diaby</h1>
-      <p class="text-muted" style="font-size:13px;margin-top:2px">Serving Hamilton and surrounding area.</p>
+      <h1 style="font-size:26px"></h1>
+      
     </header><section style="padding:0 var(--space-4) var(--space-6);text-align:center"><p style="font-size:13.5px;line-height:1.55;opacity:.85">Distressed graphic tees, hoodies and apparel. Everything 1 of 1.</p></section>
     <section style="padding:0 var(--space-4) var(--space-6)">
-      <h6 style="color:var(--color-accent-700);margin-bottom:var(--space-3)">Request a quote</h6>
-      <div class="field"><label>Name</label><input class="input" id="bib-q-name" /></div><div class="field"><label>Email</label><input class="input" type="email" id="bib-q-email" /></div><div class="field"><label>Project details</label><textarea class="input" id="bib-q-details" placeholder="Tell us what you need"></textarea></div>
-      <button id="bib-quote-submit" class="btn btn-primary btn-block">Send request</button>
-      <p id="bib-quote-status" class="text-muted" style="text-align:center;font-size:12px;margin-top:var(--space-2)"></p>
-    </section>
+    <h6 style="color:var(--color-accent-700);margin-bottom:var(--space-3)">Request a quote</h6>
+    <div class="field"><label>Name</label><input class="input" id="bib-q-name-7dffa189-185c-485c-8cad-f848b50979ae" /></div><div class="field"><label>Email</label><input class="input" type="email" id="bib-q-email-7dffa189-185c-485c-8cad-f848b50979ae" /></div><div class="field"><label>Project details</label><textarea class="input" id="bib-q-details-7dffa189-185c-485c-8cad-f848b50979ae" placeholder="Tell us what you need"></textarea></div>
+    <button id="bib-quote-submit-7dffa189-185c-485c-8cad-f848b50979ae" class="btn btn-primary btn-block">Send request</button>
+    <p id="bib-quote-status-7dffa189-185c-485c-8cad-f848b50979ae" class="text-muted" style="text-align:center;font-size:12px;margin-top:var(--space-2)"></p></section>
     <script>
-      document.getElementById('bib-quote-submit').addEventListener('click', async function () {
-        var status = document.getElementById('bib-quote-status');
-        var nameEl = document.getElementById('bib-q-name');
-        var emailEl = document.getElementById('bib-q-email');
-        var phoneEl = document.getElementById('bib-q-phone');
-        var detailsEl = document.getElementById('bib-q-details');
-        var payload = {
-          page_id: "8e288a6e-5397-45f3-a64a-d3271fab9325",
-          name: nameEl ? nameEl.value : null,
-          email: emailEl ? emailEl.value : null,
-          phone: phoneEl ? phoneEl.value : null,
-          contact_info: [emailEl ? emailEl.value : '', phoneEl ? phoneEl.value : ''].filter(Boolean).join(', ') || null,
-          message: detailsEl ? detailsEl.value : null
-        };
-        status.textContent = 'Sending...';
-        try {
-          var res = await fetch("https://eqsxcbmcsjrtnkevaygy.supabase.co" + '/rest/v1/quote_requests', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': "sb_publishable_DPifKzXa875ieM2CLgMieA_VJyYRa-6",
-              'Authorization': 'Bearer ' + "sb_publishable_DPifKzXa875ieM2CLgMieA_VJyYRa-6"
-            },
-            body: JSON.stringify(payload)
+      (function () {
+        var suffix = "7dffa189-185c-485c-8cad-f848b50979ae";
+        var nameEl = document.getElementById('bib-q-name-' + suffix);
+        var emailEl = document.getElementById('bib-q-email-' + suffix);
+        var phoneEl = document.getElementById('bib-q-phone-' + suffix);
+        var addressEl = document.getElementById('bib-q-address-' + suffix);
+        var detailsEl = document.getElementById('bib-q-details-' + suffix);
+        var status = document.getElementById('bib-quote-status-' + suffix);
+        var storageKey = 'bib_lp_' + "8e288a6e-5397-45f3-a64a-d3271fab9325" + '_' + suffix;
+        var overlay = document.getElementById('bib-lp-overlay-' + suffix);
+
+        if (overlay) {
+          var seen = null;
+          try { seen = localStorage.getItem(storageKey); } catch (e) {}
+          var cooldownMs = 7 * 24 * 60 * 60 * 1000;
+          var shouldShow = seen !== 'submitted' && (!seen || (Date.now() - Number(seen)) > cooldownMs);
+          if (shouldShow) {
+            setTimeout(function () { overlay.style.display = 'flex'; }, 5000);
+          }
+          var closeBtn = document.getElementById('bib-lp-close-' + suffix);
+          if (closeBtn) closeBtn.addEventListener('click', function () {
+            overlay.style.display = 'none';
+            try { localStorage.setItem(storageKey, String(Date.now())); } catch (e) {}
           });
-          if (!res.ok) throw new Error('failed');
-          status.textContent = 'Thanks! Your request was sent.';
-          [nameEl, emailEl, phoneEl, detailsEl].forEach(function (el) { if (el) el.value = ''; });
-        } catch (err) {
-          status.textContent = 'Something went wrong — please try again.';
+          overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) closeBtn.click();
+          });
         }
-      });
+
+        document.getElementById('bib-quote-submit-' + suffix).addEventListener('click', async function () {
+          status.textContent = 'Sending...';
+          var payload = {
+            page_id: "8e288a6e-5397-45f3-a64a-d3271fab9325",
+            name: nameEl ? nameEl.value : null,
+            email: emailEl ? emailEl.value : null,
+            phone: phoneEl ? phoneEl.value : null,
+            address: addressEl ? addressEl.value : null,
+            contact_info: [emailEl ? emailEl.value : '', phoneEl ? phoneEl.value : ''].filter(Boolean).join(', ') || null,
+            message: detailsEl ? detailsEl.value : null
+          };
+          try {
+            var res = await fetch("https://eqsxcbmcsjrtnkevaygy.supabase.co" + '/rest/v1/quote_requests', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': "sb_publishable_DPifKzXa875ieM2CLgMieA_VJyYRa-6",
+                'Authorization': 'Bearer ' + "sb_publishable_DPifKzXa875ieM2CLgMieA_VJyYRa-6"
+              },
+              body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error('failed');
+            status.textContent = 'Thanks! Your request was sent.';
+            [nameEl, emailEl, phoneEl, addressEl, detailsEl].forEach(function (el) { if (el) el.value = ''; });
+            try { localStorage.setItem(storageKey, 'submitted'); } catch (e) {}
+            if (overlay) setTimeout(function () { overlay.style.display = 'none'; }, 1800);
+          } catch (err) {
+            status.textContent = 'Something went wrong — please try again.';
+          }
+        });
+      })();
     </script><div class="social-row" style="padding:0 var(--space-4) var(--space-6)"><a href="https://instagram.com/the3strikes" class="btn" target="_blank" rel="noopener" style=""><span style="flex-shrink:0;display:flex"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l6-6"/><path d="M13 5l1-1a4 4 0 1 1 6 6l-1 1"/><path d="M11 19l-1 1a4 4 0 1 1-6-6l1-1"/></svg></span><span class="bib-link-label-text">Follow 3Strikes on IG</span></a>
         <div class="blueprint" style="padding:var(--space-3);display:flex;flex-direction:column;gap:2px;background:#050000;border-color:transparent;box-shadow:0 0 6px 1px color-mix(in srgb,#fcfcfc 90%,transparent),0 0 34px 8px color-mix(in srgb,#fcfcfc 75%,transparent);">
           <div style="display:flex;gap:12px;align-items:flex-start">
