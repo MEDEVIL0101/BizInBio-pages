@@ -130,12 +130,16 @@ button{font-family:inherit}
 .nav a:hover{color:var(--color-accent)}
 .wordmark-mark{width:28px;height:28px;object-fit:contain;flex:none}
 
-/* Rate list (services/menu/rates) — each row its own tinted, rounded
-   card, matching the builder's live-preview panel exactly (not a bordered
-   list inside one shared card). */
-.rate-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:14px;background:color-mix(in srgb,var(--color-accent) 7%,white);font-size:13px;margin-bottom:var(--space-2)}
+/* Rate list (services/menu/rates) — each row its own card, matching the
+   builder's live-preview panel (not a bordered list inside one shared
+   card). Uses the same real card tokens as .blueprint (card-bg/divider/
+   shadow) rather than a tint mixed with hardcoded white — that tint read
+   as "just text on the page background" on light themes and looked wrong
+   on dark ones, since it never actually referenced the page's own card
+   surface color. */
+.rate-row{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:var(--radius-md);background:var(--color-card-bg);border:var(--card-border-width) solid var(--color-divider);box-shadow:var(--shadow-sm);font-size:13px;margin-bottom:var(--space-2)}
 .rate-row:last-child{margin-bottom:0}
-.rate-price{color:var(--color-accent);font-family:var(--font-heading);font-weight:700}
+.rate-price{color:var(--color-accent-700);font-family:var(--font-heading);font-weight:700}
 
 /* Shop product grid (see productGridSection). Not used by the photo
    Gallery section anymore — that has its own .photo-gallery below,
