@@ -484,7 +484,7 @@
         </div>
         ${headerContent.logo_shape === "natural" ? `
           <div style="margin-top:14px">
-            <label id="h-avatar-drop" style="display:flex;align-items:center;justify-content:center;min-height:64px;width:100%;box-sizing:border-box;overflow:hidden;cursor:pointer;${headerContent.logo_url ? "" : "border:1.5px dashed var(--bib-border);border-radius:10px;padding:14px"}">
+            <label class="bib-upload" id="h-avatar-drop" style="display:flex;align-items:center;justify-content:center;min-height:64px;width:100%;box-sizing:border-box;overflow:hidden;cursor:pointer;background:transparent;border:none;${headerContent.logo_url ? "" : "border:1.5px dashed var(--bib-border);border-radius:10px;padding:14px"}">
               ${headerContent.logo_url
                 ? `<img src="${escapeHtml(headerContent.logo_url)}" style="width:${headerContent.logo_width_pct || 50}%;max-width:100%;height:auto;max-height:160px;object-fit:contain;display:block;margin:0 auto" />`
                 : `<span class="text-muted" style="font-size:12px;text-align:center">${UPLOAD_ICON}<br/>Drop your logo (transparent PNG works best)</span>`}
