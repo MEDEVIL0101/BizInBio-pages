@@ -575,7 +575,7 @@
     const isCustom = theme.paletteId === "custom";
     const buttonColorValue = theme.buttonColor || (isCustom ? theme.customAccent : (PALETTES.find((p) => p.id === theme.paletteId) || PALETTES[0]).primary);
     return `
-      <div class="bib-card">
+      <div class="bib-card" style="position:relative;z-index:5">
         <div class="bib-card-head" style="margin-bottom:16px">
           <div class="bib-card-icon" style="background:${hueBg(300)};color:${hueFg(300)}">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="13.5" cy="6.5" r="3" fill="currentColor"/><circle cx="6" cy="12" r="3" fill="currentColor"/><circle cx="17" cy="17.5" r="3" fill="currentColor"/></svg>
