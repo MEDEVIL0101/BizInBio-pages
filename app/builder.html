@@ -440,7 +440,7 @@
       case "services_list": { const n = (c.services || []).length; return n ? `${n} service${n === 1 ? "" : "s"}` : "No services yet"; }
       case "quote_request_form": { const n = (c.fields || []).filter((f) => f.enabled).length; return `${n} field${n === 1 ? "" : "s"} enabled`; }
       case "service_area": return c.area || "Not set";
-      case "booking_deposit": { const on = Number(c.deposit_amount) > 0 || el._depositOn; return on ? `$${c.deposit_amount || "0"} deposit` : "Off"; }
+      case "booking_deposit": { const on = Number(c.deposit_amount) > 0 || el._depositOn; return on ? `$${c.deposit_amount || "0"} deposit${c.deposit_description ? " — " + c.deposit_description : ""}` : "Off"; }
       case "booking_calendar": return c.link ? `${c.provider === "cal_com" ? "Cal.com" : "Calendly"} — ${c.link}` : "Not set up yet";
       case "product_shop": return "Manage products on your dashboard";
       default: return "";
@@ -882,8 +882,9 @@
             </button>
             <div style="font-size:13.5px;font-weight:600">Require a deposit to book</div>
           </div>
-          ${on ? `<input class="bib-row-input bib-deposit-amount" data-id="${el.id}" value="${escapeHtml(c.deposit_amount || "")}" placeholder="Deposit amount, e.g. 25" style="font-size:14px" />
-          <p class="text-muted" style="font-size:12px;margin-top:6px;color:var(--bib-muted)">Won't show on your page until Stripe is connected — see Booking deposits in your dashboard.</p>` : ""}`;
+          ${on ? `<input class="bib-row-input bib-deposit-description" data-id="${el.id}" value="${escapeHtml(c.deposit_description || "")}" placeholder="What's this deposit for? e.g. Wedding cake consultation" style="font-size:14px;margin-bottom:8px" />
+          <input class="bib-row-input bib-deposit-amount" data-id="${el.id}" value="${escapeHtml(c.deposit_amount || "")}" placeholder="Deposit amount, e.g. 25" style="font-size:14px" />
+          <p class="text-muted" style="font-size:12px;margin-top:6px;color:var(--bib-muted)">Shown to visitors before they pay, and on the checkout page itself — not just an internal note. Won't show on your page until Stripe is connected — see Booking deposits in your dashboard.</p>` : ""}`;
       }
 
       case "booking_calendar":
@@ -1433,7 +1434,9 @@
       });
     });
     const depositInput = panel.querySelector(".bib-deposit-amount");
-    if (depositInput) depositInput.addEventListener("input", (e) => { elById(e.target.dataset.id).content.deposit_amount = e.target.value; markDirty(); updateElementSummaries(); });
+    if (depositInput) depositInput.addEventListener("input", (e) => { elById(e.target.dataset.id).content.deposit_amount = e.target.value; markDirty(); updateElementSummaries(); renderPreview(); });
+    const depositDescInput = panel.querySelector(".bib-deposit-description");
+    if (depositDescInput) depositDescInput.addEventListener("input", (e) => { elById(e.target.dataset.id).content.deposit_description = e.target.value; markDirty(); renderPreview(); });
 
     // Booking calendar (Calendly / Cal.com)
     panel.querySelectorAll(".bib-cal-provider-btn").forEach((btn) => {
