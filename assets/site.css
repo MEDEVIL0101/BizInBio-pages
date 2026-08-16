@@ -183,9 +183,15 @@ button{font-family:inherit}
 /* Image-only link — the uploaded image itself is the whole button, no
    icon/text. Needs its own override since .social-row a above (fixed
    height/padding/tint background, meant for icon+text pills) would
-   otherwise apply to any bare <a> in this container. */
-.social-row a.bib-link-image{height:auto;min-height:0;padding:0;background:none;overflow:hidden}
-.social-row a.bib-link-image img{width:100%;height:auto;display:block;border-radius:var(--radius-md)}
+   otherwise apply to any bare <a> in this container. Locked to a 16:9
+   rectangle (object-fit:cover) rather than the image's own natural
+   height, so the card's size on the page is consistent and predictable
+   regardless of what a business uploads — the builder crops to this same
+   ratio before upload, but the lock lives here too so it's not just an
+   upload-time convention (covers anything already uploaded before that,
+   or any future upload path that skips it). */
+.social-row a.bib-link-image{min-height:0;padding:0;background:none;overflow:hidden;aspect-ratio:16/9}
+.social-row a.bib-link-image img{width:100%;height:100%;object-fit:cover;display:block;border-radius:var(--radius-md)}
 
 /* Shake — an attention-grabbing wiggle a business can opt into for
    whichever link sits at the very top of their list. Runs a brief shake
