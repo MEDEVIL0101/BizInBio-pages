@@ -43,7 +43,7 @@
 <div class="page-wrap">
 
     
-    <div class="avatar-wrap natural center"><img src="https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/969f05bd-53fa-4da3-873d-c327f16adec1/1786825924913-IMG_7984.jpeg" alt="" class="avatar-img natural" style="width:50%" /></div>
+    <div class="avatar-wrap natural center"><img src="https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/969f05bd-53fa-4da3-873d-c327f16adec1/1786825924913-IMG_7984.jpeg" alt="" class="avatar-img natural" style="width:100%" /></div>
     <header style="padding:0 var(--space-4) var(--space-4);text-align:center">
       <h1 style="font-size:26px"></h1>
       
@@ -56,10 +56,10 @@
           <div style="aspect-ratio:1;overflow:hidden;border-radius:var(--radius-md)"><img src="https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/969f05bd-53fa-4da3-873d-c327f16adec1/1786725088081-Photoroom_20260726_182638.png" alt="" style="width:100%;height:100%;object-fit:cover;display:block" /></div>
           <span style="font-size:13px;font-weight:600;line-height:1.3;">Nickelback (Shirt) - XL</span>
           <span style="font-size:13px">
-            <span style="color:var(--color-accent-700);font-family:var(--font-heading);font-weight:600">$1.00 CAD</span>
+            <span style="color:var(--color-accent-700);font-family:var(--font-heading);font-weight:600">$65.00 CAD</span>
             
           </span>
-          <button type="button" class="btn btn-secondary bib-select-options" data-id="afe83166-15a2-4136-a8fa-f8b5beb6c493" style="margin-top:2px;font-size:12px;padding:8px">Select options</button>
+          <button type="button" class="btn btn-secondary bib-add-cart" data-id="afe83166-15a2-4136-a8fa-f8b5beb6c493" data-name="Nickelback (Shirt) - XL" data-price="6500" style="margin-top:2px;font-size:12px;padding:8px">Add to cart</button>
         </div></div>
     </section>
     <button type="button" id="bib-cart-bar" aria-label="View cart" style="display:none;position:fixed;top:var(--space-4);right:var(--space-4);align-items:center;gap:7px;background:var(--color-accent);color:var(--color-on-accent);border:none;border-radius:999px;padding:10px 15px;font-family:var(--font-heading);font-size:13px;font-weight:700;cursor:pointer;box-shadow:var(--shadow-md);z-index:20">
@@ -156,7 +156,7 @@
         </div>
       </div>
     </div>
-    <script id="bib-shop-data" type="application/json">[{"id":"afe83166-15a2-4136-a8fa-f8b5beb6c493","name":"Nickelback (Shirt) - XL","price":100,"compareAtPrice":null,"images":["https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/969f05bd-53fa-4da3-873d-c327f16adec1/1786725088081-Photoroom_20260726_182638.png"],"description":"","productType":"physical","dropshipProvider":null,"dropshipShippingCents":0,"variants":[{"id":"f5914686-0226-41cb-8e5f-f8f32fcf3485","name":"XL","stock":1}]}]</script>
+    <script id="bib-shop-data" type="application/json">[{"id":"afe83166-15a2-4136-a8fa-f8b5beb6c493","name":"Nickelback (Shirt) - XL","price":6500,"compareAtPrice":null,"images":["https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/969f05bd-53fa-4da3-873d-c327f16adec1/1786725088081-Photoroom_20260726_182638.png"],"description":"","productType":"physical","dropshipProvider":null,"dropshipShippingCents":0,"variants":[]}]</script>
     <script>
       (function () {
         var STRIPE_CONNECTED = true;
@@ -184,6 +184,18 @@
           bar.style.display = 'flex';
           if (cartModalOpen) renderCartModalLines();
         }
+        // Only variant-tracked products have a real stock number to cap
+        // against (see product_variants.stock_quantity) -- plain products
+        // have no inventory field at all, so they keep the flat sanity cap.
+        function maxQtyFor(productId, variantId) {
+          var product = PRODUCTS_BY_ID[productId];
+          if (variantId && product && product.variants) {
+            for (var i = 0; i < product.variants.length; i++) {
+              if (product.variants[i].id === variantId) return Math.max(0, product.variants[i].stock);
+            }
+          }
+          return 20;
+        }
         // Cart lines are keyed by variant when the product has one, so two
         // variants of the same product are separate lines — otherwise
         // keyed by product id directly, same as before variants existed.
@@ -191,7 +203,7 @@
           var key = variantId || productId;
           var cart = getCart();
           if (!cart[key]) cart[key] = { productId: productId, variantId: variantId || null, variantName: variantName || null, qty: 0, price: price, name: name };
-          cart[key].qty += qty;
+          cart[key].qty = Math.min(maxQtyFor(productId, variantId), cart[key].qty + qty);
           setCart(cart);
           // Open the cart right away, like a normal storefront -- rather
           // than leaving the buyer to notice the floating cart button
@@ -204,7 +216,7 @@
         function setQty(key, qty) {
           var cart = getCart();
           if (!cart[key]) return;
-          if (qty <= 0) { delete cart[key]; } else { cart[key].qty = Math.min(20, qty); }
+          if (qty <= 0) { delete cart[key]; } else { cart[key].qty = Math.min(maxQtyFor(cart[key].productId, cart[key].variantId), qty); }
           setCart(cart);
         }
 
@@ -521,6 +533,10 @@
                 pill.style.borderColor = 'var(--color-accent)';
                 pill.style.background = 'var(--color-accent)';
                 pill.style.color = 'var(--color-on-accent)';
+                // Switching to a lower-stock variant after bumping qty up
+                // on a previous one shouldn't carry an out-of-range qty over.
+                currentQty = Math.min(currentQty, Math.max(1, v.stock));
+                modalQty.textContent = String(currentQty);
                 updateModalAddButton();
               });
               modalVariants.appendChild(pill);
@@ -566,7 +582,8 @@
           modalQty.textContent = String(currentQty);
         });
         document.getElementById('bib-modal-qty-plus').addEventListener('click', function () {
-          currentQty = Math.min(20, currentQty + 1);
+          var max = currentVariant ? Math.max(0, currentVariant.stock) : 20;
+          currentQty = Math.min(max, currentQty + 1);
           modalQty.textContent = String(currentQty);
         });
         document.getElementById('bib-modal-add').addEventListener('click', function () {
@@ -705,7 +722,7 @@
           window.open(btn.dataset.url, '_blank', 'noopener');
         });
       </script><div style="display:flex;flex-wrap:wrap;gap:var(--space-2);justify-content:center;padding:0 var(--space-4) var(--space-6)"><a href="mailto:the3strikes@gmail.com" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:7px;flex:none;border-radius:999px;padding:11px 18px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M4 6.5l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>the3strikes@gmail.com</span></a></div><footer style="padding:var(--space-6) var(--space-4);text-align:center;border-top:1px solid var(--color-divider)">
-    <a href="https://bizinbio.net/#pricing" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:var(--color-surface);border:1px solid var(--color-divider);color:var(--color-text);text-decoration:none;font-family:var(--font-heading);font-size:12px;font-weight:700">
+    <a href="https://bizinbio.net/#pricing" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:#d6336c;border:none;color:#fff;text-decoration:none;font-family:var(--font-heading);font-size:12px;font-weight:700">
       Get your BizInBio today
     </a>
   </footer>
