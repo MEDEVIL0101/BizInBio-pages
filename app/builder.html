@@ -853,6 +853,14 @@
                 </div>`).join("")}
             </div>
           </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:600;color:var(--bib-muted)">
+              Field color
+              <input type="color" class="bib-quote-field-color" data-id="${el.id}" value="${escapeHtml(c.field_color || "#ffffff")}" style="width:38px;height:28px;border:1.5px solid var(--bib-border);border-radius:6px;padding:0;cursor:pointer" />
+            </label>
+            <span class="text-muted" style="font-size:11px;flex:1">${c.field_color ? "Custom color set" : "Using your theme's default field color"}</span>
+            ${c.field_color ? `<button type="button" class="bib-btn-text bib-reset-quote-field-color" data-id="${el.id}" style="font-size:11px;padding:0;width:auto">Reset</button>` : ""}
+          </div>
           <div>
             <div class="bib-field-label">Show as</div>
             <div style="display:flex;gap:8px">
@@ -1418,6 +1426,13 @@
     });
     const quotePopupDelayInput = panel.querySelector(".bib-quote-popup-delay");
     if (quotePopupDelayInput) quotePopupDelayInput.addEventListener("input", (e) => { elById(e.target.dataset.id).content.popup_delay_seconds = Number(e.target.value) || 0; markDirty(); renderPreview(); });
+    const quoteFieldColorInput = panel.querySelector(".bib-quote-field-color");
+    if (quoteFieldColorInput) quoteFieldColorInput.addEventListener("input", (e) => { elById(e.target.dataset.id).content.field_color = e.target.value; markDirty(); renderEditor(); renderPreview(); });
+    const resetQuoteFieldColorBtn = panel.querySelector(".bib-reset-quote-field-color");
+    if (resetQuoteFieldColorBtn) resetQuoteFieldColorBtn.addEventListener("click", (e) => {
+      delete elById(e.target.dataset.id).content.field_color;
+      markDirty(); renderEditor(); renderPreview();
+    });
 
     // Service area
     const areaInput = panel.querySelector(".bib-servicearea-input");
