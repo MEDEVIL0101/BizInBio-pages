@@ -43,7 +43,7 @@
 <div class="page-wrap">
 
     <div class="cover-photo" style="position:relative"><img src="https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/8e9da974-cbfa-4e56-ab36-df345cc7d18a/1786831217520-bt_IFSLN2R4PS8T9RA01ABA4NLSG5QLW.jpg" alt="" /><div style="position:absolute;inset:0;background:linear-gradient(to bottom, transparent 45%, var(--color-bg) 100%)"></div></div>
-    <div class="avatar-wrap natural center overlap"><img src="https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/8e9da974-cbfa-4e56-ab36-df345cc7d18a/1786828147918-dc7eaf96adba59a00e28d6ba2c1e18e9.png" alt="" class="avatar-img natural" style="width:37%" /></div>
+    <div class="avatar-wrap natural center overlap"><img src="https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/8e9da974-cbfa-4e56-ab36-df345cc7d18a/1786828147918-dc7eaf96adba59a00e28d6ba2c1e18e9.png" alt="" class="avatar-img natural" style="width:26%" /></div>
     <header style="padding:0 var(--space-4) var(--space-4);text-align:center">
       <h1 style="font-size:26px"></h1>
       
@@ -131,7 +131,33 @@
           if (!btn) return;
           window.open(btn.dataset.url, '_blank', 'noopener');
         });
-      </script><footer style="padding:var(--space-6) var(--space-4);text-align:center;border-top:1px solid var(--color-divider)">
+      </script>
+    <div style="padding:0 var(--space-4) var(--space-6)">
+      <button id="bib-booking-btn" class="btn btn-primary btn-block">Book now</button>
+      <p id="bib-booking-status" class="text-muted" style="text-align:center;font-size:12px;margin-top:var(--space-2)"></p>
+    </div>
+    <script>
+      document.getElementById('bib-booking-btn').addEventListener('click', async function () {
+        var status = document.getElementById('bib-booking-status');
+        status.textContent = 'Redirecting to checkout...';
+        try {
+          var res = await fetch("https://eqsxcbmcsjrtnkevaygy.supabase.co" + '/functions/v1/create-booking-checkout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': "sb_publishable_DPifKzXa875ieM2CLgMieA_VJyYRa-6",
+              'Authorization': 'Bearer ' + "sb_publishable_DPifKzXa875ieM2CLgMieA_VJyYRa-6"
+            },
+            body: JSON.stringify({ page_id: "8e288a6e-5397-45f3-a64a-d3271fab9325" })
+          });
+          var data = await res.json();
+          if (!res.ok || !data.url) throw new Error('failed');
+          window.location.href = data.url;
+        } catch (err) {
+          status.textContent = 'Something went wrong — please try again.';
+        }
+      });
+    </script><footer style="padding:var(--space-6) var(--space-4);text-align:center;border-top:1px solid var(--color-divider)">
     <a href="https://bizinbio.net/#pricing" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:#d6336c;border:none;color:#fff;text-decoration:none;font-family:var(--font-heading);font-size:12px;font-weight:700">
       Get your BizInBio today
     </a>
