@@ -52,7 +52,7 @@ button{font-family:inherit}
 /* Cover/banner photo — full-bleed, no card treatment (not a duotone photo:
    this represents the business's own imagery, left untinted like the
    profile avatar). */
-.cover-photo{width:100%;aspect-ratio:4/3;overflow:hidden;display:block}
+.cover-photo{width:100%;aspect-ratio:2868/1320;overflow:hidden;display:block}
 .cover-photo img{width:100%;height:100%;object-fit:cover;display:block}
 
 /* Page/app wrapper — mobile-first narrow column, but widens (and gets a
@@ -178,7 +178,19 @@ button{font-family:inherit}
    reference link-in-bio sites rather than clipping with an ellipsis.
    Shares .blueprint's --radius-md corner so plain links and rich
    (style:"card") links read as the same family, just two densities. */
+/* Full width of .page-wrap looked fine at mobile's 460px, but stretched
+   into very wide, sparse-looking bars once .page-wrap grows to 720px/960px
+   on larger screens (a link's icon+label content doesn't get any longer
+   just because the screen did) -- narrowed and centered from tablet width
+   up so links keep reading as a compact list rather than a row of empty
+   pill outlines. */
 .social-row{display:flex;flex-direction:column;gap:18px}
+@media (min-width:640px){
+  .social-row{max-width:380px;margin:0 auto}
+}
+@media (min-width:1024px){
+  .social-row{max-width:480px}
+}
 .social-row a{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:52px;padding:16px 20px;border-radius:var(--radius-md);background:color-mix(in srgb,var(--color-accent) 14%,transparent);color:var(--color-accent);font-weight:700;font-size:16px;border:none;text-align:center}
 .social-row a .bib-link-label-text{overflow-wrap:break-word;white-space:normal;min-width:0}
 
