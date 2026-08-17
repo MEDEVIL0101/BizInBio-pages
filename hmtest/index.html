@@ -48,11 +48,16 @@
       <h1 style="font-size:26px">@lamborghinimiami</h1>
       
     </header><section style="padding:0 var(--space-4) var(--space-6);text-align:center"><p style="font-size:13.5px;line-height:1.55;opacity:.85">Lamborghini Miami has been a staple here in Miami and throughout South Florida for over 40 years! Customers throughout the area can visit our dealership to explore our excellent inventory of pre-owned Lamborghini models today!</p></section>
-    <section style="padding:0 var(--space-4) var(--space-6)">
-    <h6 style="color:var(--color-accent-700);margin-bottom:var(--space-3)">Request a quote</h6>
-    <div class="field"><label>Name</label><input class="input" id="bib-q-name-7dffa189-185c-485c-8cad-f848b50979ae" /></div><div class="field"><label>Email</label><input class="input" type="email" id="bib-q-email-7dffa189-185c-485c-8cad-f848b50979ae" /></div><div class="field"><label>Project details</label><textarea class="input" id="bib-q-details-7dffa189-185c-485c-8cad-f848b50979ae" placeholder="Tell us what you need"></textarea></div>
+    <div id="bib-lp-overlay-7dffa189-185c-485c-8cad-f848b50979ae" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;padding:var(--space-4)">
+        <div style="position:relative;width:100%;max-width:380px;background:var(--color-card-bg);border-radius:var(--radius-lg,16px);max-height:88vh;overflow-y:auto;padding:var(--space-6) var(--space-4)">
+          <button id="bib-lp-close-7dffa189-185c-485c-8cad-f848b50979ae" aria-label="Close" type="button" style="position:absolute;top:8px;right:10px;background:none;border:none;font-size:22px;line-height:1;cursor:pointer;color:var(--color-text);opacity:.6;padding:6px">&times;</button>
+          
+    <h6 style="color:var(--color-accent-700);margin-bottom:var(--space-3)">Schedule a test drive.</h6>
+    <div class="field"><label>Name</label><input class="input" id="bib-q-name-7dffa189-185c-485c-8cad-f848b50979ae" /></div><div class="field"><label>Email</label><input class="input" type="email" id="bib-q-email-7dffa189-185c-485c-8cad-f848b50979ae" /></div><div class="field"><label>Project details</label><textarea class="input" id="bib-q-details-7dffa189-185c-485c-8cad-f848b50979ae" placeholder="Drive the newest Lamborghini Models."></textarea></div>
     <button id="bib-quote-submit-7dffa189-185c-485c-8cad-f848b50979ae" class="btn btn-primary btn-block">Send request</button>
-    <p id="bib-quote-status-7dffa189-185c-485c-8cad-f848b50979ae" class="text-muted" style="text-align:center;font-size:12px;margin-top:var(--space-2)"></p></section>
+    <p id="bib-quote-status-7dffa189-185c-485c-8cad-f848b50979ae" class="text-muted" style="text-align:center;font-size:12px;margin-top:var(--space-2)"></p>
+        </div>
+      </div>
     <script>
       (function () {
         var suffix = "7dffa189-185c-485c-8cad-f848b50979ae";
@@ -114,34 +119,7 @@
           }
         });
       })();
-    </script><div class="social-row" style="padding:0 var(--space-4) var(--space-6)"><a href="https://configurator.lamborghini.com/configurator/model/32005-20111/MBV-24727-2027?loungeMode=false&amp;lang=eng&amp;country=ca" class="bib-link-image" target="_blank" rel="noopener" style=""><img src="https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/8e9da974-cbfa-4e56-ab36-df345cc7d18a/1786909221284-UrusCard.png" alt="Link" /></a></div>
-    <div style="padding:0 var(--space-4) var(--space-6)">
-      
-      <button id="bib-booking-btn" class="btn btn-primary btn-block">Book now</button>
-      <p id="bib-booking-status" class="text-muted" style="text-align:center;font-size:12px;margin-top:var(--space-2)"></p>
-    </div>
-    <script>
-      document.getElementById('bib-booking-btn').addEventListener('click', async function () {
-        var status = document.getElementById('bib-booking-status');
-        status.textContent = 'Redirecting to checkout...';
-        try {
-          var res = await fetch("https://eqsxcbmcsjrtnkevaygy.supabase.co" + '/functions/v1/create-booking-checkout', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': "sb_publishable_DPifKzXa875ieM2CLgMieA_VJyYRa-6",
-              'Authorization': 'Bearer ' + "sb_publishable_DPifKzXa875ieM2CLgMieA_VJyYRa-6"
-            },
-            body: JSON.stringify({ page_id: "8e288a6e-5397-45f3-a64a-d3271fab9325" })
-          });
-          var data = await res.json();
-          if (!res.ok || !data.url) throw new Error('failed');
-          window.location.href = data.url;
-        } catch (err) {
-          status.textContent = 'Something went wrong — please try again.';
-        }
-      });
-    </script><footer style="padding:var(--space-6) var(--space-4);text-align:center;border-top:1px solid var(--color-divider)">
+    </script><div class="social-row" style="padding:0 var(--space-4) var(--space-6)"><a href="https://configurator.lamborghini.com/configurator/model/32005-20111/MBV-24727-2027?loungeMode=false&amp;lang=eng&amp;country=ca" class="bib-link-image" target="_blank" rel="noopener" style="border-color:transparent;border-radius:var(--radius-md);box-shadow:0 0 6px 1px color-mix(in srgb,#ff4013 90%,transparent),0 0 34px 8px color-mix(in srgb,#ff4013 75%,transparent);"><img src="https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/8e9da974-cbfa-4e56-ab36-df345cc7d18a/1786909221284-UrusCard.png" alt="Link" /></a><a href="https://www.lamborghinimiami.com/schedule-car-maintenance-or-auto-repair-miami-fl" class="btn" target="_blank" rel="noopener" style="background:#444444;border-color:#444444;color:#FFFFFF;"><span style="flex-shrink:0;display:flex"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l6-6"/><path d="M13 5l1-1a4 4 0 1 1 6 6l-1 1"/><path d="M11 19l-1 1a4 4 0 1 1-6-6l1-1"/></svg></span><span class="bib-link-label-text">Book your service appointment</span></a></div><footer style="padding:var(--space-6) var(--space-4);text-align:center;border-top:1px solid var(--color-divider)">
     <a href="https://bizinbio.net/#pricing" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:#d6336c;border:none;color:#fff;text-decoration:none;font-family:var(--font-heading);font-size:12px;font-weight:700">
       Get your BizInBio today
     </a>
