@@ -77,14 +77,6 @@ const FONT_PAIRS = [
   { id: "bold", label: "Bold", display: '"Bebas Neue","Arial Narrow",sans-serif', body: '"Work Sans",system-ui,sans-serif' },
 ];
 
-// Element types visible on a free-tier page — mirrors FREE_ELEMENTS in
-// supabase/functions/render-page/index.ts (same manual-sync convention as
-// PALETTES/SOCIAL_PLATFORMS). Every paid tier ("website_shop"/All Access and
-// "custom_domain") unlocks every element type, so the builder only needs
-// this one free/paid boundary, not the full per-tier breakdown render-page
-// enforces server-side.
-const FREE_ELEMENT_TYPES = new Set(["header", "social_link", "contact", "about"]);
-
 // Social platform icons for the builder's link picker — mirrors
 // SOCIAL_PLATFORMS in supabase/functions/render-page/index.ts exactly (same
 // hand-drawn inline-SVG style as every other icon in this app: viewBox 0 0
