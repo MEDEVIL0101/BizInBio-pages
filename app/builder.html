@@ -187,31 +187,36 @@
   // offer, then take payment — not alphabetical or arbitrary. Drives both
   // the "+ Add section" grid order and (via ALL_SECTION_TYPES) anywhere
   // else that lists every section type in a fixed order.
+  // minTier replaces the old binary paywalled flag -- matches the ladder in
+  // supabase/functions/_shared/tier.ts (kept in sync by hand; there's no
+  // way to share code between this client bundle and the Deno functions).
   const SECTION_META = {
-    about: { title: "About", hue: 250, paywalled: false,
+    about: { title: "About", hue: 250, minTier: "starter",
       icon: `<path d="M4 6h16M4 12h16M4 18h10" stroke-linecap="round"/>` },
-    contact: { title: "Contact", hue: 30, paywalled: false,
+    contact: { title: "Contact", hue: 30, minTier: "starter",
       icon: `<path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.9 21 3 13.1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.4 0 .8-.3 1l-2.2 2.2z" stroke-linejoin="round"/>` },
-    social_link: { title: "Social & links", hue: 190, paywalled: false,
+    social_link: { title: "Social & links", hue: 190, minTier: "starter",
       icon: `<path d="M10 13a5 5 0 007.07 0l2-2a5 5 0 00-7.07-7.07l-1 1M14 11a5 5 0 00-7.07 0l-2 2a5 5 0 007.07 7.07l1-1" stroke-linecap="round"/>` },
-    portfolio_gallery: { title: "Gallery", hue: 320, paywalled: true,
+    portfolio_gallery: { title: "Gallery", hue: 320, minTier: "pro",
       icon: `<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M3 17l5-4 4 3 4-5 5 6" stroke-linecap="round" stroke-linejoin="round"/>` },
-    youtube_video: { title: "YouTube videos", hue: 0, paywalled: true,
+    youtube_video: { title: "YouTube videos", hue: 0, minTier: "pro",
       icon: `<circle cx="12" cy="12" r="9"/><path d="M10 9l5 3-5 3V9z" fill="currentColor" stroke="none"/>` },
-    services_list: { title: "Services", hue: 90, paywalled: true,
+    services_list: { title: "Services", hue: 90, minTier: "pro",
       icon: `<path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/><circle cx="4" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.4" fill="currentColor" stroke="none"/>` },
-    service_area: { title: "Service area", hue: 150, paywalled: true,
+    service_area: { title: "Service area", hue: 150, minTier: "pro",
       icon: `<path d="M12 21s-7-6.5-7-11a7 7 0 0114 0c0 4.5-7 11-7 11z" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.3"/>` },
-    quote_request_form: { title: "Quote / lead capture form", hue: 350, paywalled: true,
+    quote_request_form: { title: "Quote / lead capture form", hue: 350, minTier: "pro",
       icon: `<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke-linecap="round"/>` },
-    booking_deposit: { title: "Booking deposit", hue: 270, paywalled: true,
+    booking_deposit: { title: "Booking deposit", hue: 270, minTier: "pro_payments",
       icon: `<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v4M16 3v4" stroke-linecap="round"/>` },
-    booking_calendar: { title: "Book a call", hue: 210, paywalled: true,
+    booking_calendar: { title: "Book a call", hue: 210, minTier: "pro",
       icon: `<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M8 3v4M16 3v4" stroke-linecap="round"/><path d="M9 14l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>` },
-    product_shop: { title: "Shop", hue: 55, paywalled: true,
+    product_shop: { title: "Shop", hue: 55, minTier: "pro_payments",
       icon: `<path d="M6 8h12l-1 12a2 2 0 01-2 2H9a2 2 0 01-2-2L6 8z" stroke-linejoin="round"/><path d="M9 8V6a3 3 0 016 0v2"/>` },
   };
   const ALL_SECTION_TYPES = Object.keys(SECTION_META);
+  const TIER_RANK = { starter: 0, pro: 1, pro_payments: 2, teams: 3 };
+  const TIER_BADGE_LABEL = { pro: "PRO", pro_payments: "PRO PAYMENTS", teams: "TEAMS" };
 
   function hueBg(hue) { return `oklch(90% 0.05 ${hue})`; }
   function hueFg(hue) { return `oklch(49% 0.16 ${hue})`; }
@@ -370,7 +375,7 @@
   // This is what closes off the class of bug hit earlier with per-section
   // auto-save (unsaved edits silently discarded on panel reopen) — there's
   // no longer a separate persisted-vs-pending state to fall out of sync.
-  let session, page, isPaid = false;
+  let session, page, effectiveTier = "starter", trialExpired = false;
   let headerElId = null;
   let headerContent = { business_name: "", location: "", logo_url: "", logo_shape: "circle", logo_width_pct: 50, cover_image_url: "", cover_fade: false };
   let elements = []; // all non-header elements, in position order
@@ -387,7 +392,12 @@
 
   function tempId() { return "temp-" + (nextTempId++) + "-" + Date.now(); }
   function isTemp(id) { return String(id).startsWith("temp-"); }
-  function isGated(type) { return !isPaid && SECTION_META[type] && SECTION_META[type].paywalled; }
+  function isGated(type) {
+    const meta = SECTION_META[type];
+    if (!meta) return false;
+    if (trialExpired) return meta.minTier !== "starter";
+    return TIER_RANK[effectiveTier] < TIER_RANK[meta.minTier];
+  }
 
   // Maps a colorFieldRowHtml key ('accent'|'bg'|'text'|'button'|'card') to
   // the theme.* property it actually drives — one place to change if a
@@ -650,15 +660,21 @@
           <button type="button" class="bib-icon-btn bib-remove-el-btn" data-id="${el.id}" title="Delete section">${TRASH_ICON}</button>
           <span class="bib-chevron" style="transform:rotate(${isOpen ? "180deg" : "0deg"})">${CHEVRON_ICON}</span>
         </div>
-        ${isOpen ? `<div class="bib-el-panel">${gated ? gatedBannerHtml(meta.hue) : ""}${sectionEditorHtml(el)}</div>` : ""}
+        ${isOpen ? `<div class="bib-el-panel">${gated ? gatedBannerHtml(meta.hue, meta.minTier) : ""}${sectionEditorHtml(el)}</div>` : ""}
       </div>`;
   }
 
-  function gatedBannerHtml(hue) {
+  // Kept in sync by hand with the Stripe prices created for the pricing
+  // restructure (Starter $9 / Pro $19 / Pro Payments $29 / Teams
+  // $12-seat) -- there's no live-pricing API call from the builder, so
+  // this is the same "duplicated, documented" tradeoff as TIER_RANK above.
+  const TIER_PRICE_LABEL = { pro: "Pro ($19/mo)", pro_payments: "Pro Payments ($29/mo)", teams: "Teams ($12/seat/mo)" };
+
+  function gatedBannerHtml(hue, minTier) {
     return `
       <div class="bib-gated-banner" style="background:${hueBannerBg(hue)};color:${hueBannerFg(hue)}">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${hueFg(hue)}" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
-        <div>Part of <strong>All Access</strong> ($9.99/mo) — saved now, goes live once you <a href="/app/dashboard.html">upgrade</a>.</div>
+        <div>Part of <strong>${TIER_PRICE_LABEL[minTier] || minTier}</strong> — saved now, goes live once you <a href="/app/dashboard.html">upgrade</a>.</div>
       </div>`;
   }
 
@@ -944,7 +960,7 @@
     const alreadyAdded = !REPEATABLE_TYPES.has(type) && elements.some((e) => e.type === type);
     return `
       <button type="button" class="bib-add-card bib-add-section-item" data-type="${type}" data-gated="${gated}" ${alreadyAdded ? "disabled" : ""} style="${alreadyAdded ? "opacity:.55;cursor:not-allowed" : ""}">
-        ${meta.paywalled ? `<div class="bib-all-access-badge">ALL ACCESS</div>` : ""}
+        ${meta.minTier !== "starter" ? `<div class="bib-all-access-badge">${TIER_BADGE_LABEL[meta.minTier]}</div>` : ""}
         <div class="bib-add-icon" style="background:${alreadyAdded ? "oklch(95% 0.008 60)" : hueBg(meta.hue)};color:${alreadyAdded ? "oklch(78% 0.01 60)" : hueFg(meta.hue)}">${sectionIconSvg(type, 18)}</div>
         <div class="bib-add-title" style="color:${alreadyAdded ? "oklch(65% 0.015 60)" : "var(--bib-text)"}">${escapeHtml(meta.title)}</div>
       </button>`;
@@ -1481,7 +1497,8 @@
         if (btn.disabled) return;
         const type = btn.dataset.type;
         if (btn.dataset.gated === "true") {
-          if (confirm(`${SECTION_META[type].title} is part of All Access ($9.99/mo) — it won't appear on your page until you upgrade. Go to upgrade now?`)) {
+          const requiredTierLabel = TIER_PRICE_LABEL[SECTION_META[type].minTier] || SECTION_META[type].minTier;
+          if (confirm(`${SECTION_META[type].title} is part of ${requiredTierLabel} — it won't appear on your page until you upgrade. Go to upgrade now?`)) {
             window.location.href = "/app/dashboard.html";
           }
           return;
@@ -1721,8 +1738,20 @@
       productCardColor: page.product_card_color || null,
     };
 
+    // Mirrors getEffectiveTier in supabase/functions/_shared/tier.ts -- no
+    // service-role access on the client, so this uses the user's own
+    // session.user.created_at (safe, it's their own account) instead of the
+    // admin API the server-side version uses for the same computation.
     const { data: sub } = await sb.from("subscriptions").select("tier, status").eq("user_id", session.user.id).maybeSingle();
-    isPaid = !!(sub && sub.status === "active");
+    if (sub && sub.status === "active") {
+      effectiveTier = sub.tier;
+    } else {
+      const createdAt = session.user.created_at ? new Date(session.user.created_at) : null;
+      const ageMs = createdAt ? Date.now() - createdAt.getTime() : Infinity;
+      const withinTrial = ageMs <= 14 * 24 * 60 * 60 * 1000;
+      if (withinTrial) { effectiveTier = "pro_payments"; }
+      else { effectiveTier = "starter"; trialExpired = true; }
+    }
 
     const { data: productRows } = await sb.from("products").select("id, name, price_cents, compare_at_price_cents, image_urls").eq("page_id", page.id).eq("active", true).order("position", { ascending: true });
     products = productRows || [];
