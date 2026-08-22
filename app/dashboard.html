@@ -1303,6 +1303,11 @@
           <div class="bib-field-label">Description</div>
           <textarea class="bib-textarea bib-edit-description" style="min-height:60px">${escapeHtml(p.description || "")}</textarea>
         </div>
+        ${editingVariants.length === 0 ? `
+        <div style="margin-bottom:10px">
+          <div class="bib-field-label">Stock quantity <span style="font-weight:400">(optional — leave blank for unlimited)</span></div>
+          <input class="bib-row-input bib-edit-stock" type="number" min="0" step="1" value="${p.stock_quantity ?? ""}" placeholder="e.g. 1" style="width:120px" />
+        </div>` : ""}
         <div style="margin-bottom:10px;padding-top:10px;border-top:1px solid var(--bib-border)">
           <div class="bib-field-label">Variants (size, fit, etc. — optional)</div>
           ${editingVariants.map((v, i) => `
@@ -1335,7 +1340,7 @@
             : `<div style="width:44px;height:44px;border-radius:10px;background:oklch(96% 0.01 70);flex:none"></div>`}
           <div style="flex:1;min-width:0">
             <div style="font-size:14px;font-weight:600">${escapeHtml(p.name)}</div>
-            <div class="text-muted" style="font-size:12px">${formatCents(p.price_cents, currentCurrencyLabel())}${p.compare_at_price_cents ? ` (was ${formatCents(p.compare_at_price_cents, currentCurrencyLabel())})` : ""}${p.product_type === "digital" ? " · Digital" : ""}${p.dropship_provider ? ` · ${p.dropship_provider === "printful" ? "Printful" : "Printify"} dropship` : ""}${p.category ? ` · ${escapeHtml(p.category)}` : ""}${p.weight_g ? ` · ${p.weight_g}g` : ""}${photoCount > 1 ? ` · ${photoCount} photos` : ""}</div>
+            <div class="text-muted" style="font-size:12px">${formatCents(p.price_cents, currentCurrencyLabel())}${p.compare_at_price_cents ? ` (was ${formatCents(p.compare_at_price_cents, currentCurrencyLabel())})` : ""}${p.product_type === "digital" ? " · Digital" : ""}${p.dropship_provider ? ` · ${p.dropship_provider === "printful" ? "Printful" : "Printify"} dropship` : ""}${p.category ? ` · ${escapeHtml(p.category)}` : ""}${p.weight_g ? ` · ${p.weight_g}g` : ""}${photoCount > 1 ? ` · ${photoCount} photos` : ""}${p.stock_quantity != null ? ` · ${p.stock_quantity <= 0 ? "Sold out" : p.stock_quantity + " in stock"}` : ""}</div>
           </div>
           <button class="bib-btn-secondary bib-btn-sm bib-edit-product" data-id="${p.id}" style="flex:none">${isEditing ? "Close" : "Edit"}</button>
           <button class="bib-btn-secondary bib-btn-sm bib-delete-product" data-id="${p.id}" style="flex:none">Delete</button>
@@ -1477,6 +1482,15 @@
         btn.disabled = true;
         msgEl.textContent = "Saving...";
         try {
+          // A product with variants tracks stock per-variant instead — the
+          // stock field only exists in the DOM (and only means anything)
+          // when there are none, same mutual-exclusivity the editor UI
+          // itself enforces by hiding one when the other is present.
+          const cleanVariants = editingVariants.filter((v) => v.name.trim());
+          const stockInput = panel.querySelector(".bib-edit-stock");
+          const stockQuantity = cleanVariants.length === 0 && stockInput && stockInput.value.trim() !== ""
+            ? Math.max(0, Math.round(Number(stockInput.value)))
+            : null;
           const update = {
             name,
             price_cents: priceCents,
@@ -1486,6 +1500,7 @@
             product_type: productType,
             compare_at_price_cents: compareAtPriceCents,
             image_urls: editingPhotos,
+            stock_quantity: stockQuantity,
           };
           if (productType === "digital") {
             update.digital_delivery_type = digitalDeliveryType;
@@ -1507,7 +1522,6 @@
           const { error } = await sb.from("products").update(update).eq("id", btn.dataset.id);
           if (error) throw error;
 
-          const cleanVariants = editingVariants.filter((v) => v.name.trim());
           for (const v of cleanVariants) {
             if (v.id) {
               await sb.from("product_variants").update({ name: v.name.trim(), stock_quantity: v.stock_quantity }).eq("id", v.id);
