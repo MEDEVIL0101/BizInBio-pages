@@ -156,7 +156,7 @@
         </div>
       </div>
     </div>
-    <script id="bib-shop-data" type="application/json">[{"id":"afe83166-15a2-4136-a8fa-f8b5beb6c493","name":"Nickelback (Shirt) - XL","price":6500,"compareAtPrice":null,"images":["https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/969f05bd-53fa-4da3-873d-c327f16adec1/1786725088081-Photoroom_20260726_182638.png"],"description":"","productType":"physical","dropshipProvider":null,"dropshipShippingCents":0,"variants":[]}]</script>
+    <script id="bib-shop-data" type="application/json">[{"id":"afe83166-15a2-4136-a8fa-f8b5beb6c493","name":"Nickelback (Shirt) - XL","price":6500,"compareAtPrice":null,"images":["https://eqsxcbmcsjrtnkevaygy.supabase.co/storage/v1/object/public/page-photos/969f05bd-53fa-4da3-873d-c327f16adec1/1786725088081-Photoroom_20260726_182638.png"],"description":"","productType":"physical","dropshipProvider":null,"dropshipShippingCents":0,"variants":[],"stockQuantity":1}]</script>
     <script>
       (function () {
         var STRIPE_CONNECTED = true;
@@ -184,9 +184,11 @@
           bar.style.display = 'flex';
           if (cartModalOpen) renderCartModalLines();
         }
-        // Only variant-tracked products have a real stock number to cap
-        // against (see product_variants.stock_quantity) -- plain products
-        // have no inventory field at all, so they keep the flat sanity cap.
+        // Variant-tracked products cap against the variant's own stock;
+        // no-variant products cap against the product's own stockQuantity
+        // if the business set one (product_variants.stock_quantity /
+        // products.stock_quantity respectively). Neither set -> flat sanity
+        // cap, since there's no real inventory number to enforce.
         function maxQtyFor(productId, variantId) {
           var product = PRODUCTS_BY_ID[productId];
           if (variantId && product && product.variants) {
@@ -194,6 +196,7 @@
               if (product.variants[i].id === variantId) return Math.max(0, product.variants[i].stock);
             }
           }
+          if (product && product.stockQuantity != null) return Math.max(0, product.stockQuantity);
           return 20;
         }
         // Cart lines are keyed by variant when the product has one, so two
@@ -494,8 +497,9 @@
         function updateModalAddButton() {
           var hasVariants = currentProduct && currentProduct.variants && currentProduct.variants.length > 0;
           if (!hasVariants) {
-            modalAddBtn.disabled = false;
-            modalAddBtn.textContent = modalAddBtnOriginalText;
+            var outOfStock = currentProduct && currentProduct.stockQuantity != null && currentProduct.stockQuantity <= 0;
+            modalAddBtn.disabled = !!outOfStock;
+            modalAddBtn.textContent = outOfStock ? 'Sold out' : modalAddBtnOriginalText;
             return;
           }
           if (!currentVariant) {
@@ -582,7 +586,9 @@
           modalQty.textContent = String(currentQty);
         });
         document.getElementById('bib-modal-qty-plus').addEventListener('click', function () {
-          var max = currentVariant ? Math.max(0, currentVariant.stock) : 20;
+          var max = currentVariant
+            ? Math.max(0, currentVariant.stock)
+            : (currentProduct && currentProduct.stockQuantity != null ? Math.max(0, currentProduct.stockQuantity) : 20);
           currentQty = Math.min(max, currentQty + 1);
           modalQty.textContent = String(currentQty);
         });
