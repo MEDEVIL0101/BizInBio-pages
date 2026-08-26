@@ -246,6 +246,27 @@
             <option value="lb">lb</option>
           </select>
         </div>
+        <div class="bib-field-label" style="margin-top:8px">Country of origin <span class="text-muted" style="font-weight:400">(where it's made — required by customs for international orders)</span></div>
+        <select class="bib-row-input" id="product_origin_country">
+          <option value="">Same as shop</option>
+          <option value="US">United States</option>
+          <option value="CA">Canada</option>
+          <option value="GB">United Kingdom</option>
+          <option value="AU">Australia</option>
+          <option value="DE">Germany</option>
+          <option value="FR">France</option>
+          <option value="IE">Ireland</option>
+          <option value="NZ">New Zealand</option>
+          <option value="MX">Mexico</option>
+          <option value="NL">Netherlands</option>
+          <option value="IT">Italy</option>
+          <option value="ES">Spain</option>
+          <option value="JP">Japan</option>
+          <option value="SE">Sweden</option>
+          <option value="CH">Switzerland</option>
+        </select>
+        <div class="bib-field-label" style="margin-top:8px">Customs (HS) code <span class="text-muted" style="font-weight:400">(optional — needed for international orders; ask your supplier or look one up)</span></div>
+        <input class="bib-row-input" id="product_hs_tariff_code" placeholder="e.g. 6109.10" />
       </div>
       <div id="product-digital-fields" style="display:none">
         <div class="bib-field-label">Delivery</div>
@@ -1043,6 +1064,14 @@
   // 'g' throughout) -- this just lets the business type in whatever unit
   // is natural for them instead of doing the conversion in their head.
   const WEIGHT_TO_GRAMS = { g: 1, kg: 1000, lb: 453.592 };
+
+  // Mirrors the ship-to country list in render-page's checkout address
+  // form — same set Chit Chats' rate-shopping supports.
+  const ORIGIN_COUNTRY_OPTIONS = [
+    ["US", "United States"], ["CA", "Canada"], ["GB", "United Kingdom"], ["AU", "Australia"],
+    ["DE", "Germany"], ["FR", "France"], ["IE", "Ireland"], ["NZ", "New Zealand"], ["MX", "Mexico"],
+    ["NL", "Netherlands"], ["IT", "Italy"], ["ES", "Spain"], ["JP", "Japan"], ["SE", "Sweden"], ["CH", "Switzerland"],
+  ];
   function weightToGrams(value, unit) {
     const n = Number(value);
     if (!(n > 0)) return null;
@@ -1148,6 +1177,8 @@
     const weightInput = document.getElementById("product_weight").value;
     const weightUnit = document.getElementById("product_weight_unit").value;
     const weightG = weightInput ? weightToGrams(weightInput, weightUnit) : null;
+    const originCountry = document.getElementById("product_origin_country").value || null;
+    const hsTariffCode = document.getElementById("product_hs_tariff_code").value.trim() || null;
     const priceCents = Math.round(Number(priceInput) * 100);
     const productType = document.getElementById("product_type").value;
     const comparePriceInput = document.getElementById("product_compare_price").value;
@@ -1182,6 +1213,8 @@
         category: category || null,
         description: description || null,
         weight_g: productType === "digital" ? null : weightG,
+        origin_country: productType === "digital" ? null : originCountry,
+        hs_tariff_code: productType === "digital" ? null : hsTariffCode,
         product_type: productType,
         compare_at_price_cents: compareAtPriceCents,
         digital_delivery_type: productType === "digital" ? digitalDeliveryType : null,
@@ -1197,6 +1230,8 @@
       document.getElementById("product_description").value = "";
       document.getElementById("product_weight").value = "";
       document.getElementById("product_weight_unit").value = "g";
+      document.getElementById("product_origin_country").value = "";
+      document.getElementById("product_hs_tariff_code").value = "";
       document.getElementById("product_type").value = "physical";
       document.getElementById("product_compare_price").value = "";
       document.getElementById("product_digital_delivery_type").value = "hosted_file";
@@ -1283,6 +1318,13 @@
               <option value="lb">lb</option>
             </select>
           </div>
+          <div class="bib-field-label" style="margin-top:8px">Country of origin <span class="text-muted" style="font-weight:400">(where it's made — required by customs for international orders)</span></div>
+          <select class="bib-row-input bib-edit-origin-country">
+            <option value="" ${!p.origin_country ? "selected" : ""}>Same as shop</option>
+            ${ORIGIN_COUNTRY_OPTIONS.map(([code, label]) => `<option value="${code}" ${p.origin_country === code ? "selected" : ""}>${label}</option>`).join("")}
+          </select>
+          <div class="bib-field-label" style="margin-top:8px">Customs (HS) code <span class="text-muted" style="font-weight:400">(optional — needed for international orders)</span></div>
+          <input class="bib-row-input bib-edit-hs-tariff-code" value="${escapeHtml(p.hs_tariff_code || "")}" placeholder="e.g. 6109.10" />
         </div>
         <div class="bib-edit-digital-fields" style="margin-bottom:10px;${p.product_type === "digital" ? "" : "display:none"}">
           <div class="bib-field-label">Delivery</div>
@@ -1340,7 +1382,7 @@
             : `<div style="width:44px;height:44px;border-radius:10px;background:oklch(96% 0.01 70);flex:none"></div>`}
           <div style="flex:1;min-width:0">
             <div style="font-size:14px;font-weight:600">${escapeHtml(p.name)}</div>
-            <div class="text-muted" style="font-size:12px">${formatCents(p.price_cents, currentCurrencyLabel())}${p.compare_at_price_cents ? ` (was ${formatCents(p.compare_at_price_cents, currentCurrencyLabel())})` : ""}${p.product_type === "digital" ? " · Digital" : ""}${p.dropship_provider ? ` · ${p.dropship_provider === "printful" ? "Printful" : "Printify"} dropship` : ""}${p.category ? ` · ${escapeHtml(p.category)}` : ""}${p.weight_g ? ` · ${p.weight_g}g` : ""}${photoCount > 1 ? ` · ${photoCount} photos` : ""}${p.stock_quantity != null ? ` · ${p.stock_quantity <= 0 ? "Sold out" : p.stock_quantity + " in stock"}` : ""}</div>
+            <div class="text-muted" style="font-size:12px">${formatCents(p.price_cents, currentCurrencyLabel())}${p.compare_at_price_cents ? ` (was ${formatCents(p.compare_at_price_cents, currentCurrencyLabel())})` : ""}${p.product_type === "digital" ? " · Digital" : ""}${p.dropship_provider ? ` · ${p.dropship_provider === "printful" ? "Printful" : "Printify"} dropship` : ""}${p.category ? ` · ${escapeHtml(p.category)}` : ""}${p.weight_g ? ` · ${p.weight_g}g` : ""}${p.origin_country ? ` · Origin: ${p.origin_country}` : ""}${photoCount > 1 ? ` · ${photoCount} photos` : ""}${p.stock_quantity != null ? ` · ${p.stock_quantity <= 0 ? "Sold out" : p.stock_quantity + " in stock"}` : ""}</div>
           </div>
           <button class="bib-btn-secondary bib-btn-sm bib-edit-product" data-id="${p.id}" style="flex:none">${isEditing ? "Close" : "Edit"}</button>
           <button class="bib-btn-secondary bib-btn-sm bib-delete-product" data-id="${p.id}" style="flex:none">Delete</button>
@@ -1455,6 +1497,8 @@
         const weightInput = panel.querySelector(".bib-edit-weight").value;
         const weightUnit = panel.querySelector(".bib-edit-weight-unit").value;
         const weightG = weightInput ? weightToGrams(weightInput, weightUnit) : null;
+        const originCountry = panel.querySelector(".bib-edit-origin-country").value || null;
+        const hsTariffCode = panel.querySelector(".bib-edit-hs-tariff-code").value.trim() || null;
         const productType = panel.querySelector(".bib-edit-type").value;
         const comparePriceInput = panel.querySelector(".bib-edit-compare-price").value;
         const compareAtPriceCents = comparePriceInput ? Math.round(Number(comparePriceInput) * 100) : null;
@@ -1497,6 +1541,8 @@
             category: category || null,
             description: description || null,
             weight_g: productType === "digital" ? null : weightG,
+            origin_country: productType === "digital" ? null : originCountry,
+            hs_tariff_code: productType === "digital" ? null : hsTariffCode,
             product_type: productType,
             compare_at_price_cents: compareAtPriceCents,
             image_urls: editingPhotos,
