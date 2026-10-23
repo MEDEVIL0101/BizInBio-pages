@@ -854,7 +854,12 @@ class Controls {
     this.renderHotbar();
     this.bindTouches(root);
     this.bindKeys();
-    if (!world.options.hideHelp) this.flash("Left side moves · right side looks<br>Tap to build · hold to break", 4);
+    // A computer: the mouse looks once it's captured, like any first-person game.
+    this.desktop = !("ontouchstart" in window) && window.matchMedia && matchMedia("(pointer: fine)").matches;
+    if (this.desktop) this.jump.style.display = "none";
+    if (!world.options.hideHelp) this.flash(this.desktop
+      ? "Click to play · mouse looks · WASD moves · Space jumps · F flies<br>Click builds · right-click breaks · 1–9 or scroll picks a block · Esc frees the mouse"
+      : "Left side moves · right side looks<br>Tap to build · hold to break", this.desktop ? 7 : 4);
   }
 
   renderHotbar() {
@@ -950,10 +955,17 @@ class Controls {
     root.addEventListener("touchend", end);
     root.addEventListener("touchcancel", end);
 
-    // Mouse, for the simulator and Macs: drag to look, click to build, right-click or shift-click to break.
+    // Mouse: click to capture it, then it looks around; click builds, right-click (or shift-click)
+    // breaks; the wheel picks a block. Without capture, dragging looks, as before.
     let dragging = null;
-    root.addEventListener("mousedown", (e) => { if (!isButton(e.target)) dragging = { x: e.clientX, y: e.clientY, moved: false }; });
+    const locked = () => document.pointerLockElement === root;
+    root.addEventListener("mousedown", (e) => {
+      if (isButton(e.target)) return;
+      if (locked()) { if (e.button === 2 || e.shiftKey) world.breakBlock(); else world.use(); return; }
+      dragging = { x: e.clientX, y: e.clientY, moved: false };
+    });
     window.addEventListener("mousemove", (e) => {
+      if (locked()) { this.look(e.movementX * 0.6, e.movementY * 0.6); return; }
       if (!dragging) return;
       const dx = e.clientX - dragging.x, dy = e.clientY - dragging.y;
       if (Math.abs(dx) + Math.abs(dy) > 2) dragging.moved = true;
@@ -961,14 +973,29 @@ class Controls {
       this.look(dx, dy);
     });
     window.addEventListener("mouseup", (e) => {
-      if (dragging && !dragging.moved && !isButton(e.target)) { if (e.button === 2 || e.shiftKey) world.breakBlock(); else world.use(); }
+      if (dragging && !dragging.moved && !isButton(e.target)) {
+        if (this.desktop && root.requestPointerLock && e.button === 0 && !e.shiftKey) { root.requestPointerLock(); }
+        else if (e.button === 2 || e.shiftKey) world.breakBlock(); else world.use();
+      }
       dragging = null;
+    });
+    root.addEventListener("wheel", (e) => {
+      const n = world.hotbar.length;
+      if (!n) return;
+      e.preventDefault();
+      world.selected = (world.selected + (e.deltaY > 0 ? 1 : -1) + n) % n;
+      this.renderHotbar();
+    }, { passive: false });
+    root.addEventListener("click", (e) => {
+      const slot = e.target.dataset && e.target.dataset.slot;
+      if (slot !== undefined) { world.selected = Number(slot); this.renderHotbar(); }
     });
     root.addEventListener("contextmenu", (e) => e.preventDefault());
   }
 
   bindKeys() {
     window.addEventListener("keydown", (e) => {
+      if (["Space", "ArrowUp", "ArrowDown"].includes(e.code)) e.preventDefault();
       this.keys.add(e.code);
       if (e.code === "KeyF") this.toggleFly();
       const n = Number(e.key);
@@ -993,10 +1020,13 @@ class Controls {
   }
 
   update() {
+    // Letting go of the last key stops walking (it used to keep the last direction).
+    if (!this.keys.size && this.keyDriven) { this.keyDriven = false; if (this.stickTouch == null) this.move = { x: 0, y: 0 }; if (!this.touches.size) { this.up = false; this.down = false; } }
     if (this.keys.size) {
+      this.keyDriven = true;
       const k = this.keys;
-      const x = (k.has("KeyD") ? 1 : 0) - (k.has("KeyA") ? 1 : 0);
-      const y = (k.has("KeyW") ? 1 : 0) - (k.has("KeyS") ? 1 : 0);
+      const x = (k.has("KeyD") || k.has("ArrowRight") ? 1 : 0) - (k.has("KeyA") || k.has("ArrowLeft") ? 1 : 0);
+      const y = (k.has("KeyW") || k.has("ArrowUp") ? 1 : 0) - (k.has("KeyS") || k.has("ArrowDown") ? 1 : 0);
       if (this.stickTouch == null) this.move = { x, y };
       this.up = k.has("Space") || this.up;
       this.down = k.has("ShiftLeft");
