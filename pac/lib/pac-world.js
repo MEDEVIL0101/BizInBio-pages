@@ -573,16 +573,109 @@ export class World {
     pacHaptic("light");
   }
 
-  /** Hold: break the block under the crosshair. */
+  /** Hold (or right-click): hit the creature in front, else break the block under the crosshair. */
   breakBlock() {
+    const creature = this.entityUnderCrosshair(4);
     const hit = this.raycast();
+    if (creature && (!hit || creature.position.distanceTo(this.player.position) < Math.hypot(hit.x + 0.5 - this.player.position.x, hit.y + 0.5 - this.player.position.y - this.player.eye, hit.z + 0.5 - this.player.position.z) + 0.5)) {
+      if (creature.hit(1)) pacHaptic("medium");
+      return;
+    }
     if (!hit) return;
+    // TNT lights instead of breaking, unless explosions are off.
+    if (hit.block === "tnt" && this.options.explosions !== false) { this.prime(hit.x, hit.y, hit.z, 1.6); pacHaptic("medium"); return; }
     let cancelled = false;
     const event = { x: hit.x, y: hit.y, z: hit.z, block: hit.block, cancel: () => { cancelled = true; } };
     this.emit("break", event);
     if (cancelled) return;
+    const def = this.blockDefs[this.data[this.index(hit.x, hit.y, hit.z)]];
     this.setBlock(hit.x, hit.y, hit.z, null);
+    if (def) this.burst(hit.x + 0.5, hit.y + 0.5, hit.z + 0.5, def.side || def.color || "#888888", 8);
     pacHaptic("medium");
+  }
+
+  // MARK: Bits, fuses and bangs
+
+  /** A puff of little cubes, for broken blocks and creatures. */
+  burst(x, y, z, color, count = 10) {
+    if (!this.scene) return;
+    this.particles ||= [];
+    const material = new THREE.MeshBasicMaterial({ color: new THREE.Color(color) });
+    const geometry = this.particleGeometry ||= new THREE.BoxGeometry(0.14, 0.14, 0.14);
+    for (let i = 0; i < count && this.particles.length < 400; i++) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(x + (Math.random() - 0.5) * 0.6, y + (Math.random() - 0.5) * 0.6, z + (Math.random() - 0.5) * 0.6);
+      this.scene.add(mesh);
+      this.particles.push({ mesh, v: new THREE.Vector3((Math.random() - 0.5) * 5, Math.random() * 5 + 1, (Math.random() - 0.5) * 5), life: 0.5 + Math.random() * 0.5 });
+    }
+  }
+
+  /** Lights the TNT at a spot: it flashes, then goes off. */
+  prime(x, y, z, fuse = 1.6) {
+    this.fuses ||= [];
+    if (this.fuses.some((f) => f.x === x && f.y === y && f.z === z)) return;
+    const glow = new THREE.Mesh(new THREE.BoxGeometry(1.02, 1.02, 1.02), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 }));
+    glow.position.set(x + 0.5, y + 0.5, z + 0.5);
+    this.scene && this.scene.add(glow);
+    this.fuses.push({ x, y, z, left: fuse, glow });
+  }
+
+  /** A bang: clears a ball of blocks, sets off nearby TNT, knocks back everyone near. */
+  explode(x, y, z, radius = 3) {
+    const event = { x, y, z, radius, cancel: () => { event.cancelled = true; } };
+    this.emit("explode", event);
+    if (event.cancelled) return;
+    const r2 = radius * radius;
+    for (let dy = -radius; dy <= radius; dy++) for (let dz = -radius; dz <= radius; dz++) for (let dx = -radius; dx <= radius; dx++) {
+      const d2 = dx * dx + dy * dy + dz * dz;
+      const bx = x + dx, by = y + dy, bz = z + dz;
+      // The very bottom layer stays, so nobody falls out of the world.
+      if (d2 > r2 + Math.random() * 2 || by <= 0 || !this.inside(bx, by, bz)) continue;
+      const name = this.getBlock(bx, by, bz);
+      if (!name) continue;
+      if (name === "tnt" && (dx || dy || dz)) { this.prime(bx, by, bz, 0.25 + Math.random() * 0.4); continue; }
+      this.setBlock(bx, by, bz, null);
+    }
+    this.burst(x + 0.5, y + 0.5, z + 0.5, "#555555", 30);
+    this.burst(x + 0.5, y + 0.5, z + 0.5, "#FF9A2E", 20);
+    const centre = new THREE.Vector3(x + 0.5, y + 0.5, z + 0.5);
+    for (const e of [...this.entities]) {
+      const d = e.position.distanceTo(centre);
+      if (d < radius * 2) e.hit(d < radius ? 3 : 1, centre);
+    }
+    const p = this.player.position, d = p.distanceTo(centre);
+    if (d < radius * 2.5 && !this.player.flying) {
+      const push = new THREE.Vector3().subVectors(p, centre).normalize().multiplyScalar(Math.max(0, 1 - d / (radius * 2.5)) * 14);
+      this.player.velocity.y = Math.max(this.player.velocity.y, push.y + 6);
+      this.player.knock = new THREE.Vector3(push.x, 0, push.z);
+    }
+    this.shake = Math.max(this.shake || 0, Math.max(0, 1 - d / 20) * 0.5);
+    boom(Math.max(0.15, 1 - d / 30));
+    pacHaptic("heavy");
+  }
+
+  updateEffects(dt) {
+    for (const f of [...(this.fuses || [])]) {
+      f.left -= dt;
+      f.glow.visible = Math.floor(f.left * (f.left < 0.6 ? 12 : 5)) % 2 === 0;
+      if (f.left <= 0) {
+        this.fuses.splice(this.fuses.indexOf(f), 1);
+        this.scene.remove(f.glow);
+        if (this.getBlock(f.x, f.y, f.z) === "tnt") { this.setBlock(f.x, f.y, f.z, null); this.explode(f.x, f.y, f.z); }
+      }
+    }
+    for (const q of [...(this.particles || [])]) {
+      q.life -= dt;
+      q.v.y -= 18 * dt;
+      q.mesh.position.addScaledVector(q.v, dt);
+      q.mesh.scale.setScalar(Math.max(0.01, q.life * 1.6));
+      if (q.life <= 0) { this.scene.remove(q.mesh); this.particles.splice(this.particles.indexOf(q), 1); }
+    }
+    if (this.shake > 0) {
+      this.shake = Math.max(0, this.shake - dt);
+      this.camera.position.x += (Math.random() - 0.5) * this.shake;
+      this.camera.position.y += (Math.random() - 0.5) * this.shake;
+    }
   }
 
   // MARK: Creatures
@@ -683,6 +776,7 @@ export class World {
     const hit = this.raycast();
     this.highlight.visible = !!hit;
     if (hit) this.highlight.position.set(hit.x + 0.5, hit.y + 0.5, hit.z + 0.5);
+    this.updateEffects(dt);
     this.emit("tick", dt);
     this.renderer.render(this.scene, this.camera);
   }
@@ -745,6 +839,8 @@ class Player {
     const speed = this.speed * (this.flying ? 2 : 1);
     this.velocity.x = move.x * speed;
     this.velocity.z = move.z * speed;
+    // Thrown by a blast: the push fades over half a second.
+    if (this.knock) { this.velocity.x += this.knock.x; this.velocity.z += this.knock.z; this.knock.multiplyScalar(Math.max(0, 1 - dt * 4)); if (this.knock.lengthSq() < 0.05) this.knock = null; }
     const inWater = world.getBlock(this.position.x, this.position.y + 0.4, this.position.z) === "water";
     const gravity = inWater ? 8 : 28;
     const wasOnGround = this.onGround;
@@ -825,6 +921,35 @@ class Entity {
     this.heading = Math.random() * Math.PI * 2;
     this.turnIn = 1;
     this.touchedAt = 0;
+    // Hits: a few knocks and it's gone (in a puff), unless it's made invincible.
+    this.health = this.maxHealth = o.health ?? 3;
+    this.invincible = !!o.invincible;
+    this.hurtFor = 0;
+    this.color = color;
+  }
+
+  /** Knocks the creature back from `from` (a point); at no health left it vanishes in a puff. */
+  hit(amount = 1, from = this.world.player.position) {
+    const now = performance.now();
+    if (now - (this.hitAt || 0) < 150) return false;
+    this.hitAt = now;
+    const push = new THREE.Vector3().subVectors(this.position, from).setY(0);
+    if (push.lengthSq() < 1e-6) push.set(Math.random() - 0.5, 0, Math.random() - 0.5);
+    push.normalize().multiplyScalar(7);
+    this.knock = push;
+    this.velocity.y = 6;
+    this.hurtFor = 0.4;
+    this.fleeFor = 3;
+    const event = { entity: this, amount, cancel: () => { event.cancelled = true; } };
+    this.emit("hit", event); this.world.emit("hit", event);
+    if (event.cancelled || this.invincible) return true;
+    this.health -= amount;
+    if (this.health <= 0) {
+      this.world.burst(this.position.x, this.position.y + this.height / 2, this.position.z, "#" + this.color.getHexString(), 18);
+      this.emit("defeat", { entity: this }); this.world.emit("defeat", { entity: this });
+      this.remove();
+    }
+    return true;
   }
 
   on(event, callback) { (this.listeners[event] = this.listeners[event] || new Set()).add(callback); return this; }
@@ -851,14 +976,23 @@ class Entity {
       if (this.turnIn <= 0) { this.heading += (Math.random() - 0.5) * 2.4; this.turnIn = 1.5 + Math.random() * 3; this.resting = Math.random() < 0.3; }
       if (!this.resting) dir = new THREE.Vector3(Math.sin(this.heading), 0, Math.cos(this.heading));
     }
-    this.velocity.x = dir ? dir.x * this.speed : 0;
-    this.velocity.z = dir ? dir.z * this.speed : 0;
+    // Just hit: run away for a bit.
+    if (this.fleeFor > 0) { this.fleeFor -= dt; if (distance < 12) dir = toPlayer.clone().setY(0).normalize().negate(); }
+    this.velocity.x = dir ? dir.x * this.speed * (this.fleeFor > 0 ? 1.8 : 1) : 0;
+    this.velocity.z = dir ? dir.z * this.speed * (this.fleeFor > 0 ? 1.8 : 1) : 0;
+    if (this.knock) { this.velocity.x += this.knock.x; this.velocity.z += this.knock.z; this.knock.multiplyScalar(Math.max(0, 1 - dt * 6)); if (this.knock.lengthSq() < 0.05) this.knock = null; }
     this.velocity.y -= 28 * dt;
     if (this.blocked && this.onGround) this.velocity.y = 8;
     this.blocked = false;
     this.onGround = false;
     collide(this.world, this, dt);
     if (dir) this.mesh.rotation.y = Math.atan2(dir.x, dir.z);
+    // Flashes red while hurt.
+    if (this.hurtFor > 0) {
+      this.hurtFor -= dt;
+      const red = this.hurtFor > 0 && Math.floor(this.hurtFor * 12) % 2 === 0;
+      for (const m of this.mesh.material) { m.userData.base ||= m.color.clone(); m.color.copy(red ? new THREE.Color(0xff4040) : m.userData.base); }
+    }
     this.mesh.position.set(this.position.x, this.position.y + this.height / 2, this.position.z);
     if (distance < (this.width + player.width) / 2 + 0.3 && Math.abs(player.position.y - this.position.y) < 1.5) {
       const now = performance.now();
@@ -880,6 +1014,22 @@ function faceMaterial(emoji, color) {
   const texture = new THREE.CanvasTexture(c);
   texture.colorSpace = THREE.SRGBColorSpace;
   return new THREE.MeshBasicMaterial({ map: texture });
+}
+
+/** A short rumble made on the spot (no sound files). */
+let audio = null;
+function boom(volume = 1) {
+  try {
+    audio ||= new (window.AudioContext || window.webkitAudioContext)();
+    const t = audio.currentTime, len = 0.9, buffer = audio.createBuffer(1, audio.sampleRate * len, audio.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2.5);
+    const src = audio.createBufferSource(); src.buffer = buffer;
+    const filter = audio.createBiquadFilter(); filter.type = "lowpass"; filter.frequency.setValueAtTime(900, t); filter.frequency.exponentialRampToValueAtTime(120, t + len);
+    const gain = audio.createGain(); gain.gain.value = 0.9 * volume;
+    src.connect(filter).connect(gain).connect(audio.destination);
+    src.start(t);
+  } catch { /* no sound here */ }
 }
 
 function pacHaptic(kind) { try { window.pac && pac.ui.haptic(kind); } catch {} }
@@ -943,7 +1093,7 @@ class Controls {
     this.desktop = !("ontouchstart" in window) && window.matchMedia && matchMedia("(pointer: fine)").matches;
     if (this.desktop) this.jump.style.display = "none";
     if (!world.options.hideHelp) this.flash(this.desktop
-      ? "Click to play · mouse looks · WASD moves · Space jumps · F flies<br>Click builds · right-click breaks · 1–9 or scroll picks a block · Esc frees the mouse"
+      ? "Click to play · mouse looks · WASD moves · Space jumps · F flies<br>Click builds · right-click breaks or hits · hit TNT to light it · 1–9 or scroll picks a block · Esc frees the mouse"
       : "Left side moves · right side looks<br>Tap to build · hold to break", this.desktop ? 7 : 4);
   }
 
