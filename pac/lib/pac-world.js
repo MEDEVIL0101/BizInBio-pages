@@ -372,7 +372,8 @@ export class World {
     this.controls.yaw = this.player.yaw;
     for (const run of this.pendingUI.splice(0)) run();
     this.resize();
-    window.addEventListener("resize", () => this.resize());
+    this.onResize = () => this.resize();
+    window.addEventListener("resize", this.onResize);
     this.clock = new THREE.Clock();
     this.renderer.setAnimationLoop(() => this.frame());
     this.emit("ready", this);
@@ -605,6 +606,34 @@ export class World {
       if (d > longest) { longest = d; this.player.yaw = yaw; }
     }
   }
+
+  /** Closes the world: stops drawing, saves, and removes it and its controls from the page. */
+  async stop() {
+    clearTimeout(this.saveTimer);
+    if (this.started) await this.save();
+    if (document.pointerLockElement) document.exitPointerLock();
+    this.renderer?.setAnimationLoop(null);
+    this.controls?.stop();
+    window.removeEventListener("resize", this.onResize);
+    this.renderer?.dispose();
+    this.root?.remove();
+    this.started = false;
+  }
+
+  /** A small picture of what the player sees (a JPEG data URL), for a saved build's card. */
+  snapshot(width = 360) {
+    if (!this.renderer) return null;
+    this.renderer.render(this.scene, this.camera);
+    const src = this.renderer.domElement;
+    const c = document.createElement("canvas");
+    c.width = width;
+    c.height = Math.round((width * src.height) / Math.max(src.width, 1));
+    c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
+    try { return c.toDataURL("image/jpeg", 0.7); } catch { return null; }
+  }
+
+  /** How many blocks have been changed from the generated world. */
+  get changes() { return Object.keys(this.edits).length; }
 
   /** Sets the time of day: 0 midnight, 0.25 sunrise, 0.5 noon, 0.75 sunset. */
   setTime(t) { this.time = ((t % 1) + 1) % 1; }
@@ -862,6 +891,14 @@ class Controls {
       : "Left side moves · right side looks<br>Tap to build · hold to break", this.desktop ? 7 : 4);
   }
 
+  /** Adds a listener on the page that stop() takes away again. */
+  listen(target, type, fn, options) {
+    (this.cleanups ||= []).push(() => target.removeEventListener(type, fn, options));
+    target.addEventListener(type, fn, options);
+  }
+
+  stop() { for (const undo of this.cleanups || []) undo(); this.cleanups = []; }
+
   renderHotbar() {
     const world = this.world;
     this.hotbarEl.innerHTML = "";
@@ -964,7 +1001,7 @@ class Controls {
       if (locked()) { if (e.button === 2 || e.shiftKey) world.breakBlock(); else world.use(); return; }
       dragging = { x: e.clientX, y: e.clientY, moved: false };
     });
-    window.addEventListener("mousemove", (e) => {
+    this.listen(window, "mousemove", (e) => {
       if (locked()) { this.look(e.movementX * 0.6, e.movementY * 0.6); return; }
       if (!dragging) return;
       const dx = e.clientX - dragging.x, dy = e.clientY - dragging.y;
@@ -972,9 +1009,15 @@ class Controls {
       dragging.x = e.clientX; dragging.y = e.clientY;
       this.look(dx, dy);
     });
-    window.addEventListener("mouseup", (e) => {
+    this.listen(window, "mouseup", (e) => {
       if (dragging && !dragging.moved && !isButton(e.target)) {
-        if (this.desktop && root.requestPointerLock && e.button === 0 && !e.shiftKey) { root.requestPointerLock(); }
+        if (this.desktop && !this.lockRefused && root.requestPointerLock && e.button === 0 && !e.shiftKey) {
+          // Ask to capture the mouse; if the browser says no, this click builds and clicks keep building.
+          const asked = performance.now();
+          const refused = () => { if (performance.now() - asked < 1500 && !locked()) { this.lockRefused = true; world.use(); } };
+          try { const p = root.requestPointerLock(); if (p && p.catch) p.catch(refused); } catch { refused(); }
+          setTimeout(() => { if (!locked()) refused(); }, 400);
+        }
         else if (e.button === 2 || e.shiftKey) world.breakBlock(); else world.use();
       }
       dragging = null;
@@ -991,20 +1034,21 @@ class Controls {
       if (slot !== undefined) { world.selected = Number(slot); this.renderHotbar(); }
     });
     root.addEventListener("contextmenu", (e) => e.preventDefault());
+    this.listen(document, "pointerlockerror", () => { this.lockRefused = true; });
   }
 
   bindKeys() {
-    window.addEventListener("keydown", (e) => {
+    this.listen(window, "keydown", (e) => {
       if (["Space", "ArrowUp", "ArrowDown"].includes(e.code)) e.preventDefault();
       this.keys.add(e.code);
       if (e.code === "KeyF") this.toggleFly();
       const n = Number(e.key);
       if (n >= 1 && n <= this.world.hotbar.length) { this.world.selected = n - 1; this.renderHotbar(); }
     });
-    window.addEventListener("keyup", (e) => this.keys.delete(e.code));
+    this.listen(window, "keyup", (e) => this.keys.delete(e.code));
     // Keys released while the world didn't have focus never arrive: forget them, so nothing sticks.
-    window.addEventListener("blur", () => { this.keys.clear(); this.up = false; this.down = false; if (this.stickTouch == null) this.move = { x: 0, y: 0 }; });
-    document.addEventListener("visibilitychange", () => { if (document.hidden) this.keys.clear(); });
+    this.listen(window, "blur", () => { this.keys.clear(); this.up = false; this.down = false; if (this.stickTouch == null) this.move = { x: 0, y: 0 }; });
+    this.listen(document, "visibilitychange", () => { if (document.hidden) this.keys.clear(); });
   }
 
   toggleFly() {
