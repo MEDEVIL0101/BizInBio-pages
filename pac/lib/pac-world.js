@@ -682,6 +682,19 @@ class Player {
     this.speed = world.options.speed ?? 4.3;
   }
 
+  static jumpSpeed = Math.sqrt(2 * 28 * 1.45);
+
+  /** A block one high just ahead, with room above it to stand. */
+  stepAhead(move) {
+    const len = Math.hypot(move.x, move.z) || 1;
+    const x = Math.floor(this.position.x + (move.x / len) * (this.width / 2 + 0.3));
+    const z = Math.floor(this.position.z + (move.z / len) * (this.width / 2 + 0.3));
+    const y = Math.floor(this.position.y + 0.01);
+    const w = this.world;
+    return w.isSolid(x, y, z) && !w.isSolid(x, y + 1, z) && !w.isSolid(x, y + 2, z)
+      && !w.isSolid(Math.floor(this.position.x), y + 2, Math.floor(this.position.z));
+  }
+
   /** Moves the player to a spot (feet position). */
   teleport(x, y, z) { this.position.set(x, y, z); this.velocity.set(0, 0, 0); }
 
@@ -701,15 +714,25 @@ class Player {
     this.velocity.x = move.x * speed;
     this.velocity.z = move.z * speed;
     const inWater = world.getBlock(this.position.x, this.position.y + 0.4, this.position.z) === "water";
+    const gravity = inWater ? 8 : 28;
+    const wasOnGround = this.onGround;
     if (this.flying) {
       this.velocity.y = (controls.up ? 6 : 0) - (controls.down ? 6 : 0);
     } else {
-      this.velocity.y -= (inWater ? 8 : 28) * dt;
+      // Half the pull before moving and half after, so a jump reaches the same height at any frame rate.
+      this.velocity.y -= gravity * dt / 2;
       if (inWater) this.velocity.y = Math.max(this.velocity.y, -3);
-      if (controls.up && (this.onGround || inWater)) this.velocity.y = inWater ? 4 : 8.6;
+      // A jump clears about 1.45 blocks: enough to get up onto the next one with room to spare.
+      if (controls.up && (this.onGround || inWater)) this.velocity.y = inWater ? 4 : Player.jumpSpeed;
     }
     this.onGround = false;
+    this.blocked = false;
     collide(world, this, dt);
+    if (!this.flying) {
+      this.velocity.y -= gravity * dt / 2;
+      // Walking into a one-block step jumps it, like Minecraft's auto-jump.
+      if (wasOnGround && this.blocked && (move.x || move.z) && this.stepAhead(move)) this.velocity.y = Player.jumpSpeed;
+    }
     if (this.position.y < -20) { const s = world.surface(world.sizeX / 2, world.sizeZ / 2); this.teleport(world.sizeX / 2, s + 1, world.sizeZ / 2); }
     const cam = world.camera;
     cam.position.set(this.position.x, this.position.y + this.eye, this.position.z);
