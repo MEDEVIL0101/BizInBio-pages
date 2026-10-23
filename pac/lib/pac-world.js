@@ -1002,6 +1002,9 @@ class Controls {
       if (n >= 1 && n <= this.world.hotbar.length) { this.world.selected = n - 1; this.renderHotbar(); }
     });
     window.addEventListener("keyup", (e) => this.keys.delete(e.code));
+    // Keys released while the world didn't have focus never arrive: forget them, so nothing sticks.
+    window.addEventListener("blur", () => { this.keys.clear(); this.up = false; this.down = false; if (this.stickTouch == null) this.move = { x: 0, y: 0 }; });
+    document.addEventListener("visibilitychange", () => { if (document.hidden) this.keys.clear(); });
   }
 
   toggleFly() {
