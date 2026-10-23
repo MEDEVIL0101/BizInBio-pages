@@ -93,6 +93,37 @@ function paintTile(ctx, ox, color, pattern, random, extra) {
   }
 }
 
+/** Paints a hand-made 16×16 face: 256 colours, row by row ("#RRGGBB", or "" for see-through). */
+function paintPixels(ctx, ox, pixels) {
+  for (let i = 0; i < TILE * TILE; i++) {
+    const c = pixels[i];
+    if (!c) continue;
+    ctx.fillStyle = c;
+    ctx.fillRect(ox + (i % TILE), (i / TILE) | 0, 1, 1);
+  }
+}
+
+/** A built-in block's faces as pixels (top, side, bottom), to start a new design from. */
+export function blockPixels(name) {
+  const d = BUILTIN_BLOCKS[name];
+  if (!d) return null;
+  const out = {};
+  const canvas = document.createElement("canvas");
+  canvas.width = TILE; canvas.height = TILE;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  for (const [i, face] of ["top", "side", "bottom"].entries()) {
+    ctx.clearRect(0, 0, TILE, TILE);
+    const color = d[face] || d.color || "#ff00ff";
+    const pattern = face === "side" || !d.top ? d.pattern : (d.pattern === "bark" ? "ribs" : d.pattern);
+    paintTile(ctx, 0, color, pattern, rng(7 * 31 + i), face === "side" && d.sideTop ? { color: d.sideTop, rows: 3 } : null);
+    const data = ctx.getImageData(0, 0, TILE, TILE).data;
+    out[face] = Array.from({ length: TILE * TILE }, (_, j) => data[j * 4 + 3] < 128 ? "" : "#" + [0, 1, 2].map((k) => data[j * 4 + k].toString(16).padStart(2, "0")).join(""));
+  }
+  return out;
+}
+
+export const TILE_SIZE = TILE;
+
 // Each face: outward direction, corners (counter-clockwise from outside), brightness, which texture.
 const FACES = [
   { dir: [1, 0, 0], corners: [[1, 0, 0], [1, 1, 0], [1, 1, 1], [1, 0, 1]], shade: 0.8, tex: "side" },
@@ -400,14 +431,15 @@ export class World {
       const entry = {};
       for (const [face, color] of [["top", top], ["side", side], ["bottom", bottom]]) {
         entry[face] = faces.length;
-        faces.push({ color, pattern: face === "side" || !d.top ? d.pattern : (d.pattern === "bark" ? "ribs" : d.pattern), extra: face === "side" && d.sideTop ? { color: d.sideTop, rows: 3 } : null, id });
+        const pixels = d.pixels && (d.pixels[face] || d.pixels.side || d.pixels.top);
+        faces.push({ color, pixels, pattern: face === "side" || !d.top ? d.pattern : (d.pattern === "bark" ? "ribs" : d.pattern), extra: face === "side" && d.sideTop ? { color: d.sideTop, rows: 3 } : null, id });
       }
       tileFor[id] = entry;
     }
     canvas.width = faces.length * TILE;
     canvas.height = TILE;
     const ctx = canvas.getContext("2d");
-    faces.forEach((f, i) => paintTile(ctx, i * TILE, f.color, f.pattern, rng(f.id * 31 + i), f.extra));
+    faces.forEach((f, i) => (f.pixels ? paintPixels(ctx, i * TILE, f.pixels) : paintTile(ctx, i * TILE, f.color, f.pattern, rng(f.id * 31 + i), f.extra)));
     this.tileCount = faces.length;
     this.tileFor = tileFor;
     this.atlasCanvas = canvas;
@@ -871,7 +903,8 @@ class Controls {
       .pw-btn { position:absolute; width:64px; height:64px; border-radius:32px; background:rgba(0,0,0,.28); border:2px solid rgba(255,255,255,.55);
                 display:flex; align-items:center; justify-content:center; font:700 22px -apple-system,system-ui; color:#fff; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
       .pw-btn.on { background:rgba(255,255,255,.4); }
-      .pw-hotbar { position:absolute; left:50%; transform:translateX(-50%); display:flex; gap:4px; padding:4px; border-radius:12px; background:rgba(0,0,0,.3); }
+      .pw-hotbar { position:absolute; left:50%; transform:translateX(-50%); display:flex; gap:4px; padding:4px; border-radius:12px; background:rgba(0,0,0,.3); max-width:calc(100vw - 24px); overflow-x:auto; scrollbar-width:none; }
+      .pw-slot { flex:none; }
       .pw-slot { width:38px; height:38px; border-radius:8px; border:2px solid transparent; image-rendering:pixelated; background-size:cover; }
       .pw-slot.on { border-color:#fff; }
       .pw-cross { position:absolute; left:50%; top:50%; width:22px; height:22px; margin:-11px 0 0 -11px; pointer-events:none; }
