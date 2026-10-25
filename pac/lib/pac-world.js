@@ -1053,8 +1053,18 @@ class Controls {
       .pw-btn { position:absolute; width:64px; height:64px; border-radius:32px; background:rgba(0,0,0,.28); border:2px solid rgba(255,255,255,.55);
                 display:flex; align-items:center; justify-content:center; font:700 22px -apple-system,system-ui; color:#fff; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
       .pw-btn.on { background:rgba(255,255,255,.4); }
-      .pw-hotbar { position:absolute; left:50%; transform:translateX(-50%); display:flex; gap:4px; padding:4px; border-radius:12px; background:rgba(0,0,0,.3); max-width:calc(100vw - 24px); overflow-x:auto; scrollbar-width:none; }
-      .pw-slot { flex:none; }
+      .pw-hotbar { position:absolute; left:50%; transform:translateX(-50%); display:flex; gap:4px; padding:4px; border-radius:12px; background:rgba(0,0,0,.3); max-width:calc(100vw - 150px); overflow-x:auto; scrollbar-width:none; }
+      .pw-slot { flex:none; cursor:pointer; }
+      .pw-touch .pw-slot { width:46px; height:46px; }
+      .pw-hotbar { -webkit-overflow-scrolling:touch; touch-action:pan-x; }
+      .pw-picker { position:absolute; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:20; }
+      .pw-picker.open { display:flex; }
+      .pw-picker-box { background:rgba(30,30,34,.92); border-radius:20px; padding:18px; width:min(720px,92vw); box-sizing:border-box; max-height:80vh; overflow:auto; }
+      .pw-picker-box h3 { margin:0 0 12px; font:700 18px -apple-system,system-ui; color:#fff; }
+      .pw-picker-grid { display:grid; grid-template-columns:repeat(auto-fill,64px); gap:10px; }
+      .pw-pick { width:64px; height:64px; border-radius:12px; border:3px solid transparent; background-size:cover; image-rendering:pixelated; cursor:pointer; padding:0; }
+      .pw-pick.on { border-color:#fff; }
+      .pw-pick-name { font:600 11px -apple-system,system-ui; color:#ddd; text-align:center; margin-top:3px; max-width:64px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
       .pw-slot { width:38px; height:38px; border-radius:8px; border:2px solid transparent; image-rendering:pixelated; background-size:cover; }
       .pw-slot.on { border-color:#fff; }
       .pw-cross { position:absolute; left:50%; top:50%; width:22px; height:22px; margin:-11px 0 0 -11px; pointer-events:none; }
@@ -1086,6 +1096,17 @@ class Controls {
     this.flashEl = el("pw-ui pw-flash");
     this.side = el("pw-side");
     this.side.style.top = "calc(env(safe-area-inset-top) + 12px)";
+    // 🧱 opens the chooser: every block, big enough to tap.
+    this.blocksBtn = el("pw-btn", "🧱");
+    this.blocksBtn.title = "Choose a block (E)";
+    this.blocksBtn.style.cssText = `left:14px; bottom:calc(env(safe-area-inset-bottom) + 14px); width:52px; height:52px; font-size:24px; cursor:pointer`;
+    this.blocksBtn.addEventListener("click", (e) => { e.stopPropagation(); this.openPicker(); });
+    this.blocksBtn.addEventListener("touchend", (e) => { e.preventDefault(); e.stopPropagation(); this.openPicker(); });
+    if ("ontouchstart" in window || navigator.maxTouchPoints > 0) root.classList.add("pw-touch");
+    this.picker = el("pw-picker", '<div class="pw-picker-box"><h3>Choose a block</h3><div class="pw-picker-grid"></div></div>');
+    this.picker.addEventListener("click", (e) => { if (e.target === this.picker) this.closePicker(); });
+    this.picker.addEventListener("touchstart", (e) => e.stopPropagation(), { passive: true });
+    this.picker.addEventListener("mousedown", (e) => e.stopPropagation());
     this.renderHotbar();
     this.bindTouches(root);
     this.bindKeys();
@@ -1093,8 +1114,8 @@ class Controls {
     this.desktop = !("ontouchstart" in window) && window.matchMedia && matchMedia("(pointer: fine)").matches;
     if (this.desktop) this.jump.style.display = "none";
     if (!world.options.hideHelp) this.flash(this.desktop
-      ? "Click to play · mouse looks · WASD moves · Space jumps · F flies<br>Click builds · right-click breaks or hits · hit TNT to light it · 1–9 or scroll picks a block · Esc frees the mouse"
-      : "Left side moves · right side looks<br>Tap to build · hold to break", this.desktop ? 7 : 4);
+      ? "Click to play · mouse looks · WASD moves · Space jumps · F flies<br>Click builds · right-click breaks or hits · hit TNT to light it<br>Click a block in the bar, or press E for all blocks · 1–9 or scroll picks one · Esc frees the mouse"
+      : "Left side moves · right side looks<br>Tap to build · hold to break · tap a block below (🧱 for all) to choose it", this.desktop ? 7 : 4);
   }
 
   /** Adds a listener on the page that stop() takes away again. */
@@ -1104,6 +1125,46 @@ class Controls {
   }
 
   stop() { for (const undo of this.cleanups || []) undo(); this.cleanups = []; }
+
+  /** A big grid of every block: tap one to build with it. Opens with the 🧱 button, E or Tab. */
+  openPicker() {
+    const world = this.world;
+    if (document.pointerLockElement) { this.relock = true; document.exitPointerLock(); } else this.relock = false;
+    const grid = this.picker.querySelector(".pw-picker-grid");
+    grid.innerHTML = "";
+    world.hotbar.forEach((name, i) => {
+      const cell = document.createElement("div");
+      const b = document.createElement("button");
+      b.className = "pw-pick" + (i === world.selected ? " on" : "");
+      b.style.backgroundImage = `url(${world.swatch(name)})`;
+      b.title = name;
+      b.addEventListener("click", (e) => { e.stopPropagation(); this.select(i); this.closePicker(); });
+      b.addEventListener("touchend", (e) => { e.preventDefault(); e.stopPropagation(); this.select(i); this.closePicker(); });
+      const label = document.createElement("div");
+      label.className = "pw-pick-name";
+      label.textContent = name.startsWith("my-") ? "yours" : name;
+      cell.append(b, label);
+      grid.appendChild(cell);
+    });
+    this.picker.classList.add("open");
+    this.flashEl.style.opacity = 0;
+  }
+
+  closePicker() {
+    this.picker.classList.remove("open");
+    if (this.relock && this.world.root.requestPointerLock) { try { this.world.root.requestPointerLock(); } catch {} }
+  }
+
+  /** Chooses a block from the bar and keeps it in view. */
+  select(i) {
+    const world = this.world;
+    if (i < 0 || i >= world.hotbar.length) return;
+    world.selected = i;
+    this.renderHotbar();
+    const slot = this.hotbarEl.children[i];
+    if (slot && slot.scrollIntoView) slot.scrollIntoView({ block: "nearest", inline: "nearest" });
+    pacHaptic("selection");
+  }
 
   renderHotbar() {
     const world = this.world;
@@ -1138,11 +1199,11 @@ class Controls {
 
   bindTouches(root) {
     const world = this.world;
-    const isButton = (t) => t.closest && (t.closest(".pw-btn") || t.closest(".pw-side") || t.closest(".pw-hotbar"));
+    const isButton = (t) => t.closest && (t.closest(".pw-btn") || t.closest(".pw-side") || t.closest(".pw-hotbar") || t.closest(".pw-picker"));
     root.addEventListener("touchstart", (e) => {
       for (const t of e.changedTouches) {
         const target = t.target;
-        if (target.dataset && target.dataset.slot !== undefined) { world.selected = Number(target.dataset.slot); this.renderHotbar(); pacHaptic("selection"); continue; }
+        if (target.closest && target.closest(".pw-hotbar")) { this.touches.set(t.identifier, { kind: "bar", x: t.clientX, slot: target.dataset ? target.dataset.slot : undefined }); continue; }
         if (target === this.jump) { this.up = true; this.jump.classList.add("on"); this.touches.set(t.identifier, { kind: "jump" }); continue; }
         if (target === this.downBtn) { this.down = true; this.touches.set(t.identifier, { kind: "down" }); continue; }
         if (target === this.fly) { this.toggleFly(); continue; }
@@ -1160,12 +1221,14 @@ class Controls {
           this.touches.set(t.identifier, info);
         }
       }
-      e.preventDefault();
+      if (![...e.changedTouches].some((t) => t.target.closest && t.target.closest(".pw-hotbar"))) e.preventDefault();
     }, { passive: false });
     root.addEventListener("touchmove", (e) => {
+      let bar = false;
       for (const t of e.changedTouches) {
         const info = this.touches.get(t.identifier);
         if (!info) continue;
+        if (info.kind === "bar") { bar = true; continue; }
         if (info.kind === "stick") {
           let dx = t.clientX - this.stickOrigin.x, dy = t.clientY - this.stickOrigin.y;
           const len = Math.hypot(dx, dy), max = 50;
@@ -1179,13 +1242,14 @@ class Controls {
           this.look(dx, dy);
         }
       }
-      e.preventDefault();
+      if (!bar) e.preventDefault();
     }, { passive: false });
     const end = (e) => {
       for (const t of e.changedTouches) {
         const info = this.touches.get(t.identifier);
         if (!info) continue;
         this.touches.delete(t.identifier);
+        if (info.kind === "bar") { if (info.slot !== undefined && Math.abs(t.clientX - info.x) < 12) this.select(Number(info.slot)); continue; }
         if (info.kind === "stick") { this.stickTouch = null; this.move = { x: 0, y: 0 }; this.stick.style.display = "none"; this.knob.style.transform = ""; }
         else if (info.kind === "jump") { this.up = false; this.jump.classList.remove("on"); }
         else if (info.kind === "down") { this.down = false; }
@@ -1233,11 +1297,11 @@ class Controls {
       if (!n) return;
       e.preventDefault();
       world.selected = (world.selected + (e.deltaY > 0 ? 1 : -1) + n) % n;
-      this.renderHotbar();
+      this.select(world.selected);
     }, { passive: false });
     root.addEventListener("click", (e) => {
       const slot = e.target.dataset && e.target.dataset.slot;
-      if (slot !== undefined) { world.selected = Number(slot); this.renderHotbar(); }
+      if (slot !== undefined) this.select(Number(slot));
     });
     root.addEventListener("contextmenu", (e) => e.preventDefault());
     this.listen(document, "pointerlockerror", () => { this.lockRefused = true; });
@@ -1248,8 +1312,10 @@ class Controls {
       if (["Space", "ArrowUp", "ArrowDown"].includes(e.code)) e.preventDefault();
       this.keys.add(e.code);
       if (e.code === "KeyF") this.toggleFly();
+      if (e.code === "KeyE" || e.code === "Tab") { e.preventDefault(); this.picker.classList.contains("open") ? this.closePicker() : this.openPicker(); return; }
+      if (e.code === "Escape" && this.picker.classList.contains("open")) { this.relock = false; this.closePicker(); }
       const n = Number(e.key);
-      if (n >= 1 && n <= this.world.hotbar.length) { this.world.selected = n - 1; this.renderHotbar(); }
+      if (n >= 1 && n <= this.world.hotbar.length) this.select(n - 1);
     });
     this.listen(window, "keyup", (e) => this.keys.delete(e.code));
     // Keys released while the world didn't have focus never arrive: forget them, so nothing sticks.

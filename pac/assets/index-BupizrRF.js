@@ -1959,8 +1959,8 @@ canvas { display: block; touch-action: none; }
   window.alert = window.confirm = window.prompt = (m) => { parent.postMessage({ pacToast: String(m ?? "") }, "*"); };
 })();
 <\/script>
-<script src="${Rr}pac-sdk.js?v=mvlebih2"><\/script>
-<script type="importmap">${JSON.stringify({imports:{three:`${Rr}three.module.min.js?v=mvlebih2`,"pac-world":`${Rr}pac-world.js?v=mvlebih2`}})}<\/script>
+<script src="${Rr}pac-sdk.js?v=mvobm5hg"><\/script>
+<script type="importmap">${JSON.stringify({imports:{three:`${Rr}three.module.min.js?v=mvobm5hg`,"pac-world":`${Rr}pac-world.js?v=mvobm5hg`}})}<\/script>
 </head>
 <body>
 ${e.html??""}
