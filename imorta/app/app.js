@@ -1,8 +1,8 @@
 // Imorta on the web. The archive lives in this browser; the account only
 // says who you are and which plan you're on.
-import { SUPABASE_URL, SUPABASE_KEY, SUPABASE_JS } from "./config.js?v=fc030c5-184013";
-import { openArchive } from "./db.js?v=fc030c5-184013";
-import * as L from "./logic.js?v=fc030c5-184013";
+import { SUPABASE_URL, SUPABASE_KEY, SUPABASE_JS } from "./config.js?v=cadcdb7-184655";
+import { openArchive } from "./db.js?v=cadcdb7-184655";
+import * as L from "./logic.js?v=cadcdb7-184655";
 
 const root = document.getElementById("root");
 const sheetEl = document.getElementById("sheet");
@@ -144,7 +144,7 @@ function renderAuth() {
       <p class="muted" style="margin-top:10px">${up ? "Your account says who you are. Your photos stay on this device." : "Your archive opens on the device it was made on."}</p>
       <form data-submit="auth">
         <label>Email<input name="email" type="email" autocomplete="email" required></label>
-        <label>Password<input name="password" type="password" autocomplete="${up ? "new-password" : "current-password"}" minlength="8" required>${up ? "<small>At least 8 characters.</small>" : ""}</label>
+        <label>Password<input name="password" type="password" autocomplete="${up ? "new-password" : "current-password"}" minlength="${up ? 12 : 1}" required>${up ? "<small>At least 12 characters, with a capital letter, a small letter and a number.</small>" : ""}</label>
         ${S.authError ? `<p class="error">${esc(S.authError)}</p>` : ""}
         ${S.authMessage ? `<p class="notice">${esc(S.authMessage)}</p>` : ""}
         <button class="btn" type="submit">${up ? "Create account" : "Sign in"}</button>
@@ -159,7 +159,7 @@ function renderAuth() {
 function newPasswordSheet() {
   return `<h2>Choose a new password</h2>
     <form data-submit="new-password" class="stack">
-      <label>New password<input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
+      <label>New password<input name="password" type="password" autocomplete="new-password" minlength="12" required><small>At least 12 characters, with a capital letter, a small letter and a number.</small></label>
       <div class="actions"><button class="btn" type="submit">Save password</button></div>
     </form>`;
 }
@@ -493,7 +493,7 @@ function addSheet() {
 async function addFiles(fileList) {
   const files = [...fileList].filter((f) => f.type.startsWith("image/") || /\.(jpe?g|png|heic|heif|webp)$/i.test(f.name));
   if (!files.length) return;
-  const { readPhoto, loadModels } = await import("./faces.js?v=fc030c5-184013");
+  const { readPhoto, loadModels } = await import("./faces.js?v=cadcdb7-184655");
   S.adding = { running: true, total: files.length, done: 0, status: "Getting ready to recognise faces" };
   openSheet(addSheet(), true);
   let added = 0, repeats = 0, unreadable = 0, faceCount = 0;
