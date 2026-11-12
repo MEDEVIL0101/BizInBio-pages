@@ -1,7 +1,7 @@
 // Reads a photo in the browser: when it was taken, a small copy to show, and
 // the faces in it with a template for each. Nothing leaves this device.
-import { FACE_API, FACE_MODELS } from "./config.js";
-import { exifDate } from "./logic.js";
+import { FACE_API, FACE_MODELS } from "./config.js?v=fc030c5-184013";
+import { exifDate } from "./logic.js?v=fc030c5-184013";
 
 let api = null;
 let loading = null;

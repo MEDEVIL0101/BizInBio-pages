@@ -1,8 +1,8 @@
 // Imorta on the web. The archive lives in this browser; the account only
 // says who you are and which plan you're on.
-import { SUPABASE_URL, SUPABASE_KEY, SUPABASE_JS } from "./config.js";
-import { openArchive } from "./db.js";
-import * as L from "./logic.js";
+import { SUPABASE_URL, SUPABASE_KEY, SUPABASE_JS } from "./config.js?v=fc030c5-184013";
+import { openArchive } from "./db.js?v=fc030c5-184013";
+import * as L from "./logic.js?v=fc030c5-184013";
 
 const root = document.getElementById("root");
 const sheetEl = document.getElementById("sheet");
@@ -493,7 +493,7 @@ function addSheet() {
 async function addFiles(fileList) {
   const files = [...fileList].filter((f) => f.type.startsWith("image/") || /\.(jpe?g|png|heic|heif|webp)$/i.test(f.name));
   if (!files.length) return;
-  const { readPhoto, loadModels } = await import("./faces.js");
+  const { readPhoto, loadModels } = await import("./faces.js?v=fc030c5-184013");
   S.adding = { running: true, total: files.length, done: 0, status: "Getting ready to recognise faces" };
   openSheet(addSheet(), true);
   let added = 0, repeats = 0, unreadable = 0, faceCount = 0;
