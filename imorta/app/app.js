@@ -1,8 +1,8 @@
 // Imorta on the web. The archive lives in this browser; the account only
 // says who you are and which plan you're on.
-import { SUPABASE_URL, SUPABASE_KEY, SUPABASE_JS } from "./config.js?v=cadcdb7-184655";
-import { openArchive } from "./db.js?v=cadcdb7-184655";
-import * as L from "./logic.js?v=cadcdb7-184655";
+import { SUPABASE_URL, SUPABASE_KEY, SUPABASE_JS } from "./config.js?v=d9da35c-235751";
+import { openArchive } from "./db.js?v=d9da35c-235751";
+import * as L from "./logic.js?v=d9da35c-235751";
 
 const root = document.getElementById("root");
 const sheetEl = document.getElementById("sheet");
@@ -137,7 +137,7 @@ function renderAuth() {
   const up = S.authMode === "signup";
   root.innerHTML = `
   <div class="wrap">
-    <nav class="nav"><a class="brand" href="../"><img src="../assets/icon.png" alt="">Imorta</a><div class="nav-links"><a href="../plans.html">Plans</a></div></nav>
+    <nav class="nav"><a class="brand" href="../"><img src="../assets/icon.png" alt="">Imorta</a></nav>
     <div class="auth">
       <div class="eyebrow">${up ? "Create your account" : "Welcome back"}</div>
       <h1>${up ? "Start their archive." : "Sign in to Imorta."}</h1>
@@ -246,9 +246,6 @@ function homeView(c) {
     ${growthCard(c)}
     ${milestonesCard(c)}
     ${recordsCard(c)}
-    <div class="card soon"><h2>A vault of ${esc(first(c))}'s own</h2>
-      <p class="muted" style="margin-top:8px">A vault that belongs to ${esc(first(c))}. You look after it and add to it each year; one day it's theirs to claim, from you or on their own.</p>
-      <p style="margin-top:12px"><span class="pill">Coming soon</span></p></div>
   </div>`;
 }
 
@@ -493,7 +490,7 @@ function addSheet() {
 async function addFiles(fileList) {
   const files = [...fileList].filter((f) => f.type.startsWith("image/") || /\.(jpe?g|png|heic|heif|webp)$/i.test(f.name));
   if (!files.length) return;
-  const { readPhoto, loadModels } = await import("./faces.js?v=cadcdb7-184655");
+  const { readPhoto, loadModels } = await import("./faces.js?v=d9da35c-235751");
   S.adding = { running: true, total: files.length, done: 0, status: "Getting ready to recognise faces" };
   openSheet(addSheet(), true);
   let added = 0, repeats = 0, unreadable = 0, faceCount = 0;
@@ -553,14 +550,11 @@ function pickerSheet() {
 // ---------------------------------------------------------------- settings
 
 function settingsView() {
-  const plan = { free: "Keepsake (free)", family: "Family", vault: "Child Vault" }[S.account?.plan] || "Keepsake (free)";
-  const interest = S.account?.plan_interest;
   return `<div class="stack" style="max-width:680px">
     <h1 style="font-size:36px">Settings</h1>
     <div class="card stack"><h2>Account</h2>
       <div class="list">
         <div class="item"><div class="grow1"><b>${esc(S.user.email)}</b><span>${S.user.guest ? "You're trying Imorta on this device. Create an account to keep your place." : "Signed in"}</span></div>${DEV ? "" : S.user.guest ? `<button class="link" data-do="leave-guest">Create an account</button>` : `<button class="link" data-do="sign-out">Sign out</button>`}</div>
-        <div class="item"><div class="grow1"><b>${esc(plan)}</b><span>${interest ? `On the waitlist for ${interest === "family" ? "Family" : "Child Vault"}` : "Your plan"}</span></div><a class="link" href="../plans.html">See plans</a></div>
       </div></div>
     <div class="card stack"><h2>Children<span class="spacer"></span><a class="link" href="#/children">Add or edit</a></h2>
       <div class="list">${S.children.map((k) => `<div class="item"><div class="grow1"><b>${esc(k.name)}</b><span>${k.birth ? "Born " + esc(fmtDate.format(L.parseDay(k.birth))) : ""} · ${photosOf(k).length} photos</span></div>
@@ -571,8 +565,8 @@ function settingsView() {
         <div class="item"><div class="grow1"><b>Forget who's who</b><span>Keeps your photos, forgets every face and which photos are whose.</span></div><button class="link danger" data-do="delete-faces">Delete face data</button></div>
         <div class="item"><div class="grow1"><b>Remove everything from this browser</b><span>Photos, children, milestones and documents kept here. Your account stays.</span></div><button class="link danger" data-do="delete-all">Remove</button></div>
       </div></div>
-    <div class="card stack"><h2>Not on the web yet</h2>
-      <p class="muted">Encrypted backup, inviting family to send photos, a second parent and Child Vaults are being built. Your archive here is separate from the iPhone app for now: the two don't sync.</p></div>
+    <div class="card stack"><h2>On the web and on iPhone</h2>
+      <p class="muted">What you keep here stays in this browser, and what you keep in the iPhone app stays on the iPhone. They're separate. Asking family to send photos works on iPhone.</p></div>
   </div>`;
 }
 
