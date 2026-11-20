@@ -58,7 +58,7 @@
     }),
 
     storage: Object.freeze({
-      /** Small private data for this app's code (game saves, settings). JSON values, about 2 MB in all. */
+      /** Small private data for this app's code (game saves, settings). JSON values, about 10 MB in all. */
       get: (key) => call("storage.get", { key }),
       set: (key, value) => call("storage.set", { key, value: JSON.stringify(value === undefined ? null : value) }),
       remove: (key) => call("storage.remove", { key }),
@@ -67,8 +67,8 @@
 
     ui: Object.freeze({
       toast: (text) => call("ui.toast", { text: String(text) }),
-      /** "light", "medium", "heavy", "success", "warning", "error" or "selection". */
-      haptic: (kind) => call("ui.haptic", { kind: kind || "light" }),
+      /** Retired: does nothing. Code screens reach PAC only for data and storage; native feedback comes from built-in rules. */
+      haptic: () => Promise.resolve(true),
       /** Opens an entry in PAC's own detail screen. */
       openEntry: (id) => call("ui.openEntry", { id }),
       /** Sets the title shown above the screen. */

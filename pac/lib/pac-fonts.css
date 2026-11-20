@@ -1,0 +1,29 @@
+/* PAC's bundled fonts (SIL Open Font License, see fonts/OFL.txt). Files load only when a page uses them.
+   Roles are also CSS variables, e.g. font-family: var(--pac-font-display). */
+@font-face { font-family: "Fraunces"; src: url("fonts/fraunces-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Nunito"; src: url("fonts/nunito-latin-wght-normal.woff2") format("woff2"); font-weight: 200 1000; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("fonts/inter-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
+@font-face { font-family: "Baloo 2"; src: url("fonts/baloo-2-latin-wght-normal.woff2") format("woff2"); font-weight: 400 800; font-display: swap; }
+@font-face { font-family: "Playfair Display"; src: url("fonts/playfair-display-latin-wght-normal.woff2") format("woff2"); font-weight: 400 900; font-display: swap; }
+@font-face { font-family: "Caveat"; src: url("fonts/caveat-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Caveat"; src: url("fonts/caveat-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Andika"; src: url("fonts/andika-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Andika"; src: url("fonts/andika-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("fonts/atkinson-hyperlegible-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("fonts/atkinson-hyperlegible-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Lexend"; src: url("fonts/lexend-latin-400-normal.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Lexend"; src: url("fonts/lexend-latin-700-normal.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+
+:root {
+  --pac-font-display: "Fraunces", Georgia, serif;          /* characterful serif headlines */
+  --pac-font-editorial: "Playfair Display", Georgia, serif; /* elegant, high-contrast */
+  --pac-font-sans: "Inter", -apple-system, system-ui, sans-serif;
+  --pac-font-rounded: "Nunito", ui-rounded, system-ui, sans-serif; /* friendly */
+  --pac-font-playful: "Baloo 2", "Nunito", ui-rounded, sans-serif; /* bold, bouncy: games and kids */
+  --pac-font-hand: "Caveat", "Bradley Hand", cursive;       /* handwriting, notes */
+  --pac-font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --pac-font-learn: "Andika", "Nunito", sans-serif;         /* early readers: school-style a and g */
+  --pac-font-readable: "Atkinson Hyperlegible", system-ui, sans-serif; /* low vision */
+  --pac-font-reading: "Lexend", system-ui, sans-serif;      /* easier reading, dyslexia-friendly */
+}
