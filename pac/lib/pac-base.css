@@ -1,0 +1,57 @@
+/* The base every custom screen starts from (iPhone and web load the same file): professional
+   defaults and design tokens, so screens are built on a real system instead of improvising.
+   Colours (--pac-tint, --pac-tint-deep, --pac-bg, --pac-surface, --pac-text, --pac-muted) are set
+   per app by PAC; fonts and --pac-font-* come from pac-fonts.css. */
+
+:root {
+  --pac-font: Inter, -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  /* Type scale */
+  --pac-text-xs: 12px; --pac-text-sm: 14px; --pac-text-md: 16px; --pac-text-lg: 20px;
+  --pac-text-xl: 28px; --pac-text-2xl: 40px; --pac-text-3xl: 56px;
+  /* Spacing scale */
+  --pac-space-1: 4px; --pac-space-2: 8px; --pac-space-3: 12px; --pac-space-4: 16px;
+  --pac-space-5: 24px; --pac-space-6: 32px; --pac-space-7: 48px; --pac-space-8: 64px;
+  /* Corners and depth */
+  --pac-radius-sm: 8px; --pac-radius-md: 12px; --pac-radius-lg: 18px; --pac-radius-xl: 28px;
+  --pac-hairline: color-mix(in srgb, var(--pac-text) 11%, transparent);
+  --pac-shadow-1: 0 1px 2px rgba(16, 16, 24, .06), 0 1px 1px rgba(16, 16, 24, .04);
+  --pac-shadow-2: 0 4px 12px rgba(16, 16, 24, .08), 0 1px 3px rgba(16, 16, 24, .06);
+  --pac-shadow-3: 0 18px 40px rgba(16, 16, 24, .14), 0 4px 10px rgba(16, 16, 24, .06);
+  --pac-ease: cubic-bezier(.2, .8, .2, 1);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; min-height: 100%; background: var(--pac-bg); color: var(--pac-text);
+  font: var(--pac-text-md)/1.5 var(--pac-font); letter-spacing: -0.006em;
+  -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; }
+body { padding: var(--pac-space-4); }
+h1, h2, h3 { margin: 0 0 var(--pac-space-2); line-height: 1.15; letter-spacing: -0.02em; }
+h1 { font-size: var(--pac-text-xl); font-weight: 700; }
+h2 { font-size: var(--pac-text-lg); font-weight: 700; }
+h3 { font-size: 17px; font-weight: 600; }
+p { margin: 0 0 var(--pac-space-3); }
+.muted { color: var(--pac-muted); }
+svg { flex: none; }
+
+button { font: 600 15px/1 var(--pac-font); color: #fff; background: var(--pac-tint-deep, var(--pac-tint));
+  border: 0; border-radius: var(--pac-radius-sm); padding: 11px 16px; min-height: 44px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--pac-space-2);
+  box-shadow: var(--pac-shadow-1); transition: transform .12s var(--pac-ease), filter .15s, background .15s; }
+button:hover { filter: brightness(1.06); }
+button:active { transform: scale(.98); }
+button:focus-visible { outline: 3px solid color-mix(in srgb, var(--pac-tint) 45%, transparent); outline-offset: 2px; }
+button:disabled { opacity: .45; cursor: default; transform: none; }
+button.secondary { background: var(--pac-surface); color: var(--pac-text); box-shadow: inset 0 0 0 1px var(--pac-hairline), var(--pac-shadow-1); }
+button.ghost { background: transparent; color: var(--pac-text); box-shadow: none; }
+button.ghost:hover { background: color-mix(in srgb, var(--pac-text) 6%, transparent); filter: none; }
+
+input, textarea, select { font: inherit; color: inherit; background: var(--pac-surface);
+  border: 1px solid var(--pac-hairline); border-radius: var(--pac-radius-sm); padding: 10px 12px; }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--pac-tint);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pac-tint) 22%, transparent); }
+
+.card { background: var(--pac-surface); border-radius: var(--pac-radius-md); padding: var(--pac-space-4);
+  box-shadow: inset 0 0 0 1px var(--pac-hairline), var(--pac-shadow-1); }
+canvas { display: block; touch-action: none; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } }
