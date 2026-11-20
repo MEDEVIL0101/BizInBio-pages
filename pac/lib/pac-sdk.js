@@ -32,6 +32,7 @@
   window.addEventListener("unhandledrejection", (e) => send("error", [e.reason]));
 
   const listeners = {};
+  const mediaURLs = new Map();
   function on(event, callback) {
     (listeners[event] = listeners[event] || new Set()).add(callback);
     return () => listeners[event].delete(callback);
@@ -73,6 +74,22 @@
       openEntry: (id) => call("ui.openEntry", { id }),
       /** Sets the title shown above the screen. */
       setTitle: (title) => call("ui.setTitle", { title: String(title) }),
+    }),
+
+    media: Object.freeze({
+      /** A URL for one of the app's pictures or voice clips (pac.app.media), for an <img> src or new
+       *  Audio(url). Waits while a picture is still being made. */
+      url: (id) => {
+        const key = String(id);
+        if (!mediaURLs.has(key)) {
+          const p = call("media.url", { id: key }).then((v) => (typeof Blob !== "undefined" && v instanceof Blob ? URL.createObjectURL(v) : v));
+          p.catch(() => mediaURLs.delete(key));
+          mediaURLs.set(key, p);
+        }
+        return mediaURLs.get(key);
+      },
+      /** The app's pictures and voice clips: [{id, kind: "image" | "speech", about}]. */
+      list: () => Promise.resolve((init.app && init.app.media) || []),
     }),
 
     ai: Object.freeze({
