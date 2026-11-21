@@ -161,8 +161,8 @@ export function bestVoice(lang = navigator.language || "en-US") {
   return pool.sort((a, b) => rank(b) - rank(a))[0] || null;
 }
 
-/** Reads text aloud. Resolves when it finishes. rate 0.5–2 (0.85 suits young children). */
-export function speak(text, { rate = 1, pitch = 1, lang, voice, volume = 1, interrupt = true } = {}) {
+/** The device's own voice: used when PAC's natural voice isn't available (offline, or not in PAC). */
+function deviceSpeak(text, { rate = 1, pitch = 1, lang, voice, volume = 1, interrupt = true } = {}) {
   return new Promise((resolve) => {
     if (!window.speechSynthesis || !text) return resolve(false);
     if (interrupt) speechSynthesis.cancel();
@@ -175,8 +175,85 @@ export function speak(text, { rate = 1, pitch = 1, lang, voice, volume = 1, inte
     speechSynthesis.speak(u);
   });
 }
-export const stopSpeaking = () => { try { speechSynthesis.cancel(); } catch {} };
-export const canSpeak = () => !!window.speechSynthesis;
+
+// PAC's natural voice: the text is read in pieces (a short first one, so reading starts quickly),
+// each made once by PAC and kept, so reading it again is instant and free. One audio element is
+// reused and started on the tap that asked for it, so browsers let it keep playing.
+let reading = null;
+let player = null;
+const SILENCE = "data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==";
+
+function pieces(text) {
+  const sentences = String(text).replace(/\s+/g, " ").trim().match(/[^.!?…]+[.!?…]+["'”’)\]]*\s*|[^.!?…]+$/g) || [];
+  const out = [];
+  let cur = "";
+  for (const s of sentences) {
+    const limit = out.length === 0 ? 220 : 900;
+    if (cur && (cur + s).length > limit) { out.push(cur.trim()); cur = ""; }
+    cur += s;
+    while (cur.length > 1700) { out.push(cur.slice(0, 1700)); cur = cur.slice(1700); }
+  }
+  if (cur.trim()) out.push(cur.trim());
+  return out;
+}
+
+async function naturalSpeak(text, opts) {
+  const me = { stopped: false };
+  reading = me;
+  if (!player) player = new Audio();
+  // Started on the tap itself (silently), so the voice can play when it arrives.
+  try { player.src = SILENCE; player.play().catch(() => {}); } catch {}
+  const parts = pieces(text);
+  if (!parts.length) return false;
+  let first, rest;
+  try {
+    first = window.pac.media.speak([parts[0]]);
+    rest = parts.length > 1 ? window.pac.media.speak(parts.slice(1)) : Promise.resolve([]);
+    rest.catch(() => {});
+    const urls = await first;
+    for (let i = 0; i < parts.length; i++) {
+      if (me.stopped) return false;
+      const url = i === 0 ? urls[0] : (await rest)[i - 1];
+      if (me.stopped) return false;
+      player.src = url;
+      player.playbackRate = Math.max(0.5, Math.min(2, opts.rate ?? 1));
+      player.volume = opts.volume ?? 1;
+      const finished = await new Promise((resolve) => {
+        me.wake = () => resolve(false);
+        player.onended = () => resolve(true);
+        player.onerror = () => resolve(false);
+        player.play().catch(() => resolve(false));
+      });
+      if (!finished && !me.stopped) throw new Error("couldn't play");
+    }
+    return !me.stopped;
+  } catch {
+    if (me.stopped) return false;
+    // No natural voice here (offline, a preview, or not set up): the device reads the rest.
+    return deviceSpeak(text, opts);
+  } finally {
+    if (reading === me) reading = null;
+  }
+}
+
+/** Reads text aloud and resolves when it finishes. In PAC it's PAC's natural voice (a real narrator;
+ *  the same text is only made once); elsewhere, or with { natural: false }, the device's best voice.
+ *  rate 0.5–2 (0.85 suits young children). */
+export function speak(text, { rate = 1, pitch = 1, lang, voice, volume = 1, interrupt = true, natural = true } = {}) {
+  if (!text) return Promise.resolve(false);
+  if (interrupt) stopSpeaking();
+  const opts = { rate, pitch, lang, voice, volume, interrupt };
+  if (natural && !voice && window.pac && window.pac.media && window.pac.media.speak) return naturalSpeak(text, opts);
+  return deviceSpeak(text, opts);
+}
+export const stopSpeaking = () => {
+  if (reading) { reading.stopped = true; reading.wake?.(); }
+  reading = null;
+  try { if (player) { player.pause(); player.removeAttribute("src"); } } catch {}
+  try { speechSynthesis.cancel(); } catch {}
+};
+export const isSpeaking = () => !!reading || (!!window.speechSynthesis && speechSynthesis.speaking);
+export const canSpeak = () => !!window.speechSynthesis || !!(window.pac && window.pac.media && window.pac.media.speak);
 
 // ---------------------------------------------------------------------------------------------
 // Celebrations

@@ -88,13 +88,21 @@
         }
         return mediaURLs.get(key);
       },
+      /** Natural-voice audio for text (one string or a list), as URLs for new Audio(url), in the same
+       *  order. pac-kit's speak() uses it; most screens should just call speak(). */
+      speak: (texts) => {
+        const list = (Array.isArray(texts) ? texts : [texts]).map(String);
+        return call("media.speak", { texts: list }).then((blobs) =>
+          (Array.isArray(blobs) ? blobs : [blobs]).map((b) => (typeof Blob !== "undefined" && b instanceof Blob ? URL.createObjectURL(b) : b)));
+      },
       /** The app's pictures and voice clips: [{id, kind: "image" | "speech", about}]. */
       list: () => Promise.resolve((init.app && init.app.media) || []),
     }),
 
     ai: Object.freeze({
-      /** Asks PAC Magic (AI); resolves with its reply as text. Needs the "ai" permission. */
-      ask: (prompt, options) => call("ai.ask", { prompt: String(prompt), system: options && options.system ? String(options.system) : null }),
+      /** Asks PAC Magic (AI); resolves with its reply as text. Needs the "ai" permission. PAC keeps
+       *  every answer: asking the same thing again returns it at once, free ({fresh: true} asks anew). */
+      ask: (prompt, options) => call("ai.ask", { prompt: String(prompt), system: options && options.system ? String(options.system) : null, fresh: !!(options && options.fresh) }),
     }),
 
     on,
