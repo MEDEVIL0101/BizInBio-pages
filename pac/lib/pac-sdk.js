@@ -99,6 +99,23 @@
       list: () => Promise.resolve((init.app && init.app.media) || []),
     }),
 
+    web: Object.freeze({
+      /** Current web results: [{title, url, description, site, age?}]. near: {lat, lon} for local results.
+       *  Needs the "internet" permission. */
+      search: (q, options) => call("web.search", { q: String(q), count: options && options.count, near: options && options.near }),
+      /** Real photos: [{url, thumbnail, width, height, credit, link}]; prefer: ["maker.com"] ranks those
+       *  sites first. Show them with <img src=url> and a small credit. Needs "internet". */
+      images: (q, options) => call("web.images", { q: String(q), count: options && options.count, prefer: options && options.prefer }),
+      /** Reads a public page or data feed: {status, type, text} (parse JSON yourself). Needs "internet". */
+      fetch: (url) => call("web.fetch", { url: String(url) }),
+    }),
+
+    device: Object.freeze({
+      /** The person's approximate location {lat, lon, accuracy} (about a kilometre), after the
+       *  device asks them once. Needs the "location" permission. */
+      location: () => call("device.location", {}),
+    }),
+
     textures: Object.freeze({
       /** A URL for one of PAC's real surface textures (equirectangular, for a three.js sphere's map):
        *  sun, mercury, venus, earth, moon, mars, jupiter, saturn, saturn_ring (a ring strip with
