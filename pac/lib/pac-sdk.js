@@ -99,6 +99,22 @@
       list: () => Promise.resolve((init.app && init.app.media) || []),
     }),
 
+    textures: Object.freeze({
+      /** A URL for one of PAC's real surface textures (equirectangular, for a three.js sphere's map):
+       *  sun, mercury, venus, earth, moon, mars, jupiter, saturn, saturn_ring (a ring strip with
+       *  transparency), uranus, neptune. */
+      url: (name) => {
+        const key = "texture:" + String(name);
+        if (!mediaURLs.has(key)) {
+          const p = call("textures.url", { name: String(name) }).then((v) => (typeof Blob !== "undefined" && v instanceof Blob ? URL.createObjectURL(v) : v));
+          p.catch(() => mediaURLs.delete(key));
+          mediaURLs.set(key, p);
+        }
+        return mediaURLs.get(key);
+      },
+      list: () => Promise.resolve(["sun", "mercury", "venus", "earth", "moon", "mars", "jupiter", "saturn", "saturn_ring", "uranus", "neptune"]),
+    }),
+
     ai: Object.freeze({
       /** Asks PAC Magic (AI); resolves with its reply as text. Needs the "ai" permission. PAC keeps
        *  every answer: asking the same thing again returns it at once, free ({fresh: true} asks anew). */
