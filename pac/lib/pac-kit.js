@@ -366,3 +366,258 @@ export function shuffle(list) {
 export const pick = (list) => list[Math.floor(Math.random() * list.length)];
 /** True when the person prefers less motion: keep transitions short and skip big effects. */
 export { reduceMotion };
+
+// ---------------------------------------------------------------------------------------------
+// Games: a full-bleed stage, game buttons, score pills, banners, input, juice and progress, so
+// every game starts from polished parts. import { stage, gameButton, hud, banner, hint, swipe,
+// drag, burst, shake, musicToggle, progress } from "pac-kit".
+
+let gameStyled = false;
+function gameStyles() {
+  if (gameStyled) return;
+  gameStyled = true;
+  const css = `
+.pk-stage{position:fixed;inset:0;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;background:#0b1020}
+.pk-stage>.pk-back{position:absolute;inset:0;background-size:cover;background-position:center;transition:filter .4s}
+.pk-stage>.pk-layer{position:absolute;inset:0}
+.pk-stage>.pk-ui{position:absolute;inset:0;pointer-events:none;padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom))}
+.pk-stage>.pk-ui *{pointer-events:auto}
+.pk-btn{--c:#22c55e;--d:color-mix(in srgb,var(--c) 70%,#000);font:800 clamp(18px,4.6vw,26px)/1 var(--pac-font-playful,"Baloo 2",system-ui);letter-spacing:.02em;color:#fff;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--c) 85%,#fff),var(--c));border:3px solid rgba(255,255,255,.85);border-radius:22px;
+  padding:16px 34px;box-shadow:0 6px 0 var(--d),0 10px 24px rgba(0,0,0,.28);cursor:pointer;display:inline-flex;align-items:center;gap:10px;
+  text-shadow:0 2px 0 rgba(0,0,0,.18);transition:transform .08s,box-shadow .08s}
+.pk-btn:active{transform:translateY(5px);box-shadow:0 1px 0 var(--d),0 4px 10px rgba(0,0,0,.25)}
+.pk-btn.pk-small{font-size:16px;padding:10px 18px;border-radius:16px;box-shadow:0 4px 0 var(--d),0 6px 14px rgba(0,0,0,.25)}
+.pk-hud{position:absolute;display:flex;gap:8px;align-items:flex-start}
+.pk-hud.top{top:max(14px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);flex-direction:column;align-items:center}
+.pk-hud.right{top:max(14px,env(safe-area-inset-top));right:14px;flex-direction:column;align-items:flex-end}
+.pk-hud.left{top:max(14px,env(safe-area-inset-top));left:58px}
+.pk-pill{background:rgba(20,22,30,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#fff;border-radius:16px;padding:8px 16px;
+  font:800 15px/1.1 var(--pac-font-playful,"Baloo 2",system-ui);text-align:center;min-width:64px;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.pk-pill b{display:block;font-size:30px;line-height:1}
+.pk-pill small{display:block;font-size:11px;letter-spacing:.12em;opacity:.75;text-transform:uppercase}
+.pk-pill.gold{color:#ffd54a}
+.pk-banner{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%) scale(.6);opacity:0;text-align:center;pointer-events:none;
+  font:900 clamp(30px,8vw,52px)/1.05 var(--pac-font-playful,"Baloo 2",system-ui);color:#fff;
+  text-shadow:0 0 2px rgba(0,0,0,.55),0 3px 0 rgba(0,0,0,.35),0 0 22px rgba(0,0,0,.45),0 8px 30px rgba(0,0,0,.35);
+  transition:transform .35s cubic-bezier(.2,1.6,.4,1),opacity .2s;width:90%}
+.pk-banner.on{transform:translate(-50%,-50%) scale(1);opacity:1}
+.pk-banner small{display:block;font-size:.42em;font-weight:700;margin-top:10px;color:#fff;text-shadow:0 0 2px rgba(0,0,0,.6),0 2px 10px rgba(0,0,0,.55)}
+.pk-banner.bad{color:#ff5a5a}.pk-banner.good{color:#6dffa8}.pk-banner.gold{color:#ffd54a}
+.pk-hint{position:absolute;left:50%;bottom:max(28px,env(safe-area-inset-bottom));transform:translateX(-50%);color:#fff;white-space:nowrap;
+  font:800 clamp(17px,4.4vw,24px)/1 var(--pac-font-playful,"Baloo 2",system-ui);text-shadow:0 2px 10px rgba(0,0,0,.45);animation:pk-bob 1.6s ease-in-out infinite}
+@keyframes pk-bob{50%{transform:translate(-50%,-6px)}}
+.pk-toast{position:absolute;left:50%;top:calc(max(14px,env(safe-area-inset-top)) + 96px);transform:translate(-50%,-40px);opacity:0;background:rgba(10,30,30,.85);color:#9ff5e1;
+  border:1px solid rgba(159,245,225,.5);border-radius:10px;padding:10px 18px;font:600 14px/1.2 var(--pac-font-mono,"JetBrains Mono",monospace);
+  letter-spacing:.14em;text-transform:uppercase;transition:transform .45s cubic-bezier(.2,1.4,.4,1),opacity .3s;z-index:5;white-space:nowrap}
+.pk-toast.on{transform:translate(-50%,0);opacity:1}
+.pk-icon-btn{width:48px;height:48px;border-radius:50%;border:0;background:rgba(20,22,30,.5);backdrop-filter:blur(10px);color:#fff;font-size:22px;cursor:pointer;
+  display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+@media (prefers-reduced-motion:reduce){.pk-hint{animation:none}.pk-banner{transition:opacity .2s}}`;
+  const tag = document.createElement("style");
+  tag.textContent = css;
+  document.head.appendChild(tag);
+}
+
+/** A full-screen stage: a backdrop picture (or gradient), a layer to draw on, and a UI layer on top.
+ *  Returns { el, back, layer, ui, canvas(), size() }. */
+export function stage({ background, dim = 0 } = {}) {
+  gameStyles();
+  const el = document.createElement("div");
+  el.className = "pk-stage";
+  el.innerHTML = `<div class="pk-back"></div><div class="pk-layer"></div><div class="pk-ui"></div>`;
+  document.body.appendChild(el);
+  const back = el.querySelector(".pk-back"), layer = el.querySelector(".pk-layer"), ui = el.querySelector(".pk-ui");
+  const setBackground = (bg) => {
+    if (!bg) return;
+    back.style.background = /^(https?:|blob:|data:)/.test(bg) ? `center/cover no-repeat url("${bg}")` : bg;
+    if (dim) back.style.filter = `brightness(${1 - dim})`;
+  };
+  Promise.resolve(background).then(setBackground);
+  /** A canvas that fills the stage at the device's pixel density; draw in CSS pixels. */
+  const canvas = () => {
+    const c = document.createElement("canvas");
+    layer.appendChild(c);
+    const ctx = c.getContext("2d");
+    const fit = () => { const r = devicePixelRatio || 1; c.width = innerWidth * r; c.height = innerHeight * r; c.style.width = innerWidth + "px"; c.style.height = innerHeight + "px"; ctx.setTransform(r, 0, 0, r, 0, 0); };
+    fit(); addEventListener("resize", fit);
+    return { canvas: c, ctx };
+  };
+  return { el, back, layer, ui, canvas, setBackground, size: () => ({ width: innerWidth, height: innerHeight }) };
+}
+
+/** A chunky game button (PLAY, SHOP…). color: any CSS colour. Returns the element. */
+export function gameButton(label, { color = "#22c55e", icon = "", small = false, onClick, parent } = {}) {
+  gameStyles();
+  const b = document.createElement("button");
+  b.className = "pk-btn" + (small ? " pk-small" : "");
+  b.style.setProperty("--c", color);
+  b.innerHTML = `${icon ? `<span aria-hidden="true">${icon}</span>` : ""}<span>${label}</span>`;
+  if (onClick) b.addEventListener("click", (e) => { sfx("click"); onClick(e); });
+  if (parent) parent.appendChild(b);
+  return b;
+}
+
+/** Score pills. hud(ui, "top" | "right" | "left") → { pill(label, value, {gold}) → set(value) }. */
+export function hud(parent, where = "top") {
+  gameStyles();
+  const box = document.createElement("div");
+  box.className = `pk-hud ${where}`;
+  parent.appendChild(box);
+  return {
+    el: box,
+    pill(label, value = 0, { gold = false } = {}) {
+      const p = document.createElement("div");
+      p.className = "pk-pill" + (gold ? " gold" : "");
+      p.innerHTML = `<b></b><small>${label}</small>`;
+      box.appendChild(p);
+      const b = p.querySelector("b");
+      const set = (v) => { b.textContent = typeof v === "number" ? v.toLocaleString() : String(v); };
+      set(value);
+      return { el: p, set };
+    },
+  };
+}
+
+/** A big result line over the game ("Landed on its side!"). tone: "good" | "bad" | "gold". */
+export function banner(parent, text, { tone = "", sub = "", ms = 1600 } = {}) {
+  gameStyles();
+  const b = document.createElement("div");
+  b.className = `pk-banner ${tone}`;
+  b.innerHTML = `${text}${sub ? `<small>${sub}</small>` : ""}`;
+  parent.appendChild(b);
+  requestAnimationFrame(() => b.classList.add("on"));
+  if (ms > 0) setTimeout(() => { b.classList.remove("on"); setTimeout(() => b.remove(), 300); }, ms);
+  return b;
+}
+
+/** A one-line instruction at the bottom ("Swipe up to flip!"); returns { set(text), hide() }. */
+export function hint(parent, text) {
+  gameStyles();
+  const h = document.createElement("div");
+  h.className = "pk-hint";
+  h.textContent = text;
+  parent.appendChild(h);
+  return { set: (t) => { h.textContent = t; h.style.display = ""; }, hide: () => { h.style.display = "none"; } };
+}
+
+/** Swipes on an element: onSwipe({dx, dy, speed, angle}) when a finger or mouse is flicked. */
+export function swipe(el, onSwipe, { min = 30 } = {}) {
+  let start = null;
+  el.addEventListener("pointerdown", (e) => { start = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+  el.addEventListener("pointerup", (e) => {
+    if (!start) return;
+    const dx = e.clientX - start.x, dy = e.clientY - start.y, dt = Math.max(16, performance.now() - start.t);
+    start = null;
+    if (Math.hypot(dx, dy) < min) return;
+    onSwipe({ dx, dy, speed: Math.hypot(dx, dy) / dt, angle: Math.atan2(dy, dx) });
+  });
+}
+
+/** Dragging: onMove({x, y, dx, dy}) while held, onEnd({x, y, vx, vy}) on release (velocity in px/s). */
+export function drag(el, { onStart, onMove, onEnd } = {}) {
+  let last = null;
+  el.addEventListener("pointerdown", (e) => { el.setPointerCapture?.(e.pointerId); last = { x: e.clientX, y: e.clientY, t: performance.now(), vx: 0, vy: 0 }; onStart?.({ x: e.clientX, y: e.clientY }); });
+  el.addEventListener("pointermove", (e) => {
+    if (!last) return;
+    const t = performance.now(), dt = Math.max(1, t - last.t);
+    const dx = e.clientX - last.x, dy = e.clientY - last.y;
+    last = { x: e.clientX, y: e.clientY, t, vx: dx / dt * 1000, vy: dy / dt * 1000 };
+    onMove?.({ x: e.clientX, y: e.clientY, dx, dy });
+  });
+  const end = (e) => { if (!last) return; onEnd?.({ x: e.clientX, y: e.clientY, vx: last.vx, vy: last.vy }); last = null; };
+  el.addEventListener("pointerup", end);
+  el.addEventListener("pointercancel", end);
+}
+
+/** A burst of particles at a point (screen pixels): coins, sparks, dust, splashes. */
+export function burst(x, y, { colors = ["#ffd54a", "#ff6b9a", "#6dffa8", "#7cc4ff", "#fff"], count = 28, speed = 7, gravity = 0.28, size = 7, shape = "circle" } = {}) {
+  if (reduceMotion()) return;
+  const c = document.createElement("canvas");
+  Object.assign(c.style, { position: "fixed", inset: "0", pointerEvents: "none", zIndex: 50 });
+  const r = devicePixelRatio || 1;
+  c.width = innerWidth * r; c.height = innerHeight * r; c.style.width = innerWidth + "px"; c.style.height = innerHeight + "px";
+  document.body.appendChild(c);
+  const ctx = c.getContext("2d");
+  ctx.scale(r, r);
+  const parts = Array.from({ length: count }, () => {
+    const a = Math.random() * Math.PI * 2, v = speed * (0.4 + Math.random());
+    return { x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - speed * 0.5, life: 1, s: size * (0.5 + Math.random()), c: colors[(Math.random() * colors.length) | 0], rot: Math.random() * 6 };
+  });
+  const step = () => {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    let alive = false;
+    for (const p of parts) {
+      if (p.life <= 0) continue;
+      alive = true;
+      p.vy += gravity; p.x += p.vx; p.y += p.vy; p.life -= 0.018; p.rot += 0.2;
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = p.c;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      if (shape === "square") ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s);
+      else { ctx.beginPath(); ctx.arc(0, 0, p.s / 2, 0, Math.PI * 2); ctx.fill(); }
+      ctx.restore();
+    }
+    if (alive) requestAnimationFrame(step); else c.remove();
+  };
+  requestAnimationFrame(step);
+}
+
+/** A short shake of an element (a hit, a crash). */
+export function shake(el, { strength = 10, ms = 380 } = {}) {
+  if (reduceMotion() || !el.animate) return;
+  const k = [0, -1, 1, -0.7, 0.7, -0.4, 0.4, 0].map((f) => ({ transform: `translate(${f * strength}px, ${f * strength * 0.4}px)` }));
+  el.animate(k, { duration: ms, easing: "ease-out" });
+}
+
+/** A music on/off button (remembered); plays url looping once the person has tapped anything. */
+export function musicToggle(parent, url, { volume = 0.45 } = {}) {
+  gameStyles();
+  const audio = new Audio();
+  audio.loop = true; audio.volume = volume;
+  Promise.resolve(url).then((u) => { if (u) audio.src = u; });
+  let on = true;
+  try { on = localStorage.getItem("pk.music") !== "off"; } catch {}
+  const b = document.createElement("button");
+  b.className = "pk-icon-btn";
+  const paint = () => { b.textContent = on ? "♪" : "♪̸"; b.setAttribute("aria-label", on ? "Music off" : "Music on"); b.style.opacity = on ? 1 : 0.55; };
+  paint();
+  const start = () => { if (on && audio.src) audio.play().catch(() => {}); };
+  addEventListener("pointerdown", start, { once: true });
+  b.addEventListener("click", (e) => { e.stopPropagation(); on = !on; try { localStorage.setItem("pk.music", on ? "on" : "off"); } catch {} paint(); on ? audio.play().catch(() => {}) : audio.pause(); });
+  parent.appendChild(b);
+  return { el: b, audio };
+}
+
+/** Saved progress for a game (best, wallet, unlocks, achievements), kept with the app. */
+export async function progress(name = "game") {
+  const key = `pk.progress.${name}`;
+  const pac = window.pac;
+  const load = async () => { try { return (pac ? await pac.storage.get(key) : JSON.parse(localStorage.getItem(key) || "null")) || {}; } catch { return {}; } };
+  const state = Object.assign({ best: 0, wallet: 0, plays: 0, unlocked: [], achievements: [] }, await load());
+  const save = () => { try { pac ? pac.storage.set(key, state) : localStorage.setItem(key, JSON.stringify(state)); } catch {} };
+  let toastEl = null;
+  return {
+    state,
+    /** Records a finished round: returns true for a new best. */
+    finish(score) { state.plays++; const best = score > state.best; if (best) state.best = score; save(); return best; },
+    earn(n) { state.wallet += n; save(); return state.wallet; },
+    spend(n) { if (state.wallet < n) return false; state.wallet -= n; save(); return true; },
+    unlock(id) { if (!state.unlocked.includes(id)) { state.unlocked.push(id); save(); } },
+    has: (id) => state.unlocked.includes(id),
+    /** Shows "ACHIEVEMENT: name" once, ever. */
+    achieve(id, title, parent = document.body) {
+      if (state.achievements.includes(id)) return false;
+      state.achievements.push(id); save();
+      gameStyles(); sfx("levelUp");
+      toastEl?.remove();
+      toastEl = document.createElement("div");
+      toastEl.className = "pk-toast";
+      toastEl.textContent = `Achievement: ${title}`;
+      parent.appendChild(toastEl);
+      requestAnimationFrame(() => toastEl.classList.add("on"));
+      setTimeout(() => { toastEl?.classList.remove("on"); }, 2800);
+      return true;
+    },
+  };
+}

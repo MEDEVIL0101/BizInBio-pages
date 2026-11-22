@@ -72,6 +72,9 @@
       haptic: () => Promise.resolve(true),
       /** Opens an entry in PAC's own detail screen. */
       openEntry: (id) => call("ui.openEntry", { id }),
+      /** Opens a web page (a new tab, or the browser on a phone), a phone number (tel:) or an email
+       *  (mailto:). Call it from a tap. Plain <a href> links open the same way by themselves. */
+      open: (url) => openLink(String(url)),
       /** Sets the title shown above the screen. */
       setTitle: (title) => call("ui.setTitle", { title: String(title) }),
     }),
@@ -108,6 +111,10 @@
       images: (q, options) => call("web.images", { q: String(q), count: options && options.count, prefer: options && options.prefer }),
       /** Reads a public page or data feed: {status, type, text} (parse JSON yourself). Needs "internet". */
       fetch: (url) => call("web.fetch", { url: String(url) }),
+      /** Real places near somewhere: [{name, description, cuisine, address, distanceKm, hoursToday, hours,
+       *  phone, website, rating, reviews, priceRange, photo, mapUrl}], nearest first. near: a postal code,
+       *  address, city or {lat, lon}. Needs "internet". */
+      places: (category, options) => call("web.places", { category: String(category), cuisine: options && options.cuisine, near: options && options.near, count: options && options.count, radius: options && options.radius }),
     }),
 
     device: Object.freeze({
@@ -140,6 +147,20 @@
 
     on,
   });
+
+  // Links open outside the screen (a new tab, or the phone's browser), never inside it.
+  function openLink(url) {
+    if (!/^(https?:|tel:|mailto:)/i.test(url)) return Promise.resolve(false);
+    const a = document.createElement("a");
+    a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer";
+    document.body.appendChild(a); a.click(); a.remove();
+    return Promise.resolve(true);
+  }
+  document.addEventListener("click", (e) => {
+    const a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+    if (!a || !/^(https?:|tel:|mailto:)/i.test(a.getAttribute("href") || "")) return;
+    a.target = "_blank"; a.rel = "noopener noreferrer";
+  }, true);
 
   window.pac = pac;
   window.__pac = Object.freeze({
