@@ -52,7 +52,7 @@ function tone(c, { freq, to, type = "sine", start = 0, dur = 0.15, vol = 0.5, at
   osc.stop(t + dur + 0.05);
 }
 
-function noise(c, { start = 0, dur = 0.2, vol = 0.3, from = 800, to = 4000, q = 1, type = "bandpass" }) {
+function hiss(c, { start = 0, dur = 0.2, vol = 0.3, from = 800, to = 4000, q = 1, type = "bandpass" }) {
   const t = c.currentTime + start;
   const len = Math.ceil(c.sampleRate * dur);
   const buf = c.createBuffer(1, len, c.sampleRate);
@@ -83,12 +83,12 @@ function chord(c, names, opts = {}) {
 
 const SOUNDS = {
   tap: (c) => tone(c, { freq: 1200, to: 900, type: "sine", dur: 0.05, vol: 0.25 }),
-  click: (c) => { tone(c, { freq: 2000, type: "square", dur: 0.02, vol: 0.08 }); noise(c, { dur: 0.03, vol: 0.1, from: 3000, to: 5000 }); },
+  click: (c) => { tone(c, { freq: 2000, type: "square", dur: 0.02, vol: 0.08 }); hiss(c, { dur: 0.03, vol: 0.1, from: 3000, to: 5000 }); },
   pop: (c) => tone(c, { freq: 300, to: 900, type: "sine", dur: 0.09, vol: 0.5 }),
   bubble: (c) => { tone(c, { freq: 500, to: 1400, type: "sine", dur: 0.12, vol: 0.35 }); tone(c, { freq: 700, to: 1800, type: "sine", start: 0.07, dur: 0.1, vol: 0.2 }); },
-  flip: (c) => noise(c, { dur: 0.16, vol: 0.25, from: 1200, to: 5000, q: 0.7 }),
-  whoosh: (c) => noise(c, { dur: 0.35, vol: 0.35, from: 300, to: 3000, q: 0.6 }),
-  swoosh: (c) => noise(c, { dur: 0.25, vol: 0.3, from: 4000, to: 500, q: 0.8 }),
+  flip: (c) => hiss(c, { dur: 0.16, vol: 0.25, from: 1200, to: 5000, q: 0.7 }),
+  whoosh: (c) => hiss(c, { dur: 0.35, vol: 0.35, from: 300, to: 3000, q: 0.6 }),
+  swoosh: (c) => hiss(c, { dur: 0.25, vol: 0.3, from: 4000, to: 500, q: 0.8 }),
   correct: (c) => { tone(c, { freq: note("E5"), type: "triangle", dur: 0.18, vol: 0.35 }); tone(c, { freq: note("B5"), type: "triangle", start: 0.09, dur: 0.3, vol: 0.35 }); },
   wrong: (c) => { tone(c, { freq: 220, to: 180, type: "sawtooth", dur: 0.18, vol: 0.12 }); tone(c, { freq: 196, to: 150, type: "sawtooth", start: 0.14, dur: 0.25, vol: 0.12 }); },
   gentleWrong: (c) => { tone(c, { freq: note("A4"), type: "sine", dur: 0.2, vol: 0.25 }); tone(c, { freq: note("F4"), type: "sine", start: 0.12, dur: 0.3, vol: 0.25 }); },
@@ -101,13 +101,13 @@ const SOUNDS = {
   bell: (c) => { tone(c, { freq: 880, type: "sine", dur: 1.5, vol: 0.3, attack: 0.002 }); tone(c, { freq: 880 * 2.76, type: "sine", dur: 0.6, vol: 0.08, attack: 0.002 }); },
   bounce: (c) => tone(c, { freq: 180, to: 520, type: "sine", dur: 0.15, vol: 0.4 }),
   drop: (c) => tone(c, { freq: 900, to: 120, type: "sine", dur: 0.25, vol: 0.35 }),
-  thud: (c) => { tone(c, { freq: 120, to: 50, type: "sine", dur: 0.18, vol: 0.6 }); noise(c, { dur: 0.08, vol: 0.15, from: 200, to: 100, type: "lowpass" }); },
-  unlock: (c) => { tone(c, { freq: note("G5"), type: "triangle", dur: 0.08, vol: 0.25 }); tone(c, { freq: note("D6"), type: "triangle", start: 0.08, dur: 0.25, vol: 0.25 }); noise(c, { start: 0.08, dur: 0.15, vol: 0.08, from: 5000, to: 8000 }); },
-  type: (c) => noise(c, { dur: 0.025, vol: 0.12, from: 2500 + Math.random() * 1500, to: 3000, q: 2 }),
+  thud: (c) => { tone(c, { freq: 120, to: 50, type: "sine", dur: 0.18, vol: 0.6 }); hiss(c, { dur: 0.08, vol: 0.15, from: 200, to: 100, type: "lowpass" }); },
+  unlock: (c) => { tone(c, { freq: note("G5"), type: "triangle", dur: 0.08, vol: 0.25 }); tone(c, { freq: note("D6"), type: "triangle", start: 0.08, dur: 0.25, vol: 0.25 }); hiss(c, { start: 0.08, dur: 0.15, vol: 0.08, from: 5000, to: 8000 }); },
+  type: (c) => hiss(c, { dur: 0.025, vol: 0.12, from: 2500 + Math.random() * 1500, to: 3000, q: 2 }),
   tick: (c) => tone(c, { freq: 1500, type: "square", dur: 0.015, vol: 0.06 }),
   countdown: (c) => tone(c, { freq: 660, type: "sine", dur: 0.15, vol: 0.3 }),
   go: (c) => tone(c, { freq: 1320, type: "sine", dur: 0.4, vol: 0.3 }),
-  magic: (c) => { [0, 1, 2, 3, 4, 5, 6].forEach((i) => tone(c, { freq: note("C6") * Math.pow(2, i / 7), type: "sine", start: i * 0.05, dur: 0.3, vol: 0.1 })); noise(c, { dur: 0.5, vol: 0.05, from: 6000, to: 9000 }); },
+  magic: (c) => { [0, 1, 2, 3, 4, 5, 6].forEach((i) => tone(c, { freq: note("C6") * Math.pow(2, i / 7), type: "sine", start: i * 0.05, dur: 0.3, vol: 0.1 })); hiss(c, { dur: 0.5, vol: 0.05, from: 6000, to: 9000 }); },
 };
 
 /** Plays a sound effect made on the fly (no files). Names: see sfx.names. Ignored until the first touch. */
@@ -620,4 +620,140 @@ export async function progress(name = "game") {
       return true;
     },
   };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Worlds and sprites: smooth noise, painted terrain, soft fog, and clean cut-out sprites.
+
+/** Smooth noise in 0..1 (seeded, layered): the same x, y and seed always give the same value. */
+export function noise(x, y, { seed = 1, octaves = 4, scale = 1 } = {}) {
+  const hash = (i, j) => { let h = (i * 374761393 + j * 668265263 + seed * 982451653) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967295; };
+  const smooth = (t) => t * t * (3 - 2 * t);
+  const value = (px, py) => {
+    const i = Math.floor(px), j = Math.floor(py), fx = smooth(px - i), fy = smooth(py - j);
+    const a = hash(i, j), b = hash(i + 1, j), c = hash(i, j + 1), d = hash(i + 1, j + 1);
+    return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+  };
+  let total = 0, amp = 1, freq = scale, norm = 0;
+  for (let o = 0; o < octaves; o++) { total += value(x * freq, y * freq) * amp; norm += amp; amp *= 0.5; freq *= 2; }
+  return total / norm;
+}
+
+const TERRAINS = {
+  desert: [[0, "#c8a46a"], [0.42, "#d9b77c"], [0.6, "#c9a066"], [0.75, "#a88356"], [1, "#8c6c48"]],
+  grass: [[0, "#2f6f8f"], [0.3, "#3f86a6"], [0.34, "#d8c48a"], [0.38, "#6fa35a"], [0.6, "#4e8a45"], [0.8, "#3d6e3a"], [1, "#7c7c74"]],
+  snow: [[0, "#36608a"], [0.32, "#4d7fa8"], [0.36, "#cfd8de"], [0.6, "#eef3f6"], [0.85, "#ffffff"], [1, "#b9c3cc"]],
+  lava: [[0, "#ff7a1a"], [0.25, "#c2320c"], [0.3, "#2b1a14"], [0.7, "#3a2a24"], [1, "#59463d"]],
+  battlefield: [[0, "#5f6b3a"], [0.35, "#7a8148"], [0.55, "#8c8452"], [0.7, "#a08c5c"], [0.85, "#7a6a4a"], [1, "#5a4e3a"]],
+};
+function rampColor(stops, v) {
+  let i = 0;
+  while (i < stops.length - 2 && v > stops[i + 1][0]) i++;
+  const [a, ca] = stops[i], [b, cb] = stops[i + 1];
+  const t = Math.max(0, Math.min(1, (v - a) / (b - a || 1)));
+  const p = (c) => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+  const x = p(ca), y = p(cb);
+  return [x[0] + (y[0] - x[0]) * t, x[1] + (y[1] - x[1]) * t, x[2] + (y[2] - x[2]) * t];
+}
+
+/**
+ * Paints smooth, natural ground onto a canvas (or returns a new one): layered noise through a colour
+ * ramp, with soft light from the top-left and fine grain. palette: "grass" | "desert" | "snow" |
+ * "lava" | "battlefield", or your own [[0,"#hex"], …, [1,"#hex"]]. Returns { canvas, height(x, y) }
+ * where height gives the 0..1 ground level at a pixel (water below the first band, for example).
+ */
+export function paintTerrain({ width, height: h, palette = "grass", seed = 7, scale = 1 / 260, canvas } = {}) {
+  const w = Math.max(1, Math.round(width)), hh = Math.max(1, Math.round(h));
+  const c = canvas ?? document.createElement("canvas");
+  c.width = w; c.height = hh;
+  const ctx = c.getContext("2d");
+  const stops = Array.isArray(palette) ? palette : (TERRAINS[palette] ?? TERRAINS.grass);
+  const img = ctx.createImageData(w, hh);
+  const step = 2;                                 // painted at half resolution, then smoothed by the browser
+  // Layered noise sits mostly mid-range; stretched so every band of the palette shows.
+  const field = (x, y) => Math.max(0, Math.min(1, (noise(x, y, { seed, scale, octaves: 5 }) - 0.28) / 0.44));
+  for (let y = 0; y < hh; y += step) {
+    for (let x = 0; x < w; x += step) {
+      const v = field(x, y);
+      const lx = field(x + 3, y + 3) - v;           // light from the top-left
+      const grain = (noise(x, y, { seed: seed + 9, scale: 1 / 3, octaves: 1 }) - 0.5) * 14;
+      const [r, g, b] = rampColor(stops, v);
+      const shade = Math.max(0.82, Math.min(1.12, 1 - lx * 4));
+      for (let dy = 0; dy < step && y + dy < hh; dy++) for (let dx = 0; dx < step && x + dx < w; dx++) {
+        const k = ((y + dy) * w + (x + dx)) * 4;
+        img.data[k] = r * shade + grain; img.data[k + 1] = g * shade + grain; img.data[k + 2] = b * shade + grain; img.data[k + 3] = 255;
+      }
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  return { canvas: c, height: (x, y) => field(x, y) };
+}
+
+/** Soft fog of war over what's already drawn: darkens everything except around the given points
+ *  (each {x, y, r}), with feathered edges. */
+let fogLayer = null;
+export function fog(ctx, width, height, seen, { color = "rgba(8,10,14,0.82)" } = {}) {
+  fogLayer ??= document.createElement("canvas");
+  if (fogLayer.width !== width || fogLayer.height !== height) { fogLayer.width = width; fogLayer.height = height; }
+  const f = fogLayer.getContext("2d");
+  f.globalCompositeOperation = "source-over";
+  f.clearRect(0, 0, width, height);
+  f.fillStyle = color;
+  f.fillRect(0, 0, width, height);
+  f.globalCompositeOperation = "destination-out";
+  for (const p of seen) {
+    const g = f.createRadialGradient(p.x, p.y, p.r * 0.55, p.x, p.y, p.r);
+    g.addColorStop(0, "rgba(0,0,0,1)"); g.addColorStop(1, "rgba(0,0,0,0)");
+    f.fillStyle = g; f.beginPath(); f.arc(p.x, p.y, p.r, 0, Math.PI * 2); f.fill();
+  }
+  ctx.drawImage(fogLayer, 0, 0, width, height);
+}
+
+const cutCache = new Map();
+/**
+ * A sprite with its plain background removed: give it the picture's URL (from pac.media.url) and get
+ * a URL of the same picture with a transparent background and soft edges. Works for subjects on a
+ * plain white, black or flat-coloured background. Cached per URL.
+ */
+export function cutout(url, { tolerance = 38, feather = 18 } = {}) {
+  if (!url) return Promise.resolve(url);
+  if (cutCache.has(url)) return cutCache.get(url);
+  const job = new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const max = 768, k = Math.min(1, max / Math.max(img.width, img.height));
+        const w = Math.round(img.width * k), h = Math.round(img.height * k);
+        const c = document.createElement("canvas"); c.width = w; c.height = h;
+        const ctx = c.getContext("2d"); ctx.drawImage(img, 0, 0, w, h);
+        const d = ctx.getImageData(0, 0, w, h), px = d.data;
+        // The background colour: the average of the four corners.
+        const corners = [[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]].map(([x, y]) => (y * w + x) * 4);
+        const bg = [0, 1, 2].map((i) => corners.reduce((s, o) => s + px[o + i], 0) / 4);
+        const dist = (o) => Math.hypot(px[o] - bg[0], px[o + 1] - bg[1], px[o + 2] - bg[2]);
+        // Flood from the edges through background-coloured pixels, so the subject's own matching colours stay.
+        const seen = new Uint8Array(w * h), stack = [];
+        for (let x = 0; x < w; x++) stack.push(x, (h - 1) * w + x);
+        for (let y = 0; y < h; y++) stack.push(y * w, y * w + w - 1);
+        while (stack.length) {
+          const i = stack.pop();
+          if (seen[i]) continue;
+          const o = i * 4, dd = dist(o);
+          if (dd > tolerance + feather) continue;
+          seen[i] = 1;
+          px[o + 3] = dd <= tolerance ? 0 : Math.round(255 * (dd - tolerance) / feather);
+          const x = i % w;
+          if (x > 0) stack.push(i - 1); if (x < w - 1) stack.push(i + 1);
+          if (i >= w) stack.push(i - w); if (i < w * (h - 1)) stack.push(i + w);
+        }
+        ctx.putImageData(d, 0, 0);
+        c.toBlob((b) => resolve(b ? URL.createObjectURL(b) : url), "image/png");
+      } catch { resolve(url); }
+    };
+    img.onerror = () => resolve(url);
+    img.src = url;
+  });
+  cutCache.set(url, job);
+  return job;
 }
