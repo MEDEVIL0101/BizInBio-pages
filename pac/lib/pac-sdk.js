@@ -5,6 +5,13 @@
   const init = window.__pacInit || {};
   const bridge = window.webkit && window.webkit.messageHandlers;
 
+  function settingValue(x) {
+    if (!x) return undefined;
+    if (x.kind === "number") { const n = Number(x.value); return Number.isFinite(n) ? n : undefined; }
+    if (x.kind === "toggle") return x.value === "true";
+    return String(x.value ?? "");
+  }
+
   function call(method, args) {
     if (!bridge || !bridge.pac) return Promise.reject(new Error("PAC isn't available here"));
     return bridge.pac.postMessage({ method, args: args === undefined ? null : args }).then((reply) => {
@@ -56,6 +63,14 @@
       remove: (id) => call("records.remove", { id }),
       /** Called with the collection's entries whenever they change (here, in PAC or from someone sharing the app). */
       onChange: (callback) => on("records", callback),
+    }),
+
+    /** Things the person can adjust without Magic (Customise): difficulty, speed, how many, a title,
+     *  sound on or off. get(id) gives the value typed (number, true/false or text); all() gives them all.
+     *  They change when the person changes them, and the screen starts again with the new values. */
+    settings: Object.freeze({
+      get: (id) => settingValue((init.app && init.app.settings || []).find((x) => x.id === id)),
+      all: () => Object.fromEntries((init.app && init.app.settings || []).map((x) => [x.id, settingValue(x)])),
     }),
 
     storage: Object.freeze({
