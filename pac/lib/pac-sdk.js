@@ -40,6 +40,31 @@
 
   const listeners = {};
   const mediaURLs = new Map();
+  const mediaKinds = new Map();
+
+  // Sounds and music: the person turns either off in PAC while playing or using an app, and every
+  // app follows it without needing to know. Music = an app's music tracks and anything looping;
+  // sounds = effects and everything else; the voice reading aloud always plays.
+  const audioPrefs = { sounds: true, music: true, ...(init.audio || {}) };
+  const playing = new Set();
+  function audioKind(el) {
+    if (el.dataset && el.dataset.pacAudio) return el.dataset.pacAudio;
+    const kind = mediaKinds.get(el.currentSrc || el.src);
+    if (kind === "speech") return "voice";
+    if (kind === "music" || (!kind && el.loop)) return "music";
+    return "sound";
+  }
+  function applyAudio(el) {
+    const kind = audioKind(el);
+    el.muted = kind === "music" ? !audioPrefs.music : kind === "sound" ? !audioPrefs.sounds : false;
+  }
+  try {
+    const play = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function () {
+      if (!(this instanceof HTMLVideoElement) || this.loop || !this.muted) { playing.add(this); applyAudio(this); }
+      return play.apply(this, arguments);
+    };
+  } catch {}
   function on(event, callback) {
     (listeners[event] = listeners[event] || new Set()).add(callback);
     return () => listeners[event].delete(callback);
@@ -51,6 +76,9 @@
     app: Object.freeze(init.app || {}),
     /** Screen size, safe areas and dark mode. */
     device: init.device || {},
+    /** The person's sound settings in PAC: { sounds, music } (true = on). PAC applies them for you;
+     *  pac.on("audio", fn) hears changes. */
+    audio: Object.freeze({ get sounds() { return audioPrefs.sounds; }, get music() { return audioPrefs.music; } }),
 
     records: Object.freeze({
       /** Entries in a collection (the screen's own collection by default), newest first. */
@@ -100,7 +128,8 @@
       url: (id) => {
         const key = String(id);
         if (!mediaURLs.has(key)) {
-          const p = call("media.url", { id: key }).then((v) => (typeof Blob !== "undefined" && v instanceof Blob ? URL.createObjectURL(v) : v));
+          const p = call("media.url", { id: key }).then((v) => (typeof Blob !== "undefined" && v instanceof Blob ? URL.createObjectURL(v) : v))
+            .then((u) => { const a = ((init.app && init.app.media) || []).find((m) => m.id === key); if (a && u) mediaKinds.set(u, a.kind); return u; });
           p.catch(() => mediaURLs.delete(key));
           mediaURLs.set(key, p);
         }
@@ -111,7 +140,11 @@
       speak: (texts) => {
         const list = (Array.isArray(texts) ? texts : [texts]).map(String);
         return call("media.speak", { texts: list }).then((blobs) =>
-          (Array.isArray(blobs) ? blobs : [blobs]).map((b) => (typeof Blob !== "undefined" && b instanceof Blob ? URL.createObjectURL(b) : b)));
+          (Array.isArray(blobs) ? blobs : [blobs]).map((b) => {
+            const u = typeof Blob !== "undefined" && b instanceof Blob ? URL.createObjectURL(b) : b;
+            mediaKinds.set(u, "speech");
+            return u;
+          }));
       },
       /** The app's pictures and voice clips: [{id, kind: "image" | "speech", about}]. */
       list: () => Promise.resolve((init.app && init.app.media) || []),
@@ -181,6 +214,10 @@
   window.__pac = Object.freeze({
     emit(event, data) {
       if (event === "device") Object.assign(pac.device, data);
+      if (event === "audio" && data) {
+        Object.assign(audioPrefs, data);
+        for (const el of playing) { if (el.isConnected || !el.paused) applyAudio(el); else playing.delete(el); }
+      }
       for (const callback of listeners[event] || []) { try { callback(data); } catch (e) { send("error", [e]); } }
     },
   });

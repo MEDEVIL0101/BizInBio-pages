@@ -111,8 +111,10 @@ const SOUNDS = {
 };
 
 /** Plays a sound effect made on the fly (no files). Names: see sfx.names. Ignored until the first touch. */
+const soundsOff = () => !!(window.pac && window.pac.audio && window.pac.audio.sounds === false);
+
 export function sfx(name, { volume = 1 } = {}) {
-  if (muted) return;
+  if (muted || soundsOff()) return;
   const c = audio();
   const make = SOUNDS[name];
   if (!c || !make) return;
@@ -127,7 +129,7 @@ sfx.mute = (on = true) => { muted = on; };
 /** Plays a short melody: [["C5", 0.25], ["E5", 0.25], [null, 0.25], ["G5", 0.5]] (null = rest). */
 export function melody(notes, { type = "triangle", volume = 0.25, tempo = 1 } = {}) {
   const c = audio();
-  if (!c || muted) return;
+  if (!c || muted || soundsOff()) return;
   let at = 0;
   for (const [n, beats] of notes) {
     const dur = beats / tempo;
@@ -574,7 +576,7 @@ export function shake(el, { strength = 10, ms = 380 } = {}) {
 export function musicToggle(parent, url, { volume = 0.45 } = {}) {
   gameStyles();
   const audio = new Audio();
-  audio.loop = true; audio.volume = volume;
+  audio.loop = true; audio.volume = volume; audio.dataset.pacAudio = "music";
   Promise.resolve(url).then((u) => { if (u) audio.src = u; });
   let on = true;
   try { on = localStorage.getItem("pk.music") !== "off"; } catch {}
