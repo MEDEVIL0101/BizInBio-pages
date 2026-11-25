@@ -150,6 +150,18 @@
       list: () => Promise.resolve((init.app && init.app.media) || []),
     }),
 
+    leaderboard: Object.freeze({
+      /** Posts the player's score for a game on Discover (keeps their best, all time and this week).
+       *  options: {board: "main", lower: true when a lower score wins, like a time}. Needs the player
+       *  to be signed in to PAC; resolves with the board, rejects otherwise. */
+      submit: (score, options) => call("leaderboard.submit", { score: Number(score), board: options && options.board, lower: !!(options && options.lower) }),
+      /** The board: {board, lower, period, top: [{place, name, score, me}], me: {place, score} | null}.
+       *  options: {board, period: "all" | "week", limit (up to 100)}. */
+      top: (options) => call("leaderboard.top", { board: options && options.board, period: options && options.period, limit: options && options.limit }),
+      /** Opens PAC's own leaderboard over the game (all time and this week). */
+      show: (options) => call("leaderboard.show", { board: options && options.board }),
+    }),
+
     web: Object.freeze({
       /** Current web results: [{title, url, description, site, age?}]. near: {lat, lon} for local results.
        *  Needs the "internet" permission. */
