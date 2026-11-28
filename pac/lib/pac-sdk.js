@@ -1,4 +1,20 @@
 // PAC SDK: the only way a code screen reaches outside its sandbox.
+// Apps behave like apps: no pinch or double-tap zoom, and holding a finger down (to aim, charge,
+// drag) never selects the app or pops up Copy / Look Up; text boxes keep normal selection.
+try {
+  for (const t of ["gesturestart", "gesturechange", "gestureend"]) document.addEventListener(t, (e) => e.preventDefault(), { passive: false });
+  document.addEventListener("touchmove", (e) => { if (e.touches.length > 1 && !e.defaultPrevented) e.preventDefault(); }, { passive: false });
+  document.documentElement.style.touchAction = document.documentElement.style.touchAction || "manipulation";
+  document.documentElement.style.webkitTextSizeAdjust = "100%";
+  const noSelect = () => {
+    if (document.getElementById("pac-noselect")) return;
+    const st = document.createElement("style"); st.id = "pac-noselect";
+    st.textContent = "html,body,body *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}input,textarea,select,[contenteditable],[contenteditable] *{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}";
+    (document.head || document.documentElement).appendChild(st);
+  };
+  noSelect(); addEventListener("DOMContentLoaded", noSelect); addEventListener("load", noSelect);
+  new MutationObserver(noSelect).observe(document.documentElement, { childList: true });
+} catch {}
 // Every call is a message to PAC, which checks it before doing anything.
 (() => {
   "use strict";
